@@ -6,9 +6,9 @@ import { store } from '@/store';
 function App() {
   return (
     <BrowserRouter>
-    <Provider store={store}>
-      <AppRoutes />
-      <Toaster />
+      <Provider store={store}>
+        <AppRoutes />
+        <Toaster />
       </Provider>
     </BrowserRouter>
   );
