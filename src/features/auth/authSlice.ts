@@ -2,7 +2,6 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { type User } from '@/types'; 
 import { type RootState } from '@/store';
 
-// Định nghĩa Interface cho State
 interface AuthState {
   user: User | null;
   token: string | null;

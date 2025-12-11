@@ -1,4 +1,4 @@
-import { rootApi } from '@/store/rootApi';
+import { rootApi } from '@/services/rootApi';
 import { type LostItem } from '@/types';
 
 interface GetItemsParams {
