@@ -1,0 +1,158 @@
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Loader2, Upload, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useCreateClaimMutation } from '@/features/items/itemApi';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+
+// Validation
+const claimSchema = z.object({
+  title: z.string().min(5, "Tiêu đề quá ngắn"),
+  description: z.string().min(10, "Vui lòng mô tả kỹ hơn để Staff xác minh (VD: Số tiền, vết trầy, pass...)"),
+});
+
+type ClaimFormValues = z.infer<typeof claimSchema>;
+
+interface ClaimFormProps {
+  foundItemId: string;
+}
+
+export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [createClaim, { isLoading }] = useCreateClaimMutation();
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+  const form = useForm<ClaimFormValues>({
+    resolver: zodResolver(claimSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+    },
+  });
+
+  // Handle Images (Giống form trước)
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setSelectedImages((prev) => [...prev, ...filesArray]);
+      const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
+      setPreviewUrls((prev) => [...prev, ...newPreviews]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const onSubmit = async (data: ClaimFormValues) => {
+    try {
+      const formData = new FormData();
+      formData.append("foundItemId", foundItemId);
+      formData.append("title", data.title); // Tiêu đề bằng chứng
+      formData.append("description", data.description); // Mô tả chi tiết
+      
+      selectedImages.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      await createClaim(formData).unwrap();
+
+      toast({
+        title: "Gửi yêu cầu thành công!",
+        description: "Vui lòng chờ Staff duyệt. Bạn có thể theo dõi trong Lịch sử.",
+      });
+
+      navigate('/my-claims'); // Chuyển đến trang lịch sử
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không thể gửi yêu cầu lúc này.",
+      });
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tiêu đề bằng chứng</FormLabel>
+              <FormControl>
+                <Input placeholder="VD: Hóa đơn mua hàng / Ảnh chụp cũ / Đặc điểm bí mật" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Mô tả chi tiết (Quan trọng)</FormLabel>
+              <FormControl>
+                <Textarea 
+                  placeholder="Hãy mô tả những đặc điểm mà chỉ chủ nhân mới biết. Ví dụ: Trong ví có 500k, thẻ xe buýt, pass điện thoại là 1234, có vết nứt ở góc..." 
+                  className="h-32 bg-yellow-50/50 border-yellow-200 focus-visible:ring-yellow-400"
+                  {...field} 
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Upload Ảnh Bằng Chứng */}
+        <div className="space-y-2">
+          <Label>Hình ảnh xác minh (Nếu có)</Label>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-slate-300 hover:bg-slate-50 transition-colors">
+              <Upload className="h-6 w-6 text-slate-400" />
+              <span className="mt-1 text-xs text-slate-500">Upload</span>
+              <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
+            </label>
+            {previewUrls.map((url, index) => (
+              <div key={index} className="relative h-24 w-24 overflow-hidden rounded-md border">
+                <img src={url} alt="Preview" className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="text-[0.8rem] text-muted-foreground">
+             Nên upload ảnh cũ bạn đã chụp món đồ này, hoặc ảnh hóa đơn mua hàng.
+          </p>
+        </div>
+
+        <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 font-bold text-md" disabled={isLoading}>
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          XÁC NHẬN ĐÂY LÀ ĐỒ CỦA TÔI
+        </Button>
+      </form>
+    </Form>
+  );
+};

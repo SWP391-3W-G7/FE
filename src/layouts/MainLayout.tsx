@@ -207,7 +207,7 @@ const MainLayout = () => {
               <h4 className="font-bold mb-4">Liên kết nhanh</h4>
               <ul className="space-y-2 text-sm text-slate-500">
                 <li><Link to="/items" className="hover:text-orange-600">Tìm đồ thất lạc</Link></li>
-                <li><Link to="/report" className="hover:text-orange-600">Báo mất đồ</Link></li>
+                <li><Link to="/report-lost" className="hover:text-orange-600">Báo mất đồ</Link></li>
                 <li><Link to="/guidelines" className="hover:text-orange-600">Quy trình nhận lại</Link></li>
               </ul>
             </div>
