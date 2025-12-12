@@ -235,6 +235,53 @@ export const itemApi = rootApi.injectEndpoints({
         return { data: mock };
       },
     }),
+
+    // Security: Create temporary found item record
+    createTemporaryFoundItem: build.mutation<FoundItem, FormData>({
+      query: (formData) => ({
+        url: "/security/found-items/temporary",
+        method: "POST",
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }),
+    }),
+
+    // Staff: Get all found items for management
+    getStaffFoundItems: build.query<
+      FoundItemDisplayDTO[],
+      { campusId?: string; status?: string; keyword?: string }
+    >({
+      queryFn: async () => {
+        // Mock data - in real app this would filter by campus and status
+        return { data: mockFoundItems };
+      },
+    }),
+
+    // Staff: Create official found item record (with storage location)
+    createOfficialFoundItem: build.mutation<FoundItem, FormData>({
+      query: (formData) => ({
+        url: "/staff/found-items/official",
+        method: "POST",
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }),
+    }),
+
+    // Staff: Update found item status
+    updateFoundItemStatus: build.mutation<
+      FoundItem,
+      { foundItemId: string; status: string }
+    >({
+      query: ({ foundItemId, status }) => ({
+        url: `/staff/found-items/${foundItemId}/status`,
+        method: "PATCH",
+        data: { status },
+      }),
+    }),
   }),
 });
 
@@ -248,4 +295,8 @@ export const {
   useGetMyLostItemsQuery,
   useGetMyFoundReportsQuery,
   useGetMyClaimsQuery,
+  useCreateTemporaryFoundItemMutation,
+  useGetStaffFoundItemsQuery,
+  useCreateOfficialFoundItemMutation,
+  useUpdateFoundItemStatusMutation,
 } = itemApi;

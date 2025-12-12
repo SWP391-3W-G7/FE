@@ -87,11 +87,12 @@ export interface FoundItem {
   description: string;
   foundDate: string; // datetime ISO string
   foundLocation: string;
-  status: 'Stored' | 'Returned' | 'Unclaimed'; // Map từ varchar DB
+  status: 'Stored' | 'Returned' | 'Unclaimed' | 'Claimed'; // Map từ varchar DB
   createdBy?: number; // UserID
   storedBy?: number;  // UserID (Staff)
   campusID: number;  // FK -> Campus
   categoryID: number;// FK -> Category
+  storageLocation?: string; // Vị trí lưu trữ trong kho (VD: Kệ A, Tủ số 5)
 }
 
 export interface User {

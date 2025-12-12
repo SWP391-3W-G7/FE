@@ -10,6 +10,10 @@ import ReportFoundPage from '@/pages/private/student/ReportFoundPage';
 import FindItemsPage from '@/pages/private/student/FindItemsPage';
 import ClaimItemPage from '@/pages/private/student/ClaimItemPage';
 import StudentDashboard from '@/pages/private/student/StudentDashboard';
+import SecurityLogPage from '@/pages/private/security/SecurityLogPage';
+import StaffDashboard from '@/pages/private/staff/StaffDashboard';
+import StaffCreateItemPage from '@/pages/private/staff/StaffCreateItemPage';
+import StaffItemDetailPage from '@/pages/private/staff/StaffItemDetailPage';
 
 const AppRoutes = () => {
   return (
@@ -24,6 +28,12 @@ const AppRoutes = () => {
         <Route path="/items" element={<FindItemsPage />} />
         <Route path="/items/:id" element={<ClaimItemPage />} />
         <Route path="/my-claims" element={<StudentDashboard />} />
+        
+        {/* Test routes - Skip authentication for easy testing */}
+        <Route path="/test/security/log" element={<SecurityLogPage />} />
+        <Route path="/test/staff/dashboard" element={<StaffDashboard />} />
+        <Route path="/test/staff/create" element={<StaffCreateItemPage />} />
+        <Route path="/test/staff/items/:id" element={<StaffItemDetailPage />} />
       </Route>
 
 
@@ -42,8 +52,31 @@ const AppRoutes = () => {
       </Route>
 
 
+      {/* Security Routes */}
+      <Route element={<ProtectedRoute allowedRoles={[ROLES.SECURITY]} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/security/log-item" element={<SecurityLogPage />} />
+        </Route>
+      </Route>
+
+      {/* Staff Routes */}
+      <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF]} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/staff/dashboard" element={<StaffDashboard />} />
+          <Route path="/staff/create-item" element={<StaffCreateItemPage />} />
+          <Route path="/staff/items/:id" element={<StaffItemDetailPage />} />
+        </Route>
+      </Route>
+
+      {/* Legacy dashboard route - redirect based on role */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.SECURITY]} />}>
-        <Route path="/dashboard" element={<div className='p-10 text-2xl font-bold text-center'>Dashboard Quản Lý (Dành cho Staff/Security)</div>} />
+        <Route element={<MainLayout />}>
+          <Route path="/dashboard" element={
+            <div className='p-10 text-2xl font-bold text-center'>
+              Dashboard Quản Lý - Vui lòng sử dụng menu để điều hướng
+            </div>
+          } />
+        </Route>
       </Route>
 
 
