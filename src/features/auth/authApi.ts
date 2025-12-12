@@ -5,7 +5,7 @@
     endpoints: (build) => ({
       login: build.mutation({
         query: (credentials) => ({
-          url: "/auth/login",
+          url: "/User/login",
           method: "POST",
           data: credentials,
         }),
@@ -18,7 +18,17 @@
           }
         },
       }),
+
+      register: build.mutation({
+      query: (userData) => ({
+        url: "/User/register",
+        method: "POST",
+        data: userData,
+      }),
+    }),
     }),
   });
 
-  export const { useLoginMutation } = authApi;
+  
+
+  export const { useLoginMutation, useRegisterMutation } = authApi;

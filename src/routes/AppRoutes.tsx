@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { ROLES } from '@/config/roles';
 import MainLayout from '@/layouts/MainLayout';
-import LoginPage from '@/pages/public/LoginPage';
+import AuthPage from '@/pages/public/AuthPage';
 import LandingPage from '@/pages/public/LandingPage';
 // import LostItemsPage from '@/pages/items/LostItemsPage';
 // import ReportItemPage from '@/pages/items/ReportItemPage';
@@ -10,7 +10,7 @@ import ProtectedRoute from './ProtectedRoute';
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<AuthPage />} />
       <Route path="/unauthorized" element={<div className="p-10 text-red-500 text-center text-xl">403 - Bạn không có quyền truy cập!</div>} />
       
       <Route element={<MainLayout />}>
