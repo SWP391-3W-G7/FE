@@ -87,12 +87,37 @@ export interface FoundItem {
   description: string;
   foundDate: string; // datetime ISO string
   foundLocation: string;
-  status: 'Stored' | 'Returned' | 'Unclaimed' | 'Claimed'; // Map từ varchar DB
+  status: 'Stored' | 'Returned' | 'Unclaimed' | 'Claimed' | 'Open'; // Map từ varchar DB - 'Open' là temporary từ Security
   createdBy?: number; // UserID
   storedBy?: number;  // UserID (Staff)
   campusID: number;  // FK -> Campus
   categoryID: number;// FK -> Category
   storageLocation?: string; // Vị trí lưu trữ trong kho (VD: Kệ A, Tủ số 5)
+  finderName?: string; // Tên người nhặt được (từ Security)
+  finderContact?: string; // SĐT người nhặt được
+  transferredToStaff?: boolean; // Đã chuyển đến Staff chưa
+}
+
+// Temporary Found Item từ Security
+export interface TemporaryFoundItem extends FoundItem {
+  status: 'Open'; // Temporary items luôn có status Open
+  finderName: string;
+  finderContact?: string;
+  transferredToStaff: boolean;
+}
+
+// Extended Claim với thông tin chi tiết hơn cho Security
+export interface DisputedClaim extends Claim {
+  foundItem: {
+    id: number;
+    title: string;
+    thumbnail: string;
+    foundLocation: string;
+    foundDate: string;
+  };
+  claimantName?: string;
+  evidenceDescription?: string;
+  disputeReason?: string;
 }
 
 export interface User {

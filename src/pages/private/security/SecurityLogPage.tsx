@@ -39,7 +39,7 @@ const SecurityLogPage = () => {
     const { toast } = useToast();
     const user = useAppSelector(selectCurrentUser);
 
-    const { data: categories = [] } = useGetCategoriesQuery();
+    const { data: categories = [], isLoading: isLoadingCategories } = useGetCategoriesQuery();
     const [createTemporaryItem, { isLoading }] = useCreateTemporaryFoundItemMutation();
 
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -88,7 +88,7 @@ const SecurityLogPage = () => {
 
             toast({
                 title: "Đã ghi nhận tạm thời!",
-                description: "Vui lòng bàn giao đồ vật cho phòng DVSV để tạo hồ sơ chính thức.",
+                description: "Vật phẩm đã được ghi nhận với trạng thái 'Open'. Vui lòng chuyển giao đến DVSV Staff.",
             });
 
             form.reset();
@@ -162,11 +162,17 @@ const SecurityLogPage = () => {
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {categories.map((cat) => (
-                                                            <SelectItem key={cat.categoryID} value={cat.categoryID.toString()}>
-                                                                {cat.categoryName}
-                                                            </SelectItem>
-                                                        ))}
+                                                        {isLoadingCategories ? (
+                                                            <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                                                        ) : (
+                                                            categories
+                                                                .filter((cat) => cat && cat.categoryID != null)
+                                                                .map((cat) => (
+                                                                    <SelectItem key={cat.categoryID} value={cat.categoryID.toString()}>
+                                                                        {cat.categoryName || 'Chưa có tên'}
+                                                                    </SelectItem>
+                                                                ))
+                                                        )}
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />

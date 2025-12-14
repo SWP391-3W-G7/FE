@@ -11,9 +11,9 @@ import FindItemsPage from '@/pages/private/student/FindItemsPage';
 import ClaimItemPage from '@/pages/private/student/ClaimItemPage';
 import StudentDashboard from '@/pages/private/student/StudentDashboard';
 import SecurityLogPage from '@/pages/private/security/SecurityLogPage';
-import StaffDashboard from '@/pages/private/staff/StaffDashboard';
-import StaffCreateItemPage from '@/pages/private/staff/StaffCreateItemPage';
-import StaffItemDetailPage from '@/pages/private/staff/StaffItemDetailPage';
+import SecurityDashboard from '@/pages/private/security/SecurityDashboard';
+import SecurityVerificationPage from '@/pages/private/security/SecurityVerificationPage';
+import SecurityDisputePage from '@/pages/private/security/SecurityDisputePage';
 
 const AppRoutes = () => {
   return (
@@ -31,9 +31,9 @@ const AppRoutes = () => {
         
         {/* Test routes - Skip authentication for easy testing */}
         <Route path="/test/security/log" element={<SecurityLogPage />} />
-        <Route path="/test/staff/dashboard" element={<StaffDashboard />} />
-        <Route path="/test/staff/create" element={<StaffCreateItemPage />} />
-        <Route path="/test/staff/items/:id" element={<StaffItemDetailPage />} />
+        <Route path="/test/security/dashboard" element={<SecurityDashboard />} />
+        <Route path="/test/security/verification" element={<SecurityVerificationPage />} />
+        <Route path="/test/security/disputes" element={<SecurityDisputePage />} />
       </Route>
 
 
@@ -55,21 +55,15 @@ const AppRoutes = () => {
       {/* Security Routes */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.SECURITY]} />}>
         <Route element={<MainLayout />}>
+          <Route path="/security/dashboard" element={<SecurityDashboard />} />
           <Route path="/security/log-item" element={<SecurityLogPage />} />
-        </Route>
-      </Route>
-
-      {/* Staff Routes */}
-      <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF]} />}>
-        <Route element={<MainLayout />}>
-          <Route path="/staff/dashboard" element={<StaffDashboard />} />
-          <Route path="/staff/create-item" element={<StaffCreateItemPage />} />
-          <Route path="/staff/items/:id" element={<StaffItemDetailPage />} />
+          <Route path="/security/verification" element={<SecurityVerificationPage />} />
+          <Route path="/security/disputes" element={<SecurityDisputePage />} />
         </Route>
       </Route>
 
       {/* Legacy dashboard route - redirect based on role */}
-      <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.SECURITY]} />}>
+      <Route element={<ProtectedRoute allowedRoles={[ROLES.SECURITY]} />}>
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={
             <div className='p-10 text-2xl font-bold text-center'>
