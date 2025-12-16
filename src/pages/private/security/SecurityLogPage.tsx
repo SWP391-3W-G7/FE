@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { CalendarIcon, Loader2, Upload, X, ChevronLeft } from 'lucide-react';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { useGetCategoriesQuery, useCreateTemporaryFoundItemMutation } from '@/features/items/itemApi';
+import { useGetCategoriesQuery, useGetCampusesQuery, useCreateTemporaryFoundItemMutation } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
 import { Button } from "@/components/ui/button";
@@ -23,13 +23,11 @@ import { useToast } from "@/hooks/use-toast";
 
 const temporaryFoundItemSchema = z.object({
     title: z.string().min(5, "Vui lòng nhập tên đồ vật rõ ràng"),
-    description: z.string().min(2, "Mô tả ngắn gọn về tình trạng đồ"),
-    categoryId: z.string("Chọn loại tài sản"),
-    campusId: z.string("Chọn cơ sở"),
-    foundDate: z.date("Chọn thời gian nhặt"),
+    description: z.string().optional(),
+    categoryId: z.string().min(1, "Chọn loại tài sản"),
+    campusId: z.string().min(1, "Chọn cơ sở"),
+    foundDate: z.date({ required_error: "Chọn thời gian nhặt" }),
     foundLocation: z.string().min(2, "Nhập vị trí nhặt được"),
-    finderName: z.string().min(2, "Nhập tên người nhặt được"),
-    finderContact: z.string().optional(),
 });
 
 type TemporaryFoundItemFormValues = z.infer<typeof temporaryFoundItemSchema>;
@@ -40,6 +38,7 @@ const SecurityLogPage = () => {
     const user = useAppSelector(selectCurrentUser);
 
     const { data: categories = [], isLoading: isLoadingCategories } = useGetCategoriesQuery();
+    const { data: campuses = [] } = useGetCampusesQuery();
     const [createTemporaryItem, { isLoading }] = useCreateTemporaryFoundItemMutation();
 
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -48,7 +47,7 @@ const SecurityLogPage = () => {
     const form = useForm<TemporaryFoundItemFormValues>({
         resolver: zodResolver(temporaryFoundItemSchema),
         defaultValues: {
-            campusId: user?.campusId || "hcm-nvh",
+            campusId: user?.campusId?.toString() || "",
         },
     });
 
@@ -70,15 +69,13 @@ const SecurityLogPage = () => {
         try {
             const formData = new FormData();
             formData.append("title", data.title);
-            formData.append("description", data.description);
+            if (data.description) {
+                formData.append("description", data.description);
+            }
             formData.append("categoryId", data.categoryId);
             formData.append("campusId", data.campusId);
             formData.append("foundDate", data.foundDate.toISOString());
             formData.append("foundLocation", data.foundLocation);
-            formData.append("finderName", data.finderName);
-            if (data.finderContact) {
-                formData.append("finderContact", data.finderContact);
-            }
 
             selectedImages.forEach((file) => {
                 formData.append("images", file);
@@ -155,7 +152,7 @@ const SecurityLogPage = () => {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Loại tài sản <span className="text-red-500">*</span></FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger>
                                                             <SelectValue placeholder="Chọn loại" />
@@ -240,13 +237,16 @@ const SecurityLogPage = () => {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Cơ sở (Campus) <span className="text-red-500">*</span></FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <Select onValueChange={field.onChange} value={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger><SelectValue placeholder="Chọn Campus" /></SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        <SelectItem value="hcm-nvh">HCM - NVH Sinh Viên</SelectItem>
-                                                        <SelectItem value="hcm-shtp">HCM - SHTP (Q9)</SelectItem>
+                                                        {campuses.map((campus) => (
+                                                            <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
+                                                                {campus.campusName}
+                                                            </SelectItem>
+                                                        ))}
                                                     </SelectContent>
                                                 </Select>
                                                 <FormMessage />
@@ -268,40 +268,6 @@ const SecurityLogPage = () => {
                                         </FormItem>
                                     )}
                                 />
-
-                                <div className="border-t pt-6 space-y-4">
-                                    <h3 className="font-semibold text-slate-900">Thông tin người giao nộp</h3>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <FormField
-                                            control={form.control}
-                                            name="finderName"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Họ tên người nhặt được <span className="text-red-500">*</span></FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="VD: Nguyễn Văn A" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="finderContact"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Số điện thoại (tùy chọn)</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="VD: 0123456789" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
-                                </div>
 
                                 <div className="space-y-2">
                                     <Label>Ảnh chụp vật phẩm (Nếu có)</Label>

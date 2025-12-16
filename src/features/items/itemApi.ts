@@ -6,7 +6,11 @@ import {
   type FoundItemDisplayDTO,
   type LostItem,
   type TemporaryFoundItem,
-  type DisputedClaim,
+  type SystemReport,
+  type Campus,
+  type CreateCampusRequest,
+  type AdminUser,
+  type AssignUserRequest,
 } from "@/types";
 
 const mockFoundItems: FoundItemDisplayDTO[] = [
@@ -72,6 +76,13 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/categories",
         method: "GET",
       }),
+      transformResponse: (response: any[]) => {
+        // API trả về categoryId (lowercase), cần transform sang categoryID (uppercase)
+        return response.map((category) => ({
+          categoryID: category.categoryId,
+          categoryName: category.categoryName,
+        }));
+      },
     }),
 
     createLostItem: build.mutation<LostItem, FormData>({
@@ -241,7 +252,7 @@ export const itemApi = rootApi.injectEndpoints({
     // Security: Create temporary found item record (Status = Open)
     createTemporaryFoundItem: build.mutation<TemporaryFoundItem, FormData>({
       query: (formData) => ({
-        url: "/security/found-items/temporary",
+        url: "/found-items/public",
         method: "POST",
         data: formData,
         headers: {
@@ -250,54 +261,44 @@ export const itemApi = rootApi.injectEndpoints({
       }),
     }),
 
+
     // Security: Get temporary found items (Status = Open)
     getSecurityTemporaryItems: build.query<
       TemporaryFoundItem[],
       { campusId?: string }
     >({
-      queryFn: async () => {
-        // Mock data - temporary items with status Open
-        const mockTemporary: TemporaryFoundItem[] = [
-          {
-            foundItemID: 101,
-            title: "Bút bi xanh",
-            description: "Bút bi màu xanh, còn mới",
-            foundDate: "2023-11-01T08:00:00",
-            foundLocation: "Phòng 301",
-            status: "Open",
-            campusID: 1,
-            categoryID: 6,
-            finderName: "Nguyễn Văn A",
-            finderContact: "0123456789",
-            transferredToStaff: false,
-          },
-          {
-            foundItemID: 102,
-            title: "Áo khoác đen",
-            description: "Áo khoác thể thao màu đen, size M",
-            foundDate: "2023-11-02T14:30:00",
-            foundLocation: "Sảnh chính",
-            status: "Open",
-            campusID: 1,
-            categoryID: 7,
-            finderName: "Trần Thị B",
-            finderContact: "0987654321",
-            transferredToStaff: false,
-          },
-        ];
-        return { data: mockTemporary };
+      query: () => ({
+        url: "/security/my-open-found-items",
+        method: "GET",
+      }),
+      transformResponse: (response: any[]) => {
+        // API trả về foundItemId, categoryId, imageUrls
+        return response.map((item) => ({
+          foundItemID: item.foundItemId,
+          title: item.title,
+          description: item.description || "",
+          foundDate: item.foundDate,
+          foundLocation: item.foundLocation,
+          status: item.status,
+          campusID: 0,
+          categoryID: item.categoryId || 0,
+          categoryName: item.categoryName || "",
+          imageUrl: item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : null,
+          finderName: "",
+          finderContact: "",
+          transferredToStaff: false,
+        }));
       },
     }),
 
-    // Security: Transfer temporary item to Staff
-    transferToStaff: build.mutation<
+    // Security: Mark item as returned
+    updateSecurityItemStatus: build.mutation<
       TemporaryFoundItem,
-      { foundItemId: string; note?: string }
+      { foundItemId: number }
     >({
-      query: ({ foundItemId, note }) => ({
-        url: `/security/found-items/${foundItemId}/transfer`,
-        method: "POST",
-        data: { note },
+      query: ({ foundItemId }) => ({
+        url: `/security/found-items/${foundItemId}/return`,
+        method: "PUT",
       }),
     }),
 
@@ -337,39 +338,138 @@ export const itemApi = rootApi.injectEndpoints({
       }),
     }),
 
-    // Security: Get disputed claims (for investigation)
-    getDisputedClaims: build.query<DisputedClaim[], { campusId?: string }>({
+
+    // Admin: Get system reports
+    getSystemReports: build.query<SystemReport, void>({
       queryFn: async () => {
-        const mock: DisputedClaim[] = [
-          {
-            claimID: 201,
-            claimDate: "2023-10-28T15:00:00",
-            status: "Pending",
-            foundItem: {
-              id: 1,
-              title: "Ví da nam màu nâu",
-              thumbnail: "https://placehold.co/400x300/5f4b32/ffffff?text=Wallet",
-              foundLocation: "Ghế đá sảnh chính",
-              foundDate: "2023-10-27T08:30:00",
+        // Mock data
+        const mock: SystemReport = {
+          totalLostItems: 45,
+          totalFoundItems: 78,
+          itemsInStorage: 32,
+          itemsReturned: 28,
+          itemsClaimed: 12,
+          itemsOpen: 6,
+          campusStats: [
+            {
+              campusID: 1,
+              campusName: "HCM - NVH Sinh Viên",
+              totalLostItems: 25,
+              totalFoundItems: 42,
+              itemsInStorage: 18,
+              itemsReturned: 16,
             },
-            claimantName: "Nguyễn Văn C",
-            evidenceDescription: "Có ảnh chụp ví cũ",
-            disputeReason: "Có nhiều người claim cùng một món đồ",
-          },
-        ];
+            {
+              campusID: 2,
+              campusName: "HCM - SHTP (Q9)",
+              totalLostItems: 20,
+              totalFoundItems: 36,
+              itemsInStorage: 14,
+              itemsReturned: 12,
+            },
+          ],
+        };
         return { data: mock };
       },
     }),
 
-    // Security: Add investigation notes to disputed claim
-    addInvestigationNotes: build.mutation<
-      DisputedClaim,
-      { claimId: string; notes: string }
-    >({
-      query: ({ claimId, notes }) => ({
-        url: `/security/claims/${claimId}/investigation`,
+    // Admin: Get all campuses
+    getCampuses: build.query<Campus[], void>({
+      query: () => ({
+        url: "/Campus",
+        method: "GET",
+      }),
+      transformResponse: (response: any[]) => {
+        // API trả về campusId (lowercase), cần transform sang campusID (uppercase)
+        return response.map((campus) => ({
+          campusID: campus.campusId,
+          campusName: campus.campusName,
+          address: campus.address,
+          storageLocation: campus.storageLocation,
+        }));
+      },
+    }),
+
+    // Admin: Create new campus
+    createCampus: build.mutation<Campus, CreateCampusRequest>({
+      query: (data) => ({
+        url: "/admin/campuses",
         method: "POST",
-        data: { notes },
+        data,
+      }),
+    }),
+
+    // Admin: Get all users (for assignment)
+    getAdminUsers: build.query<AdminUser[], { role?: string; campusId?: string }>({
+      query: ({ role, campusId }) => {
+        // Map role string to roleId number
+        let roleId: number | undefined;
+        if (role === 'STAFF') roleId = 2;
+        else if (role === 'SECURITY') roleId = 3;
+        
+        return {
+          url: "/admin/get-users-by-role",
+          method: "GET",
+          params: {
+            roleId: roleId, // Nếu undefined thì get all
+          },
+        };
+      },
+      transformResponse: (response: any[]) => {
+        // Transform API response to AdminUser format
+        console.log("Raw API response:", response);
+        
+        const transformed = response.map((user) => {
+          // Normalize role name
+          let role = 'USER';
+          const roleName = user.roleName?.toLowerCase() || '';
+          if (roleName.includes('staff')) role = 'STAFF';
+          else if (roleName.includes('security')) role = 'SECURITY';
+          else if (roleName.includes('admin')) role = 'ADMIN';
+          else if (roleName.includes('user') || roleName.includes('student')) role = 'USER';
+          
+          const transformed = {
+            id: user.userId?.toString() || user.email,
+            userId: user.userId,
+            email: user.email,
+            fullName: user.fullName,
+            role: role,
+            campusId: user.campusId?.toString() || '',
+            campusName: user.campusName || '',
+            isActive: user.status === 'Active',
+          };
+          
+          console.log(`User: ${user.fullName}, roleName: ${user.roleName}, normalized role: ${role}`);
+          return transformed;
+        });
+        
+        console.log("Transformed users:", transformed);
+        return transformed;
+      },
+    }),
+
+    // Admin: Assign user role and campus
+    assignUser: build.mutation<AdminUser, AssignUserRequest>({
+      query: (data) => ({
+        url: "/admin/assign-role",
+        method: "POST",
+        data,
+      }),
+    }),
+
+    // Admin: Create new user (STAFF or SECURITY)
+    createUser: build.mutation<any, {
+      email: string;
+      fullName: string;
+      phone: string;
+      password: string;
+      role: 'STAFF' | 'SECURITY';
+      campusId: string;
+    }>({
+      query: (data) => ({
+        url: "/admin/create-user",
+        method: "POST",
+        data,
       }),
     }),
   }),
@@ -387,9 +487,13 @@ export const {
   useGetMyClaimsQuery,
   useCreateTemporaryFoundItemMutation,
   useGetSecurityTemporaryItemsQuery,
-  useTransferToStaffMutation,
+  useUpdateSecurityItemStatusMutation,
   useGetLostItemsForVerificationQuery,
   useVerifyLostItemMutation,
-  useGetDisputedClaimsQuery,
-  useAddInvestigationNotesMutation,
+  useGetSystemReportsQuery,
+  useGetCampusesQuery,
+  useCreateCampusMutation,
+  useGetAdminUsersQuery,
+  useAssignUserMutation,
+  useCreateUserMutation,
 } = itemApi;

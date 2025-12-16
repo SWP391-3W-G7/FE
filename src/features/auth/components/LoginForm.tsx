@@ -1,9 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
 import { useLoginMutation } from '../authApi';
+import { useAppSelector } from '@/store';
+import { selectCurrentUser } from '../authSlice';
 import { type UserRole } from '@/types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +28,45 @@ export const LoginForm = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { toast } = useToast();
+    const currentUser = useAppSelector(selectCurrentUser);
 
     const [login, { isLoading }] = useLoginMutation();
+
+    // Listen for user change in Redux
+    useEffect(() => {
+        if (currentUser?.id && currentUser?.role) {
+            console.log("✅ User updated in Redux:", currentUser);
+            console.log("✅ User role:", currentUser.role, "Type:", typeof currentUser.role);
+            
+            const userRole = currentUser.role as UserRole;
+            let redirectPath = '/items';
+
+            if (userRole === 'ADMIN') {
+                redirectPath = '/admin/dashboard';
+                console.log("🔄 Redirecting ADMIN to:", redirectPath);
+            } else if (userRole === 'SECURITY') {
+                redirectPath = '/security/dashboard';
+                console.log("🔄 Redirecting SECURITY to:", redirectPath);
+            } else if (userRole === 'STAFF') {
+                redirectPath = '/admin/dashboard';
+                console.log("🔄 Redirecting STAFF to:", redirectPath);
+            } else {
+                console.log("🔄 Redirecting", userRole, "to:", redirectPath);
+            }
+
+            // Small delay to ensure Redux store is fully synced
+            setTimeout(() => {
+                toast({
+                    title: "Đăng nhập thành công!",
+                    description: `Xin chào ${currentUser.fullName}`,
+                });
+
+                // Always redirect to role-based path, ignore 'from' to avoid permission issues
+                console.log("🚀 Navigating to:", redirectPath);
+                navigate(redirectPath, { replace: true });
+            }, 100);
+        }
+    }, [currentUser, navigate, toast]);
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -39,30 +79,17 @@ export const LoginForm = () => {
 
     const onSubmit = async (values: LoginFormValues) => {
         try {
-            const response = await login({
+            const result = await login({
                 email: values.email,
                 password: values.password,
                 campusId: values.campusId
             }).unwrap();
 
-            toast({
-                title: "Đăng nhập thành công!",
-                description: `Xin chào ${response.user.fullName}`,
-            });
-
-            const userRole = response.user.role as UserRole;
-            let redirectPath = '/items';
-
-            if (userRole === 'STAFF' || userRole === 'ADMIN') {
-                redirectPath = '/dashboard';
-            } else if (userRole === 'SECURITY') {
-                redirectPath = '/dashboard';
-            }
-
-            const from = location.state?.from?.pathname || redirectPath;
-            navigate(from, { replace: true });
+            console.log("✅ Login successful, result:", result);
+            // useEffect will handle the rest when currentUser updates in Redux
 
         } catch (err) {
+            console.error("❌ Login error:", err);
             const error = err as FetchBaseQueryError | SerializedError;
 
             let errorMessage = "Đã có lỗi xảy ra. Vui lòng thử lại.";
@@ -76,6 +103,10 @@ export const LoginForm = () => {
                 if (data.message) {
                     errorMessage = data.message;
                 }
+            }
+
+            if (err instanceof Error) {
+                errorMessage = err.message;
             }
 
             toast({

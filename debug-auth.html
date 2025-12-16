@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Auth</title>
+</head>
+<body>
+    <h1>Debug localStorage</h1>
+    <pre id="output"></pre>
+    <script>
+        const token = localStorage.getItem('accessToken');
+        const userStr = localStorage.getItem('user');
+        
+        let output = 'Token: ' + (token ? 'Exists (' + token.substring(0, 20) + '...)' : 'Not found') + '\n\n';
+        
+        if (userStr) {
+            output += 'User String:\n' + userStr + '\n\n';
+            try {
+                const user = JSON.parse(userStr);
+                output += 'User Object:\n' + JSON.stringify(user, null, 2);
+                output += '\n\nuser.role type: ' + typeof user.role;
+                output += '\nuser.role value: "' + user.role + '"';
+            } catch(e) {
+                output += 'Error parsing user: ' + e.message;
+            }
+        } else {
+            output += 'No user in localStorage';
+        }
+        
+        document.getElementById('output').textContent = output;
+    </script>
+</body>
+</html>

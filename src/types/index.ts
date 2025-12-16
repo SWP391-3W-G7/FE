@@ -129,6 +129,48 @@ export interface User {
   avatarUrl?: string;
 }
 
+// System Reports for Admin
+export interface SystemReport {
+  totalLostItems: number;
+  totalFoundItems: number;
+  itemsInStorage: number;
+  itemsReturned: number;
+  itemsClaimed: number;
+  itemsOpen: number; // Temporary items from Security
+  campusStats: CampusStat[];
+}
+
+export interface CampusStat {
+  campusID: number;
+  campusName: string;
+  totalLostItems: number;
+  totalFoundItems: number;
+  itemsInStorage: number;
+  itemsReturned: number;
+}
+
+// Extended User for Admin management
+export interface AdminUser extends User {
+  userId: number;
+  campusName?: string;
+  assignedAt?: string;
+  isActive: boolean;
+}
+
+// Create Campus Request
+export interface CreateCampusRequest {
+  campusName: string;
+  address: string;
+  storageLocation: string;
+}
+
+// Assign User Request
+export interface AssignUserRequest {
+  userId: string;
+  role: 'STAFF' | 'SECURITY';
+  campusId: string;
+}
+
 // Type cho API response khi login thành công
 export interface LoginResponse {
   user: User;

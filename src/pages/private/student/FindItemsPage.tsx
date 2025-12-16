@@ -86,7 +86,7 @@ const FindItemsPage = () => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Tất cả các loại</SelectItem>
-                                {categories.map((cat) => (
+                                {categories.filter(cat => cat.categoryID).map((cat) => (
                                     <SelectItem key={cat.categoryID} value={cat.categoryID.toString()}>
                                         {cat.categoryName}
                                     </SelectItem>
