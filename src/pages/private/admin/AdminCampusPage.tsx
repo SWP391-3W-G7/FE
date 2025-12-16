@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Plus, MapPin, Building2, Loader2, Edit, Trash2, ArrowUpDown } from 'lucide-react';
-import { useGetCampusesQuery, useCreateCampusMutation } from '@/features/items/itemApi';
+import { useGetCampusesQuery, useCreateCampusMutation, useUpdateCampusMutation, useDeleteCampusMutation } from '@/features/items/itemApi';
 import { Button } from "@/components/ui/button";
 import AdminNav from '@/components/AdminNav';
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -37,13 +47,27 @@ type SortOrder = 'asc' | 'desc';
 const AdminCampusPage = () => {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedCampus, setSelectedCampus] = useState<any>(null);
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   const { data: campuses = [], isLoading, refetch } = useGetCampusesQuery();
   const [createCampus, { isLoading: isCreating }] = useCreateCampusMutation();
+  const [updateCampus, { isLoading: isUpdating }] = useUpdateCampusMutation();
+  const [deleteCampus, { isLoading: isDeleting }] = useDeleteCampusMutation();
 
   const form = useForm<CampusFormValues>({
+    resolver: zodResolver(campusSchema),
+    defaultValues: {
+      campusName: "",
+      address: "",
+      storageLocation: "",
+    },
+  });
+
+  const editForm = useForm<CampusFormValues>({
     resolver: zodResolver(campusSchema),
     defaultValues: {
       campusName: "",
@@ -70,6 +94,73 @@ const AdminCampusPage = () => {
         variant: "destructive",
         title: "Lỗi",
         description: "Không thể tạo campus lúc này.",
+      });
+    }
+  };
+
+  const handleOpenEditDialog = (campus: any) => {
+    setSelectedCampus(campus);
+    editForm.reset({
+      campusName: campus.campusName,
+      address: campus.address,
+      storageLocation: campus.storageLocation,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const onEditSubmit = async (data: CampusFormValues) => {
+    if (!selectedCampus) return;
+
+    try {
+      await updateCampus({
+        id: selectedCampus.campusID,
+        ...data,
+      }).unwrap();
+
+      toast({
+        title: "Cập nhật thành công!",
+        description: `Campus "${data.campusName}" đã được cập nhật.`,
+      });
+
+      editForm.reset();
+      setEditDialogOpen(false);
+      setSelectedCampus(null);
+      refetch();
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error?.data?.message || "Không thể cập nhật campus lúc này.",
+      });
+    }
+  };
+
+  const handleOpenDeleteDialog = (campus: any) => {
+    setSelectedCampus(campus);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteCampus = async () => {
+    if (!selectedCampus) return;
+
+    try {
+      await deleteCampus(selectedCampus.campusID).unwrap();
+
+      toast({
+        title: "Đã xóa campus",
+        description: `Campus "${selectedCampus.campusName}" đã bị xóa khỏi hệ thống.`,
+      });
+
+      setDeleteDialogOpen(false);
+      setSelectedCampus(null);
+      refetch();
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error?.data?.message || "Không thể xóa campus lúc này.",
       });
     }
   };
@@ -287,11 +378,11 @@ const AdminCampusPage = () => {
                   </div>
                 </div>
                 <div className="flex gap-2 pt-2 border-t">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => handleOpenEditDialog(campus)}>
                     <Edit className="h-3 w-3 mr-1" />
                     Sửa
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:text-red-700">
+                  <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:text-red-700" onClick={() => handleOpenDeleteDialog(campus)}>
                     <Trash2 className="h-3 w-3 mr-1" />
                     Xóa
                   </Button>
@@ -314,6 +405,109 @@ const AdminCampusPage = () => {
           </Button>
         </div>
       )}
+
+      {/* Edit Campus Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Sửa thông tin Campus</DialogTitle>
+            <DialogDescription>
+              Cập nhật thông tin cho {selectedCampus?.campusName}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="campusName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tên Campus <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="VD: HCM - NVH Sinh Viên" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Địa chỉ <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Nhập địa chỉ đầy đủ của campus" 
+                        className="resize-none" 
+                        rows={3}
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="storageLocation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vị trí lưu trữ đồ vật <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="VD: Phòng P.102, Tòa A" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditDialogOpen(false);
+                    editForm.reset();
+                    setSelectedCampus(null);
+                  }}
+                  disabled={isUpdating}
+                >
+                  Hủy
+                </Button>
+                <Button type="submit" disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
+                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Cập nhật
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Campus Alert Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xóa Campus</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa campus <strong>{selectedCampus?.campusName}</strong>?
+              <br />
+              <span className="text-red-600 font-medium">Hành động này không thể hoàn tác!</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteCampus}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </>
   );

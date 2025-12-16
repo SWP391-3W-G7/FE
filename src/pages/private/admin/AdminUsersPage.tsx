@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Search, UserPlus, Shield, Users, MapPin, Loader2, Edit } from 'lucide-react';
-import { useGetAdminUsersQuery, useGetCampusesQuery, useAssignUserMutation, useCreateUserMutation } from '@/features/items/itemApi';
+import { Search, UserPlus, Shield, Users, MapPin, Loader2, Edit, Ban, UserX } from 'lucide-react';
+import { useGetAdminUsersQuery, useGetCampusesQuery, useAssignUserMutation, useCreateUserMutation, useUpdateUserMutation, useBanUserMutation } from '@/features/items/itemApi';
 import { Button } from "@/components/ui/button";
 import AdminNav from '@/components/AdminNav';
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -39,8 +49,16 @@ const createUserSchema = z.object({
   campusId: z.string().min(1, "Vui lòng chọn campus"),
 });
 
+const editUserSchema = z.object({
+  fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
+  phoneNumber: z.string().regex(/(84|0[3|5|7|8|9])+([0-9]{8})\b/, "Số điện thoại không hợp lệ"),
+  campusId: z.string().min(1, "Vui lòng chọn campus"),
+  status: z.string().min(1, "Vui lòng chọn trạng thái"),
+});
+
 type AssignUserFormValues = z.infer<typeof assignUserSchema>;
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
+type EditUserFormValues = z.infer<typeof editUserSchema>;
 
 const AdminUsersPage = () => {
   const { toast } = useToast();
@@ -49,7 +67,11 @@ const AdminUsersPage = () => {
   const [selectedCampus, setSelectedCampus] = useState<string>("all");
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [selectedUserForAssign, setSelectedUserForAssign] = useState<string | null>(null);
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState<any>(null);
+  const [selectedUserForBan, setSelectedUserForBan] = useState<any>(null);
 
   const { data: users = [], isLoading, refetch } = useGetAdminUsersQuery({
     role: selectedRole === "all" ? undefined : selectedRole,
@@ -58,6 +80,8 @@ const AdminUsersPage = () => {
   const { data: campuses = [] } = useGetCampusesQuery();
   const [assignUser, { isLoading: isAssigning }] = useAssignUserMutation();
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
+  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
+  const [banUser, { isLoading: isBanning }] = useBanUserMutation();
 
   const assignForm = useForm<AssignUserFormValues>({
     resolver: zodResolver(assignUserSchema),
@@ -77,6 +101,16 @@ const AdminUsersPage = () => {
       password: "",
       role: "STAFF",
       campusId: "",
+    },
+  });
+
+  const editForm = useForm<EditUserFormValues>({
+    resolver: zodResolver(editUserSchema),
+    defaultValues: {
+      fullName: "",
+      phoneNumber: "",
+      campusId: "",
+      status: "Active",
     },
   });
 
@@ -198,6 +232,87 @@ const AdminUsersPage = () => {
         variant: "destructive",
         title: "Lỗi",
         description: error?.data?.message || JSON.stringify(error?.data) || "Không thể tạo tài khoản lúc này.",
+      });
+    }
+  };
+
+  const handleOpenEditDialog = (user: any) => {
+    setSelectedUserForEdit(user);
+    editForm.reset({
+      fullName: user.fullName,
+      phoneNumber: user.phone || "",
+      campusId: user.campusId?.toString() || "",
+      status: user.isActive ? "Active" : "Inactive",
+    });
+    setEditDialogOpen(true);
+  };
+
+  const onEditSubmit = async (data: EditUserFormValues) => {
+    if (!selectedUserForEdit) return;
+
+    try {
+      const payload = {
+        id: parseInt(selectedUserForEdit.id),
+        fullName: data.fullName,
+        phoneNumber: data.phoneNumber,
+        campusId: parseInt(data.campusId),
+        status: data.status,
+      };
+
+      console.log("Updating user with payload:", payload);
+      await updateUser(payload).unwrap();
+
+      toast({
+        title: "Cập nhật thành công!",
+        description: "Thông tin người dùng đã được cập nhật.",
+      });
+
+      editForm.reset();
+      setEditDialogOpen(false);
+      setSelectedUserForEdit(null);
+      refetch();
+    } catch (error: any) {
+      console.error("Update user error:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error?.data?.message || "Không thể cập nhật người dùng lúc này.",
+      });
+    }
+  };
+
+  const handleOpenBanDialog = (user: any) => {
+    setSelectedUserForBan(user);
+    setBanDialogOpen(true);
+  };
+
+  const handleBanUser = async () => {
+    if (!selectedUserForBan) return;
+
+    try {
+      const isBan = selectedUserForBan.isActive; // If active, ban them. If inactive, unban them.
+
+      await banUser({
+        id: parseInt(selectedUserForBan.id),
+        isBan: isBan,
+      }).unwrap();
+
+      toast({
+        title: isBan ? "Đã khóa người dùng" : "Đã mở khóa người dùng",
+        description: isBan 
+          ? "Người dùng đã bị khóa và không thể truy cập hệ thống."
+          : "Người dùng đã được mở khóa và có thể truy cập hệ thống.",
+      });
+
+      setBanDialogOpen(false);
+      setSelectedUserForBan(null);
+      refetch();
+    } catch (error: any) {
+      console.error("Ban user error:", error);
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: error?.data?.message || "Không thể thực hiện thao tác lúc này.",
       });
     }
   };
@@ -430,7 +545,7 @@ const AdminUsersPage = () => {
         </TabsList>
 
         <TabsContent value="all">
-          {renderUsersList(sortedUsers, isLoading, handleOpenAssignDialog, getRoleBadge)}
+          {renderUsersList(sortedUsers, isLoading, handleOpenAssignDialog, handleOpenEditDialog, handleOpenBanDialog, getRoleBadge)}
         </TabsContent>
 
         <TabsContent value="SECURITY">
@@ -438,6 +553,8 @@ const AdminUsersPage = () => {
             sortedUsers.filter(u => u.role === 'SECURITY'),
             isLoading,
             handleOpenAssignDialog,
+            handleOpenEditDialog,
+            handleOpenBanDialog,
             getRoleBadge
           )}
         </TabsContent>
@@ -447,6 +564,8 @@ const AdminUsersPage = () => {
             sortedUsers.filter(u => u.role === 'STAFF'),
             isLoading,
             handleOpenAssignDialog,
+            handleOpenEditDialog,
+            handleOpenBanDialog,
             getRoleBadge
           )}
         </TabsContent>
@@ -456,6 +575,8 @@ const AdminUsersPage = () => {
             sortedUsers.filter(u => u.role === 'USER' || u.role === 'STUDENT'),
             isLoading,
             handleOpenAssignDialog,
+            handleOpenEditDialog,
+            handleOpenBanDialog,
             getRoleBadge
           )}
         </TabsContent>
@@ -548,6 +669,146 @@ const AdminUsersPage = () => {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Sửa thông tin người dùng</DialogTitle>
+            <DialogDescription>
+              Cập nhật thông tin cho {selectedUserForEdit?.fullName}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+              <FormField
+                control={editForm.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Họ và tên <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="Nguyễn Văn A" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Số điện thoại <span className="text-red-500">*</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="0912345678" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="campusId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Campus <span className="text-red-500">*</span></FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn campus" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {sortedCampuses.map((campus) => (
+                          <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
+                            {campus.campusName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Trạng thái <span className="text-red-500">*</span></FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Chọn trạng thái" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Active">Hoạt động</SelectItem>
+                        <SelectItem value="Inactive">Không hoạt động</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditDialogOpen(false);
+                    editForm.reset();
+                    setSelectedUserForEdit(null);
+                  }}
+                  disabled={isUpdating}
+                >
+                  Hủy
+                </Button>
+                <Button type="submit" disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
+                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Cập nhật
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ban/Unban User Alert Dialog */}
+      <AlertDialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {selectedUserForBan?.isActive ? 'Khóa người dùng' : 'Mở khóa người dùng'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedUserForBan?.isActive ? (
+                <>
+                  Bạn có chắc chắn muốn khóa <strong>{selectedUserForBan?.fullName}</strong>?
+                  Người dùng sẽ không thể truy cập hệ thống sau khi bị khóa.
+                </>
+              ) : (
+                <>
+                  Bạn có chắc chắn muốn mở khóa <strong>{selectedUserForBan?.fullName}</strong>?
+                  Người dùng sẽ có thể truy cập hệ thống trở lại.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBanning}>Hủy</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBanUser}
+              disabled={isBanning}
+              className={selectedUserForBan?.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
+            >
+              {isBanning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {selectedUserForBan?.isActive ? 'Khóa' : 'Mở khóa'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </>
   );
@@ -558,6 +819,8 @@ const renderUsersList = (
   users: any[],
   isLoading: boolean,
   onAssign: (userId: string) => void,
+  onEdit: (user: any) => void,
+  onBan: (user: any) => void,
   getRoleBadge: (role: string) => JSX.Element
 ) => {
   if (isLoading) {
@@ -623,8 +886,33 @@ const renderUsersList = (
                   size="sm"
                   onClick={() => onAssign(user.id)}
                 >
-                  <Edit className="h-3 w-3 mr-1" />
+                  <Shield className="h-3 w-3 mr-1" />
                   Phân công
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(user)}
+                >
+                  <Edit className="h-3 w-3 mr-1" />
+                  Sửa
+                </Button>
+                <Button
+                  variant={user.isActive ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={() => onBan(user)}
+                >
+                  {user.isActive ? (
+                    <>
+                      <Ban className="h-3 w-3 mr-1" />
+                      Khóa
+                    </>
+                  ) : (
+                    <>
+                      <UserX className="h-3 w-3 mr-1" />
+                      Mở khóa
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

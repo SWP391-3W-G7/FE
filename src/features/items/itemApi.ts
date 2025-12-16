@@ -472,6 +472,52 @@ export const itemApi = rootApi.injectEndpoints({
         data,
       }),
     }),
+
+    // Admin: Update user
+    updateUser: build.mutation<any, {
+      id: number;
+      fullName: string;
+      phoneNumber: string;
+      campusId: number;
+      status: string;
+    }>({
+      query: ({ id, ...data }) => ({
+        url: `/admin/users/${id}`,
+        method: "PUT",
+        data,
+      }),
+    }),
+
+    // Admin: Ban/Unban user
+    banUser: build.mutation<any, { id: number; isBan: boolean }>({
+      query: ({ id, isBan }) => ({
+        url: `/admin/users/${id}/ban-status`,
+        method: "PATCH",
+        params: { isBan },
+      }),
+    }),
+
+    // Admin: Update campus
+    updateCampus: build.mutation<any, {
+      id: number;
+      campusName: string;
+      address: string;
+      storageLocation: string;
+    }>({
+      query: ({ id, ...data }) => ({
+        url: `/Campus/${id}`,
+        method: "PUT",
+        data,
+      }),
+    }),
+
+    // Admin: Delete campus
+    deleteCampus: build.mutation<any, number>({
+      query: (id) => ({
+        url: `/Campus/${id}`,
+        method: "DELETE",
+      }),
+    }),
   }),
 });
 
@@ -493,7 +539,11 @@ export const {
   useGetSystemReportsQuery,
   useGetCampusesQuery,
   useCreateCampusMutation,
+  useUpdateCampusMutation,
+  useDeleteCampusMutation,
   useGetAdminUsersQuery,
   useAssignUserMutation,
   useCreateUserMutation,
+  useUpdateUserMutation,
+  useBanUserMutation,
 } = itemApi;
