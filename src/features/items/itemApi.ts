@@ -1,85 +1,35 @@
 import { rootApi } from "@/services/rootApi";
 import {
+  type Campus,
   type Category,
   type Claim,
   type FoundItem,
-  type FoundItemDisplayDTO,
   type LostItem,
+  type StaffReport,
 } from "@/types";
-
-const mockFoundItems: FoundItemDisplayDTO[] = [
-  {
-    foundItemID: 1,
-    title: "Ví da nam màu nâu (Levis)",
-    description: "Ví cũ, có vết trầy xước.",
-    foundDate: "2023-10-27T08:30:00",
-    foundLocation: "Ghế đá sảnh chính",
-    status: "Stored",
-    campusID: 1,
-    campusName: "HCM - NVH Sinh Viên",
-    categoryID: 1,
-    categoryName: "Ví/Túi xách",
-    thumbnailURL:
-      "https://placehold.co/400x300/5f4b32/ffffff?text=Leather+Wallet",
-  },
-  {
-    foundItemID: 2,
-    title: "Chìa khóa xe Honda Vision",
-    description: "Móc khóa hình con gấu.",
-    foundDate: "2023-10-27T09:15:00",
-    foundLocation: "Bãi xe nhà 3",
-    status: "Stored",
-    campusID: 2,
-    campusName: "HCM - SHTP (Q9)",
-    categoryID: 4,
-    categoryName: "Chìa khóa",
-    thumbnailURL: "https://placehold.co/400x300/94a3b8/ffffff?text=Car+Key",
-  },
-  {
-    foundItemID: 3,
-    title: "Tai nghe AirPods 2",
-    description: "Chỉ còn tai bên phải.",
-    foundDate: "2023-10-26T14:00:00",
-    foundLocation: "Thư viện",
-    status: "Stored",
-    campusID: 2,
-    campusName: "HCM - SHTP (Q9)",
-    categoryID: 3,
-    categoryName: "Điện tử",
-    thumbnailURL: "https://placehold.co/400x300/e2e8f0/1e293b?text=Airpods",
-  },
-  {
-    foundItemID: 4,
-    title: "Bình nước Lock&Lock",
-    description: "Màu xanh dương.",
-    foundDate: "2023-10-25T10:00:00",
-    foundLocation: "Phòng 204",
-    status: "Stored",
-    campusID: 1,
-    campusName: "HCM - NVH Sinh Viên",
-    categoryID: 5,
-    categoryName: "Đồ gia dụng",
-    thumbnailURL: "https://placehold.co/400x300/2563eb/ffffff?text=Bottle",
-  },
-];
 
 export const itemApi = rootApi.injectEndpoints({
   endpoints: (build) => ({
+    // got it
     getCategories: build.query<Category[], void>({
       query: () => ({
         url: "/categories",
         method: "GET",
       }),
     }),
+    // got it
+    getCampuses: build.query<Campus[], void>({
+      query: () => ({
+        url: "/Campus/enum-values",
+        method: "GET",
+      }),
+    }),
 
     createLostItem: build.mutation<LostItem, FormData>({
       query: (formData) => ({
-        url: "/items/lost",
+        url: "/lost-items",
         method: "POST",
         data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
       }),
     }),
 
@@ -94,34 +44,27 @@ export const itemApi = rootApi.injectEndpoints({
       }),
     }),
 
+    // got it
     getFoundItems: build.query<
-      FoundItemDisplayDTO[],
-      { campusId?: string; categoryId?: string; keyword?: string }
+      FoundItem[],
+      {
+        campusId?: string;
+        status?: string;
+      }
     >({
-      queryFn: async () => {
-        return { data: mockFoundItems };
-      },
+      query: (params) => ({
+        url: "/found-items",
+        method: "GET",
+        params: params,
+      }),
     }),
 
-    // getFoundItems: build.query<FoundItemDisplayDTO[], { campusId?: string; categoryId?: string; keyword?: string }>({
-    //   query: (params) => ({
-    //     url: "/found-items",
-    //     params: params,
-    //   }),
-    // }),
-
-    getFoundItemById: build.query<FoundItemDisplayDTO, string>({
-      queryFn: async (id) => {
-        const found = mockFoundItems.find(
-          (x) => x.foundItemID === parseInt(id)
-        );
-
-        if (!found) {
-          return { error: { status: 404, data: "Item not found" } };
-        }
-
-        return { data: found };
-      },
+    /// got it
+    getFoundItemById: build.query<FoundItem, string>({
+      query: (id) => ({
+        url: `/found-items/${id}/user-details`,
+        method: "GET",
+      }),
     }),
 
     createClaim: build.mutation({
@@ -134,118 +77,154 @@ export const itemApi = rootApi.injectEndpoints({
         },
       }),
     }),
-
+    //got it
     getMyLostItems: build.query<LostItem[], void>({
-      queryFn: async () => {
-        const mock: LostItem[] = [
-          {
-            lostItemID: 1,
-            title: "Laptop Macbook Air M1",
-            lostDate: "2023-10-20",
-            lostLocation: "Thư viện",
-            status: "Open",
-            campusID: 1,
-            description: "Màu xám, có dán sticker",
-            categoryID: 3,
-            createdBy: 123,
-          },
-          {
-            lostItemID: 2,
-            title: "Bình nước Lock&Lock",
-            lostDate: "2023-09-15",
-            lostLocation: "Canteen",
-            status: "Found",
-            campusID: 1,
-            description: "Màu xanh",
-            categoryID: 5,
-            createdBy: 123,
-          },
-        ];
-
-        return { data: mock };
-      },
+      query: () => ({
+        url: "/lost-items",
+        method: "GET",
+      }),
+    }),
+    // got it
+    getMyFoundItems: build.query<FoundItem[], void>({
+      query: () => ({
+        url: "/found-items/my-found-items",
+        method: "GET",
+      }),
     }),
 
-    getMyFoundReports: build.query<FoundItemDisplayDTO[], void>({
-      queryFn: async () => {
-        const mock: FoundItemDisplayDTO[] = [
-          {
-            foundItemID: 99,
-            title: "Thẻ xe buýt",
-            description: "Thẻ xe buýt màu xanh, còn mới",
-            foundDate: "2023-10-28T10:30:00",
-            foundLocation: "Nhà xe",
-            status: "Unclaimed",
-            createdBy: 456,
-            storedBy: 789,
-            campusID: 1,
-            categoryID: 3,
-            campusName: "HCM - NVH",
-            categoryName: "Giấy tờ",
-            thumbnailURL: "https://placehold.co/400x300?text=Card",
-          },
-          {
-            foundItemID: 100,
-            title: "Ô dù màu đen",
-            description: "Ô dù gấp, cán nhôm",
-            foundDate: "2023-11-01T15:20:00",
-            foundLocation: "Sảnh A",
-            status: "Stored",
-            createdBy: 321,
-            storedBy: 654,
-            campusID: 2,
-            categoryID: 5,
-            campusName: "HCM - Q9",
-            categoryName: "Vật dụng cá nhân",
-            thumbnailURL: "https://placehold.co/400x300?text=Umbrella",
-          },
-        ];
-
-        return { data: mock };
-      },
-    }),
-
+    // got it
     getMyClaims: build.query<Claim[], void>({
-      queryFn: async () => {
-        const mock: Claim[] = [
-          {
-            claimID: 101,
-            claimDate: "2023-10-27T10:00:00",
-            status: "Pending",
-            foundItem: {
-              id: 1,
-              title: "Ví da nam màu nâu",
-              thumbnail:
-                "https://placehold.co/400x300/5f4b32/ffffff?text=Wallet",
-            },
-          },
-          {
-            claimID: 102,
-            claimDate: "2023-10-15T09:00:00",
-            status: "Rejected",
-            foundItem: {
-              id: 55,
-              title: "Tai nghe Sony",
-              thumbnail:
-                "https://placehold.co/400x300/000000/ffffff?text=Headphone",
-            },
-          },
-        ];
+      query: () => ({
+        url: "/claim-requests/my-claims",
+        method: "GET",
+      }),
+    }),
 
-        return { data: mock };
-      },
+    // got it
+    getIncomingItems: build.query<FoundItem[], void>({
+      query: () => ({
+        url: "/found-items",
+        method: "GET",
+      }),
+      providesTags: ["IncomingItems"],
+    }),
+    // got it
+    updateItemStatus: build.mutation<void, { id: number; status: string }>({
+      query: ({ id, status }) => ({
+        url: `/found-items/${id}/status`,
+        method: "PUT",
+        data: { status },
+      }),
+      invalidatesTags: ["StatusItems"],
+    }),
+    //got it
+    getPendingClaims: build.query<Claim[], void>({
+      query: () => ({
+        url: "claim-requests?status=Pending",
+        method: "GET",
+      }),
+      providesTags: ["Claims"],
+    }),
+
+    // [STAFF] Xử lý duyệt/từ chối
+    verifyClaim: build.mutation<
+      void,
+      { claimId: number; status: "Approved" | "Rejected"; reason?: string }
+    >({
+      query: ({ claimId, status, reason }) => ({
+        url: `/staff/claims/${claimId}/verify`,
+        method: "POST",
+        body: { status, reason },
+      }),
+      invalidatesTags: ["Claims"],
+    }),
+    // got it
+    getReadyToReturnItems: build.query<Claim[], void>({
+     query: () => ({
+        url: "claim-requests?status=Approved",
+        method: "GET",
+      }),
+      providesTags: ["Claims"],
+    }),
+
+    // got it
+    getInventoryItems: build.query<FoundItem[], void>({
+       query: () => ({
+        url: "/found-items",
+        method: "GET",
+      }),
+      providesTags: ["InventoryItems"],
+    }),
+
+    requestMoreInfo: build.mutation<void, { claimId: number; title: string; description: string; images: string[] }>(
+      {
+        query: ({ claimId, title, description, images }) => ({
+          url: `/claim-requests/${claimId}/evidence`,
+          method: "POST",
+          body: { title, description, images },
+        }),
+        invalidatesTags: ["Claims"],
+      }
+    ),
+    // got it
+    getAllLostItems: build.query<LostItem[], void>({
+      query: () => ({
+        url: "/lost-items",
+        method: "GET",
+      }),
+    }),
+
+    // got it
+    getStaffStats: build.query<StaffReport, void>({
+      query: () => ({
+        url: "reports/dashboard",
+        method: "GET",
+      }),
+    }),
+
+    resolveDispute: build.mutation<
+      void,
+      { winnerClaimId: number; itemId: number }
+    >({
+      query: ({ winnerClaimId, itemId }) => ({
+        url: `/staff/claims/resolve-dispute`,
+        method: "POST",
+        body: { winnerClaimId, itemId },
+      }),
+      invalidatesTags: ["Disputes", "Claims", "ReadyItems"],
+    }),
+
+    // got it
+    getDisputedItems: build.query<FoundItem[], void>({
+      query: () => ({
+        url: `/found-items`,
+        method: "GET",
+      }),
+      providesTags: ["Disputes"],
     }),
   }),
 });
 
 export const {
   useGetCategoriesQuery,
+  useGetCampusesQuery,
   useCreateLostItemMutation,
   useCreateFoundItemMutation,
   useGetFoundItemsQuery,
   useGetFoundItemByIdQuery,
+  useUpdateItemStatusMutation,
   useCreateClaimMutation,
   useGetMyLostItemsQuery,
-  useGetMyFoundReportsQuery,
+  useGetMyFoundItemsQuery,
   useGetMyClaimsQuery,
+  useGetIncomingItemsQuery,
+  useGetPendingClaimsQuery,
+  useVerifyClaimMutation,
+  useGetReadyToReturnItemsQuery,
+  useGetInventoryItemsQuery,
+  useRequestMoreInfoMutation,
+  useGetAllLostItemsQuery,
+  useGetStaffStatsQuery,
+  useResolveDisputeMutation,
+  useGetDisputedItemsQuery,
 } = itemApi;

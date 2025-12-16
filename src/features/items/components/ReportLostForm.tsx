@@ -46,7 +46,7 @@ export const ReportLostForm = () => {
     const form = useForm<ReportFormValues>({
         resolver: zodResolver(reportSchema),
         defaultValues: {
-            campusId: user?.campusId || "hcm-nvh",
+            campusId: user?.campusName || "hcm-nvh",
         },
     });
 
