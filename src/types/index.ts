@@ -61,6 +61,38 @@ export interface FoundItem {
   actionLogs: null;
 }
 
+// Temporary Found Item từ Security
+export interface TemporaryFoundItem extends FoundItem {
+  status: 'Open'; // Temporary items luôn có status Open
+  finderName: string;
+  finderContact?: string;
+  transferredToStaff: boolean;
+}
+
+// Extended Claim với thông tin chi tiết hơn cho Security
+export interface DisputedClaim extends Claim {
+  foundItem: {
+    id: number;
+    title: string;
+    thumbnail: string;
+    foundLocation: string;
+    foundDate: string;
+  };
+  claimantName?: string;
+  evidenceDescription?: string;
+  disputeReason?: string;
+  status: "Open" | "Stored" | "Returned";
+  campusId: number;
+  campusName: string;
+  categoryId: number;
+  categoryName: string;
+  createdBy: number;
+  storedBy: number | null;
+  imageUrls: string[];
+  claimRequests: Claim[] | null;
+  actionLogs: null;
+}
+
 
 export interface User {
   email: string;
@@ -68,6 +100,48 @@ export interface User {
   role: UserRole;
   campusName: string;
   campusId: number;
+}
+
+// System Reports for Admin
+export interface SystemReport {
+  totalLostItems: number;
+  totalFoundItems: number;
+  itemsInStorage: number;
+  itemsReturned: number;
+  itemsClaimed: number;
+  itemsOpen: number; // Temporary items from Security
+  campusStats: CampusStat[];
+}
+
+export interface CampusStat {
+  campusID: number;
+  campusName: string;
+  totalLostItems: number;
+  totalFoundItems: number;
+  itemsInStorage: number;
+  itemsReturned: number;
+}
+
+// Extended User for Admin management
+export interface AdminUser extends User {
+  userId: number;
+  campusName?: string;
+  assignedAt?: string;
+  isActive: boolean;
+}
+
+// Create Campus Request
+export interface CreateCampusRequest {
+  campusName: string;
+  address: string;
+  storageLocation: string;
+}
+
+// Assign User Request
+export interface AssignUserRequest {
+  userId: string;
+  role: 'STAFF' | 'SECURITY';
+  campusId: string;
 }
 
 // Type cho API response khi login thành công

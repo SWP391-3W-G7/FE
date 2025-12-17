@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Auth Storage</title>
+</head>
+<body>
+    <h1>Clear Authentication Storage</h1>
+    <button onclick="clearStorage()">Clear localStorage</button>
+    <pre id="output"></pre>
+    <script>
+        function clearStorage() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            document.getElementById('output').textContent = 'Storage cleared!\n\nYou can now close this page and try logging in again.';
+        }
+        
+        // Show current storage
+        const token = localStorage.getItem('accessToken');
+        const user = localStorage.getItem('user');
+        document.getElementById('output').textContent = 
+            'Current storage:\n\n' +
+            'Token: ' + (token ? 'Exists' : 'Not found') + '\n' +
+            'User: ' + (user || 'Not found');
+    </script>
+</body>
+</html>
