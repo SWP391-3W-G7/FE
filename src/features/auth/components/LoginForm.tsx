@@ -11,7 +11,6 @@ import { type UserRole } from '@/types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import type { SerializedError } from '@reduxjs/toolkit';
@@ -19,7 +18,6 @@ import type { SerializedError } from '@reduxjs/toolkit';
 const loginSchema = z.object({
     email: z.string().email({ message: "Email không hợp lệ" }),
     password: z.string().min(1, { message: "Vui lòng nhập mật khẩu" }),
-    campusId: z.string().nonempty("Vui lòng chọn cơ sở (Campus)")
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -73,7 +71,6 @@ export const LoginForm = () => {
         defaultValues: {
             email: "",
             password: "",
-            campusId: ""
         },
     });
 
@@ -82,7 +79,6 @@ export const LoginForm = () => {
             const result = await login({
                 email: values.email,
                 password: values.password,
-                campusId: values.campusId
             }).unwrap();
 
             console.log("✅ Login successful, result:", result);
@@ -129,29 +125,6 @@ export const LoginForm = () => {
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-
-                    {/* CAMPUS SELECT */}
-                    <FormField
-                        control={form.control}
-                        name="campusId"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Cơ sở (Campus)</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Chọn nơi bạn đang học/làm việc" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="hcm-nvh">HCM - NVH Sinh Viên</SelectItem>
-                                        <SelectItem value="hcm-shtp">HCM - SHTP (Q9)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
 
                     <FormField
                         control={form.control}

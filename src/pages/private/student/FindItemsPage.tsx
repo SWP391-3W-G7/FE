@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, MapPin, Calendar, ArrowUpRight } from 'lucide-react';
 import { format } from 'date-fns';
-import { useGetFoundItemsQuery, useGetCategoriesQuery } from '@/features/items/itemApi';
+import { useGetFoundItemsQuery, useGetCategoriesQuery, useGetCampusesQuery } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Campus, Category, FoundItem } from '@/types';
 
 const FindItemsPage = () => {
     const navigate = useNavigate();
@@ -20,16 +21,23 @@ const FindItemsPage = () => {
     const [searchParams] = useSearchParams();
     const urlKeyword = searchParams.get('keyword') || "";
 
-    const [keyword, setKeyword] = useState(urlKeyword);
-    const [selectedCampus, setSelectedCampus] = useState<string>(user?.campusId || "all");
-    const [selectedCategory, setSelectedCategory] = useState<string>("all");
-
+    // API calls
+    const { data: campuses = [], isLoading: isCampusesLoading } = useGetCampusesQuery();
     const { data: categories = [] } = useGetCategoriesQuery();
 
+    const [keyword, setKeyword] = useState(urlKeyword);
+    const [selectedCategory, setSelectedCategory] = useState<string>("all");
+    
+    // Lấy ID từ user (đã có campusId từ login) làm mặc định
+    const [selectedCampus, setSelectedCampus] = useState<string>(() => {
+        if (user?.campusId) {
+            return user.campusId.toString();
+        }
+        return "all";
+    });
+
     const { data: items = [], isLoading, isFetching } = useGetFoundItemsQuery({
-        campusId: selectedCampus === "all" ? undefined : selectedCampus,
-        categoryId: selectedCategory === "all" ? undefined : selectedCategory,
-        keyword: keyword.trim() || undefined,
+        campusId: selectedCampus === "all" ? undefined : selectedCampus
     });
 
     return (
@@ -65,13 +73,18 @@ const FindItemsPage = () => {
                             <SelectTrigger>
                                 <div className="flex items-center gap-2 text-slate-600">
                                     <MapPin className="h-4 w-4" />
-                                    <SelectValue placeholder="Chọn Campus" />
+                                    <SelectValue placeholder={isCampusesLoading ? "Đang tải..." : "Chọn Campus"} />
                                 </div>
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Tất cả Campus</SelectItem>
-                                <SelectItem value="hcm-nvh">HCM - NVH Sinh Viên</SelectItem>
-                                <SelectItem value="hcm-shtp">HCM - SHTP (Q9)</SelectItem>
+                                {/* 👇 UPDATE: Sửa mapping theo JSON mới của BE */}
+                                {/* campus.id là khóa chính, campus.description là tên hiển thị (VD: Hà Nội) */}
+                                {campuses.map((campus: Campus) => (
+                                    <SelectItem key={campus.id} value={campus.id.toString()}>
+                                        {campus.description}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -86,8 +99,8 @@ const FindItemsPage = () => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Tất cả các loại</SelectItem>
-                                {categories.filter(cat => cat.categoryID).map((cat) => (
-                                    <SelectItem key={cat.categoryID} value={cat.categoryID.toString()}>
+                                {categories.map((cat: Category) => (
+                                    <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
                                         {cat.categoryName}
                                     </SelectItem>
                                 ))}
@@ -125,13 +138,13 @@ const FindItemsPage = () => {
                 </div>
             ) : items.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {items.map((item) => (
-                        <Card key={item.foundItemID} className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-slate-200 flex flex-col">
+                    {items.map((item: FoundItem) => (
+                        <Card key={item.foundItemId} className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-slate-200 flex flex-col">
 
                             <div className="bg-slate-100 relative">
                                 <AspectRatio ratio={4 / 3}>
                                     <img
-                                        src={item.thumbnailURL}
+                                        src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "https://placehold.co/400x300?text=No+Image"} 
                                         alt={item.title}
                                         className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
@@ -169,7 +182,7 @@ const FindItemsPage = () => {
                             </CardContent>
 
                             <CardFooter className="p-4 pt-0 mt-auto">
-                                <Button className="w-full gap-2" onClick={() => navigate(`/items/${item.foundItemID}`)}>
+                                <Button className="w-full gap-2" onClick={() => navigate(`/items/${item.foundItemId}`)}>
                                     Xem chi tiết <ArrowUpRight className="h-4 w-4" />
                                 </Button>
                             </CardFooter>

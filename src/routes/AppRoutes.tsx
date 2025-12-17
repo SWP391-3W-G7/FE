@@ -3,7 +3,6 @@ import { ROLES } from '@/config/roles';
 import MainLayout from '@/layouts/MainLayout';
 import AuthPage from '@/pages/public/AuthPage';
 import LandingPage from '@/pages/public/LandingPage';
-// import LostItemsPage from '@/pages/items/LostItemsPage';
 import ReportItemPage from '@/pages/private/student/ReportItemPage';
 import ProtectedRoute from './ProtectedRoute';
 import ReportFoundPage from '@/pages/private/student/ReportFoundPage';
@@ -16,6 +15,7 @@ import AdminCampusPage from '@/pages/private/admin/AdminCampusPage';
 import AdminUsersPage from '@/pages/private/admin/AdminUsersPage';
 import SecurityDashboard from '@/pages/private/security/SecurityDashboard';
 import SecurityVerificationPage from '@/pages/private/security/SecurityVerificationPage';
+import { StaffDashboard } from '@/pages/private/staff/StaffDashboard';
 
 const AppRoutes = () => {
   return (
@@ -26,6 +26,12 @@ const AppRoutes = () => {
       {/* Public Routes */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/report-lost" element={<ReportItemPage />} />
+        <Route path="/report-found" element={<ReportFoundPage />} />
+        <Route path="/items" element={<FindItemsPage />} />
+        <Route path="/items/:id" element={<ClaimItemPage />} />
+        <Route path="/my-claims" element={<StudentDashboard />} />
+        <Route path="/staff/dashboard" element={<StaffDashboard />} />
       </Route>
 
       {/* Student Routes */}
@@ -46,6 +52,12 @@ const AppRoutes = () => {
           <Route path="/security/log-item" element={<SecurityLogPage />} />
           <Route path="/security/verification" element={<SecurityVerificationPage />} />
         </Route>
+      <Route element={<ProtectedRoute allowedRoles={['STAFF', 'ADMIN']} />}>
+        {/* <Route path="/staff/dashboard" element={<StaffDashboard />} /> */}
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.SECURITY]} />}>
+        <Route path="/dashboard" element={<div className='p-10 text-2xl font-bold text-center'>Dashboard Quản Lý (Dành cho Staff/Security)</div>} />
       </Route>
 
       {/* Admin Routes */}

@@ -1,7 +1,4 @@
-export type UserRole = 'STUDENT' | 'STAFF' | 'SECURITY'| 'ADMIN';
-
-export type ItemStatus = 'PENDING' | 'VERIFIED' | 'RETURNED' | 'REJECTED';
-
+export type UserRole = "STUDENT" | "STAFF" | "SECURITY" | "ADMIN";
 // ==========================================
 // MAP THEO DATABASE TABLES
 // ==========================================
@@ -12,30 +9,27 @@ export interface Role {
   roleName: string; // 'Student', 'Staff', 'Admin'
 }
 
-// Table Campus
-export interface Campus {
-  campusID: number;
-  campusName: string;      // VD: HCM - NVH
-  address: string;
-  storageLocation: string; // VD: Phòng P.102
-}
+// Table Camp
 
 // Table Category
 export interface Category {
-  categoryID: number;
+  categoryId: number;
   categoryName: string; // VD: Ví, Laptop
 }
 
 export interface LostItem {
-  lostItemID: number;
-  title: string;       // DB ông thiếu cột này, nhưng ở Prompt trước đã chốt thêm vào
-  description: string; // DB ông thiếu cột này, nhưng ở Prompt trước đã chốt thêm vào
-  lostDate: string;    // datetime ISO
+  lostItemId: number;
+  title: string; 
+  description: string; 
+  lostDate: string; 
   lostLocation: string;
-  status: 'Open' | 'Closed' | 'Found';
-  createdBy: number;
-  categoryID: number;
-  campusID: number; // Mapping từ logic Business
+  status: "Open" | "Closed" | "Found";
+  campusId: number;
+  campusName: string;
+  categoryId: number;
+  categoryName: string;
+  imageUrls: string[];
+  actionLogs: null;
 }
 
 export interface CreateLostItemRequest {
@@ -48,54 +42,23 @@ export interface CreateLostItemRequest {
 }
 
 
-
-export interface Claim {
-  claimID: number;
-  claimDate: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
-  // Join với FoundItem để hiển thị thông tin món đồ đang claim
-  foundItem: {
-    id: number;
-    title: string;
-    thumbnail: string;
-  };
-}
-
-
-// Table Image (Ảnh tách riêng)
-export interface Image {
-  imageID: number;
-  imageURL: string;
-  uploadedAt: string;
-  uploadedBy: number;
-  lostItemID?: number | null;
-  foundItemID?: number | null; // Link tới FoundItem
-  evidenceID?: number | null;
-}
-
-// DTO (Data Transfer Object) - Dùng cho Frontend hiển thị
-// (Đây là object sau khi đã JOIN các bảng lại)
-export interface FoundItemDisplayDTO extends FoundItem {
-  campusName: string;
-  categoryName: string;
-  thumbnailURL: string; // Lấy ảnh đầu tiên từ bảng Image
-}
 // Table FoundItem (Đồ nhặt được)
 export interface FoundItem {
-  foundItemID: number;
+  foundItemId: number;
   title: string;
   description: string;
-  foundDate: string; // datetime ISO string
+  foundDate: string; // ISO datetime
   foundLocation: string;
-  status: 'Stored' | 'Returned' | 'Unclaimed' | 'Claimed' | 'Open'; // Map từ varchar DB - 'Open' là temporary từ Security
-  createdBy?: number; // UserID
-  storedBy?: number;  // UserID (Staff)
-  campusID: number;  // FK -> Campus
-  categoryID: number;// FK -> Category
-  storageLocation?: string; // Vị trí lưu trữ trong kho (VD: Kệ A, Tủ số 5)
-  finderName?: string; // Tên người nhặt được (từ Security)
-  finderContact?: string; // SĐT người nhặt được
-  transferredToStaff?: boolean; // Đã chuyển đến Staff chưa
+  status: "Open" | "Stored" | "Returned";
+  campusId: number;
+  campusName: string;
+  categoryId: number;
+  categoryName: string;
+  createdBy: number;
+  storedBy: number | null;
+  imageUrls: string[];
+  claimRequests: Claim[] | null;
+  actionLogs: null;
 }
 
 // Temporary Found Item từ Security
@@ -118,15 +81,25 @@ export interface DisputedClaim extends Claim {
   claimantName?: string;
   evidenceDescription?: string;
   disputeReason?: string;
+  status: "Open" | "Stored" | "Returned";
+  campusId: number;
+  campusName: string;
+  categoryId: number;
+  categoryName: string;
+  createdBy: number;
+  storedBy: number | null;
+  imageUrls: string[];
+  claimRequests: Claim[] | null;
+  actionLogs: null;
 }
 
+
 export interface User {
-  id: string;
   email: string;
   fullName: string;
   role: UserRole;
-  campusId?: string; 
-  avatarUrl?: string;
+  campusName: string;
+  campusId: number;
 }
 
 // System Reports for Admin
@@ -175,4 +148,40 @@ export interface AssignUserRequest {
 export interface LoginResponse {
   user: User;
   token: string;
+}
+
+export interface Campus {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export interface Claim {
+  claimId: number
+  claimDate: string
+  status: 'Pending' | 'Approved' | 'Rejected'
+  foundItemId: number | null
+  lostItemId: number | null
+  foundItemTitle: string | null
+  studentId: number
+  studentName: string | null
+  evidences: Evidence[]
+  actionLogs: string
+}
+
+export interface Evidence {
+  evidenceId: number
+  title: string
+  description: string
+  createdAt: string
+  imageUrls: string[]
+}
+
+export interface StaffReport {
+  totalFound: number;
+  returnedCount: number;
+  disposedCount: number;
+  activeClaims: number;
+  returnRate: number;
+  categoryStats: { name: string; value: number }[];
 }

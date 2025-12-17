@@ -1,76 +1,52 @@
 import { rootApi } from "@/services/rootApi";
 import { loginSuccess } from "./authSlice";
+import { type User, type LoginResponse } from "@/types"; // Import type ông đã định nghĩa
 
 export const authApi = rootApi.injectEndpoints({
   endpoints: (build) => ({
-    login: build.mutation<{ token: string; user: any }, any>({
+    login: build.mutation<LoginResponse, any>({
       query: (credentials) => ({
         url: "/Users/login",
         method: "POST",
-        data: credentials,
+        data: credentials, // Dùng 'data' vì ông dùng axiosBaseQuery
       }),
-      transformResponse: (response: any) => {
-        console.log("📨 transformResponse - Raw response:", response);
+
+      // 🔥 ĐOẠN NÀY LÀ QUAN TRỌNG NHẤT
+      transformResponse: (rawResult: any) => {
+        // rawResult là cái cục JSON ông vừa paste cho tôi đó
         
-        // Response is: { token, email, fullName, roleName, campusId, campusName }
-        const token = response?.token;
-        console.log("Token:", token);
-        
-        // Normalize role to match ROLES config
-        const roleFromApi = response?.roleName || 'STUDENT';
-        let normalizedRole = roleFromApi.toUpperCase();
-        
-        // Map API role names to our ROLES
-        if (normalizedRole === 'MANAGER' || roleFromApi.toLowerCase().includes('security')) {
-          normalizedRole = 'SECURITY';
-        } else if (normalizedRole === 'ADMIN' || roleFromApi.toLowerCase().includes('admin')) {
-          normalizedRole = 'ADMIN';
-        } else if (normalizedRole === 'STAFF' || roleFromApi.toLowerCase().includes('staff')) {
-          normalizedRole = 'STAFF';
-        } else {
-          normalizedRole = 'STUDENT';
-        }
-        
-        console.log("Role normalized:", roleFromApi, "→", normalizedRole);
-        
-        const user = {
-          id: response?.email || 'unknown',
-          email: response?.email || '',
-          fullName: response?.fullName || '',
-          role: normalizedRole,
-          campusId: response?.campusId || '',
-          campusName: response?.campusName || '',
+        // 1. Map 'token' của BE thành biến 'token' cho FE
+        const accessToken = rawResult.token; 
+
+        // 2. Xử lý Role: BE trả về "User" -> FE đổi thành "STUDENT"
+        // (Hoặc giữ nguyên nếu ông muốn, nhưng nên chuẩn hóa Uppercase)
+        let role = rawResult.roleName.toUpperCase();
+        if (role === 'USER') role = 'STUDENT';
+
+        // 3. Gom các trường lẻ tẻ thành object User
+        const user: User = {
+          email: rawResult.email,
+          fullName: rawResult.fullName,
+          campusName: rawResult.campusName,
+          role: role, 
+          campusId: rawResult.campusId,
         };
-        
-        console.log("User object created:", user);
-        
+
+        // 4. Trả về đúng cấu trúc { user, token } mà authSlice đang đợi
         return {
-          token,
-          user
+          user: user,
+          token: accessToken,
         };
       },
+
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          console.log("✅ onQueryStarted - data from queryFulfilled:", data);
-          console.log("✅ User role:", data?.user?.role, "Type:", typeof data?.user?.role);
+          // data lúc này đã qua transformResponse => { user: {...}, token: "..." }
           
-          if (data?.token && data?.user) {
-            console.log("Dispatching loginSuccess with user:", data.user);
-            console.log("User role being saved:", data.user.role);
-            
-            dispatch(loginSuccess({
-              token: data.token,
-              user: data.user
-            }));
-            
-            // Verify it was saved
-            console.log("localStorage user after save:", localStorage.getItem('user'));
-          } else {
-            console.error("❌ Missing token or user in data", data);
-          }
+          dispatch(loginSuccess(data)); // Redux lưu ngon lành!
         } catch (err) {
-          console.error("❌ Error in onQueryStarted: ", err);
+          console.error("Login failed: ", err);
         }
       },
     }),
