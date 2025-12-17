@@ -118,7 +118,7 @@ const MainLayout = () => {
                       <UserIcon className="mr-2 h-4 w-4" />
                       Hồ sơ cá nhân
                     </DropdownMenuItem>
-                    {/* Nếu là Staff/Admin thì hiện nút vào Dashboard */}
+
                     {(user.role === 'STAFF' || user.role === 'ADMIN') && (
                        <>
                         <DropdownMenuSeparator />

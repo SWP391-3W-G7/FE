@@ -29,6 +29,7 @@ export const authApi = rootApi.injectEndpoints({
           fullName: rawResult.fullName,
           campusName: rawResult.campusName,
           role: role, 
+          campusId: rawResult.campusId,
         };
 
         // 4. Trả về đúng cấu trúc { user, token } mà authSlice đang đợi
