@@ -9,16 +9,20 @@ interface AuthState {
 }
 
 const getInitialState = (): AuthState => {
-  const token = localStorage.getItem('accessToken');
-  const userStr = localStorage.getItem('user');
-
   try {
+    const token = localStorage.getItem('accessToken');
+    const userStr = localStorage.getItem('user');
+
     if (token && userStr) {
       const user = JSON.parse(userStr) as User;
-      return { token, user, isAuthenticated: true };
+      if (user && user.id) {
+        return { token, user, isAuthenticated: true };
+      }
     }
   } catch (e) {
     console.error("Error parsing user from local storage", e);
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
   }
 
   return { token: null, user: null, isAuthenticated: false };
@@ -29,12 +33,20 @@ const authSlice = createSlice({
   initialState: getInitialState(),
   reducers: {
     loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
-      state.user = action.payload.user;
-      state.token = action.payload.token;
+      const { user, token } = action.payload;
+      
+      // Ensure user has id, use email as fallback
+      const userWithId = {
+        ...user,
+        id: user.id || (user as any).email || 'unknown',
+      };
+      
+      state.user = userWithId;
+      state.token = token;
       state.isAuthenticated = true;
 
-      localStorage.setItem('accessToken', action.payload.token);
-      localStorage.setItem('user', JSON.stringify(action.payload.user));
+      localStorage.setItem('accessToken', token);
+      localStorage.setItem('user', JSON.stringify(userWithId));
     },
     logout: (state) => {
       state.user = null;

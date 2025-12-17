@@ -37,9 +37,7 @@ const FindItemsPage = () => {
     });
 
     const { data: items = [], isLoading, isFetching } = useGetFoundItemsQuery({
-        campusId: selectedCampus === "all" ? undefined : selectedCampus,
-        categoryId: selectedCategory === "all" ? undefined : selectedCategory,
-        keyword: keyword.trim() || undefined,
+        campusId: selectedCampus === "all" ? undefined : selectedCampus
     });
 
     return (
