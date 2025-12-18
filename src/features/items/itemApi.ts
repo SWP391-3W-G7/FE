@@ -11,6 +11,7 @@ import {
   type AdminUser,
   type AssignUserRequest,
   type StaffReport,
+  type PaginatedFoundItemsResponse,
 } from "@/types";
 
 export const itemApi = rootApi.injectEndpoints({
@@ -60,10 +61,10 @@ export const itemApi = rootApi.injectEndpoints({
 
     // got it
     getFoundItems: build.query<
-      FoundItem[],
+      PaginatedFoundItemsResponse,
       {
-        campusId?: string;
-        status?: string;
+        CampusId?: string;
+        Status?: string;
       }
     >({
       query: (params) => ({
@@ -160,14 +161,6 @@ export const itemApi = rootApi.injectEndpoints({
       }),
     }),
 
-    // got it
-    getIncomingItems: build.query<FoundItem[], void>({
-      query: () => ({
-        url: "/found-items",
-        method: "GET",
-      }),
-      providesTags: ["IncomingItems"],
-    }),
     // got it
     updateItemStatus: build.mutation<void, { id: number; status: string }>({
       query: ({ id, status }) => ({
@@ -524,7 +517,6 @@ export const {
   useCreateUserMutation,
   useUpdateUserMutation,
   useBanUserMutation,
-  useGetIncomingItemsQuery,
   useGetPendingClaimsQuery,
   useVerifyClaimMutation,
   useGetReadyToReturnItemsQuery,

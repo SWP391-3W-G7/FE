@@ -61,6 +61,17 @@ export interface FoundItem {
   actionLogs: null;
 }
 
+// Paginated response for FoundItems API
+export interface PaginatedFoundItemsResponse {
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  totalCount: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+  items: FoundItem[];
+}
+
 // Temporary Found Item từ Security
 export interface TemporaryFoundItem extends FoundItem {
   status: 'Open'; // Temporary items luôn có status Open
