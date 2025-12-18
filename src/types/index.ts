@@ -163,7 +163,7 @@ export interface Campus {
 export interface Claim {
   claimId: number
   claimDate: string
-  status: 'Pending' | 'Approved' | 'Rejected' | 'Conflicted'
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Conflicted' | 'Returned'
   foundItemId: number | null
   lostItemId: number | null
   foundItemTitle: string | null

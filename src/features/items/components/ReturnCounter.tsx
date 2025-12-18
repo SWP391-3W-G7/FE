@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { Search, UserCheck, PackageCheck, Loader2 } from 'lucide-react';
 
 // API
-import { useUpdateItemStatusMutation } from '@/features/items/itemApi';
-import { useGetReadyToReturnItemsQuery } from '@/features/claims/claimApi';
+import { useGetReadyToReturnItemsQuery, useUpdateClaimStatusMutation } from '@/features/claims/claimApi';
 
 // UI
 import { Input } from "@/components/ui/input";
@@ -22,8 +21,8 @@ export const ReturnCounter = () => {
   // 1. Lấy danh sách Claim đã Approved
   const { data, isLoading } = useGetReadyToReturnItemsQuery();
 
-  // 2. Hook update status Item
-  const [updateItemStatus, { isLoading: isProcessing }] = useUpdateItemStatusMutation();
+  // 2. Hook update status Claim Request
+  const [updateClaimStatus, { isLoading: isProcessing }] = useUpdateClaimStatusMutation();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<Claim | undefined>(undefined);
@@ -46,15 +45,15 @@ export const ReturnCounter = () => {
     }
 
     try {
-      // --- LOGIC CHÍNH: Gọi API update Found Item sang 'Returned' ---
-      await updateItemStatus({
-        id: selectedClaim.foundItemId,
+      // --- LOGIC CHÍNH: Gọi API update Claim Request sang 'Returned' ---
+      await updateClaimStatus({
+        claimId: selectedClaim.claimId,
         status: 'Returned'
       }).unwrap();
 
       toast({
         title: "Hoàn tất trả đồ!",
-        description: `Vật phẩm #${selectedClaim.foundItemId} đã được cập nhật trạng thái Returned.`,
+        description: `Yêu cầu #${selectedClaim.claimId} đã được cập nhật trạng thái Returned.`,
         className: "bg-green-50 border-green-200 text-green-800"
       });
 

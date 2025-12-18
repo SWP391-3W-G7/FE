@@ -88,7 +88,7 @@ export const claimApi = rootApi.injectEndpoints({
 
         updateClaimStatus: build.mutation<
             Claim,
-            { claimId: number; status: "Approved" | "Rejected" }
+            { claimId: number; status: "Approved" | "Rejected" | "Returned" }
         >({
             query: ({ claimId, status }) => ({
                 url: `/claim-requests/${claimId}/status`,
