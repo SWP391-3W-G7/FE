@@ -17,38 +17,21 @@ import type { FoundItem } from '@/types';
 const ITEMS_PER_PAGE = 5;
 
 export const InventoryTable = () => {
-  // 1. Lấy dữ liệu
-  const { data: items, isLoading } = useGetInventoryItemsQuery();
-  const { data: categories = [] } = useGetCategoriesQuery();
+  // 1. Chỉ lấy dữ liệu để hiển thị
+  const { data, isLoading } = useGetInventoryItemsQuery();
 
   // State
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 2. Lọc danh sách - ensure array safety
-  const itemsArray = Array.isArray(items) ? items : [];
-  const filteredItems = itemsArray.filter((item: FoundItem) => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || item.categoryName === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  // Robust data extraction (handles flat array or paginated response)
+  const rawItems = (data as any)?.items || (Array.isArray(data) ? data : []);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-  // Reset page when filter changes
-  const handleFilterChange = (value: string) => {
-    setCategoryFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    setCurrentPage(1);
-  };
+  // 2. Lọc danh sách (Chỉ tìm theo tên item)
+  const filteredItems = rawItems.filter((item: FoundItem) =>
+    item.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -61,39 +44,16 @@ export const InventoryTable = () => {
 
   return (
     <div className="space-y-4">
-      {/* Filter Bar */}
-      <div className="flex flex-wrap gap-4 items-center">
-        <div className="flex w-full max-w-sm items-center space-x-2">
-          <Input 
-            placeholder="Tìm kiếm vật phẩm..." 
-            value={searchTerm}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
-          <Button size="icon" variant="secondary">
-            <Search className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-slate-500" />
-          <Select value={categoryFilter} onValueChange={handleFilterChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Tất cả danh mục" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả danh mục</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat.categoryId} value={cat.categoryName}>
-                  {cat.categoryName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Badge variant="outline" className="ml-auto">
-          Tổng: {filteredItems.length} vật phẩm
-        </Badge>
+      {/* Search Bar */}
+      <div className="flex w-full max-w-sm items-center space-x-2">
+        <Input
+          placeholder="Tìm kiếm vật phẩm..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <Button size="icon" variant="secondary">
+          <Search className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Table Data */}
@@ -108,12 +68,12 @@ export const InventoryTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedItems.length === 0 ? (
-               <TableRow>
-                 <TableCell colSpan={4} className="h-24 text-center text-slate-500">
-                   Không tìm thấy vật phẩm nào trong kho.
-                 </TableCell>
-               </TableRow>
+            {!filteredItems || filteredItems.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center text-slate-500">
+                  Không tìm thấy vật phẩm nào trong kho.
+                </TableCell>
+              </TableRow>
             ) : (
               paginatedItems.map((item: FoundItem) => {
                 // Tính số ngày tồn kho
@@ -126,36 +86,36 @@ export const InventoryTable = () => {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded border border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center shrink-0">
-                           <img 
-                             src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "https://placehold.co/100?text=Img"} 
-                             alt="" 
-                             className="h-full w-full object-cover" 
-                           />
+                          <img
+                            src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "https://placehold.co/100?text=Img"}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
                         </div>
                         <div>
                           <div className="font-medium text-slate-900 line-clamp-1" title={item.title}>
-                              {item.title}
+                            {item.title}
                           </div>
                           {/* Hiển thị ID nhỏ bên dưới để dễ đối soát */}
                           <div className="text-[10px] text-slate-400">#{item.foundItemId}</div>
                         </div>
                       </div>
                     </TableCell>
-                    
+
                     {/* Cột 2: Danh mục */}
                     <TableCell>
-                         <Badge variant="outline" className="font-normal">
-                             {item.categoryName}
-                         </Badge>
+                      <Badge variant="outline" className="font-normal">
+                        {item.categoryName}
+                      </Badge>
                     </TableCell>
 
                     {/* Cột 3: Thời gian */}
                     <TableCell>
                       <div className="text-sm font-medium text-slate-700">
-                          {format(new Date(item.foundDate), "dd/MM/yyyy")}
+                        {format(new Date(item.foundDate), "dd/MM/yyyy")}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                          Đã lưu {daysInStorage} ngày
+                        Đã lưu {daysInStorage} ngày
                       </div>
                     </TableCell>
 
@@ -176,7 +136,7 @@ export const InventoryTable = () => {
                         </TooltipProvider>
                       ) : (
                         <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
-                            Đang lưu giữ
+                          Đang lưu giữ
                         </Badge>
                       )}
                     </TableCell>
