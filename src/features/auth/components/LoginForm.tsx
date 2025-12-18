@@ -24,7 +24,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginForm = () => {
     const navigate = useNavigate();
-    const location = useLocation();
     const { toast } = useToast();
     const currentUser = useAppSelector(selectCurrentUser);
 
@@ -32,7 +31,7 @@ export const LoginForm = () => {
 
     // Listen for user change in Redux
     useEffect(() => {
-        if (currentUser?.id && currentUser?.role) {
+        if (currentUser?.role) {
             console.log("✅ User updated in Redux:", currentUser);
             console.log("✅ User role:", currentUser.role, "Type:", typeof currentUser.role);
             
@@ -46,7 +45,7 @@ export const LoginForm = () => {
                 redirectPath = '/security/dashboard';
                 console.log("🔄 Redirecting SECURITY to:", redirectPath);
             } else if (userRole === 'STAFF') {
-                redirectPath = '/admin/dashboard';
+                redirectPath = '/staff/dashboard';
                 console.log("🔄 Redirecting STAFF to:", redirectPath);
             } else {
                 console.log("🔄 Redirecting", userRole, "to:", redirectPath);

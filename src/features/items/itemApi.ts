@@ -7,7 +7,6 @@ import {
   type LostItem,
   type TemporaryFoundItem,
   type SystemReport,
-  type Campus,
   type CreateCampusRequest,
   type AdminUser,
   type AssignUserRequest,
@@ -22,13 +21,6 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/categories",
         method: "GET",
       }),
-      transformResponse: (response: any[]) => {
-        // API trả về categoryId (lowercase), cần transform sang categoryID (uppercase)
-        return response.map((category) => ({
-          categoryID: category.categoryId,
-          categoryName: category.categoryName,
-        }));
-      },
     }),
     // got it
     getCampuses: build.query<Campus[], void>({
@@ -43,12 +35,15 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/lost-items",
         method: "POST",
         data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       }),
     }),
 
     createFoundItem: build.mutation<FoundItem, FormData>({
       query: (formData) => ({
-        url: "/items/found",
+        url: "/found-items/public",
         method: "POST",
         data: formData,
         headers: {
@@ -82,7 +77,7 @@ export const itemApi = rootApi.injectEndpoints({
 
     createClaim: build.mutation({
       query: (formData) => ({
-        url: "/claims",
+        url: "/claim-requests",
         method: "POST",
         data: formData,
         headers: {
@@ -128,7 +123,7 @@ export const itemApi = rootApi.injectEndpoints({
         method: "PUT",
         data: { status },
       }),
-      invalidatesTags: ["StatusItems"],
+      invalidatesTags: ["StatusItems", "IncomingItems", "InventoryItems"],
     }),
     //got it
     getPendingClaims: build.query<Claim[], void>({
@@ -151,6 +146,7 @@ export const itemApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: ["Claims"],
     }),
+    
     // got it
     getReadyToReturnItems: build.query<Claim[], void>({
      query: () => ({
@@ -341,20 +337,11 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Get all campuses
-    getCampuses: build.query<Campus[], void>({
+    getCampusesForAdmin: build.query<Campus[], void>({
       query: () => ({
         url: "/Campus",
         method: "GET",
-      }),
-      transformResponse: (response: any[]) => {
-        // API trả về campusId (lowercase), cần transform sang campusID (uppercase)
-        return response.map((campus) => ({
-          campusID: campus.campusId,
-          campusName: campus.campusName,
-          address: campus.address,
-          storageLocation: campus.storageLocation,
-        }));
-      },
+      })
     }),
 
     // Admin: Create new campus
@@ -506,7 +493,7 @@ export const {
   useGetLostItemsForVerificationQuery,
   useVerifyLostItemMutation,
   useGetSystemReportsQuery,
-  useGetCampusesQuery,
+  useGetCampusesForAdminQuery,
   useCreateCampusMutation,
   useUpdateCampusMutation,
   useDeleteCampusMutation,
