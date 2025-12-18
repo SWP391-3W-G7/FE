@@ -15,12 +15,13 @@ import type { FoundItem } from '@/types';
 
 export const InventoryTable = () => {
   // 1. Chỉ lấy dữ liệu để hiển thị
-  const { data, isLoading } = useGetInventoryItemsQuery();
+  // 1. Lấy dữ liệu từ API (Chỉ lấy status 'Stored')
+  const { data, isLoading } = useGetInventoryItemsQuery({ Status: 'Stored', PageNumber: 1, PageSize: 20 });
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Robust data extraction (handles flat array or paginated response)
-  const rawItems = (data as any)?.items || (Array.isArray(data) ? data : []);
+  // 👇 Lấy danh sách items từ response phân trang
+  const rawItems = data?.items || [];
 
   // 2. Lọc danh sách (Chỉ tìm theo tên item)
   const filteredItems = rawItems.filter((item: FoundItem) =>

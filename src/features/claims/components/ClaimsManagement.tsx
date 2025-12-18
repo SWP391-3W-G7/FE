@@ -4,7 +4,7 @@ import { Eye, User, MapPin, Send, MessageSquare, Package, Check, X, Clock, Alert
 
 // API
 import { useGetStaffWorkItemsQuery, useGetClaimByIdQuery, useRequestMoreInfoMutation, useVerifyClaimMutation, useUpdateClaimStatusMutation, useGetMatchByIdQuery, useGetPendingClaimsQuery, useGetConflictedClaimsQuery, useGetMatchingItemsQuery } from '@/features/claims/claimApi';
-import { useGetFoundItemDetailsQuery } from '@/features/items/itemApi';
+import { useGetFoundItemDetailsQuery, useGetCategoriesQuery, useGetCampusesForAdminQuery } from '@/features/items/itemApi';
 
 // UI
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,56 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Types
 import { type Claim, type Evidence, type ActionLog } from '@/types';
+
+// Robust Property Helpers
+const getProp = (obj: any, keys: string[]) => {
+    if (!obj) return undefined;
+    for (const key of keys) {
+        if (obj[key] !== undefined && obj[key] !== null) return obj[key];
+    }
+    return undefined;
+};
+
+const getItemImages = (item: any): string[] => {
+    if (!item) return [];
+    const urls = getProp(item, ['imageUrls', 'ImageUrls']);
+    if (Array.isArray(urls) && urls.length > 0) return urls;
+    const singleUrl = getProp(item, ['imageUrl', 'ImageUrl', 'thumbnail', 'Thumbnail']);
+    if (typeof singleUrl === 'string' && singleUrl) return [singleUrl];
+    return [];
+};
+
+const getItemTitle = (item: any) => getProp(item, ['title', 'Title']) || "N/A";
+const getItemId = (item: any) => getProp(item, ['foundItemId', 'FoundItemId', 'lostItemId', 'LostItemId', 'id', 'Id']);
+
+const getItemCategory = (item: any, categories?: any[]) => {
+    const name = getProp(item, ['categoryName', 'CategoryName']);
+    if (name) return name;
+    const id = getProp(item, ['categoryId', 'CategoryId', 'categoryID', 'CategoryID']);
+    if (id && categories) {
+        const idNum = Number(id);
+        const cat = categories.find(c => Number(getProp(c, ['categoryId', 'CategoryId'])) === idNum);
+        return getProp(cat, ['categoryName', 'CategoryName']) || "N/A";
+    }
+    return "N/A";
+};
+
+const getItemLocation = (item: any) => getProp(item, ['foundLocation', 'FoundLocation', 'lostLocation', 'LostLocation']) || "N/A";
+const getItemDate = (item: any) => getProp(item, ['foundDate', 'FoundDate', 'lostDate', 'LostDate', 'createdAt', 'CreatedAt', 'claimDate', 'ClaimDate']);
+
+const getItemCampus = (item: any, campuses?: any[]) => {
+    const name = getProp(item, ['campusName', 'CampusName']);
+    if (name) return name;
+    const id = getProp(item, ['campusId', 'CampusId', 'campusID', 'CampusID']);
+    if (id && campuses) {
+        const idNum = Number(id);
+        const camp = campuses.find(c => Number(getProp(c, ['campusId', 'CampusId'])) === idNum);
+        return getProp(camp, ['campusName', 'CampusName']) || "N/A";
+    }
+    return "N/A";
+};
+
+const getItemDescription = (item: any) => getProp(item, ['description', 'Description']) || "N/A";
 
 const ClaimActionLogs = ({ logs }: { logs: ActionLog[] }) => {
     if (!logs || logs.length === 0) return (
@@ -56,15 +106,17 @@ const ClaimActionLogs = ({ logs }: { logs: ActionLog[] }) => {
 
 const FoundItemDetailView = ({ itemId }: { itemId: number }) => {
     const { data: item, isLoading, error } = useGetFoundItemDetailsQuery(itemId);
+    const { data: categories } = useGetCategoriesQuery();
+    const { data: campuses } = useGetCampusesForAdminQuery();
 
     if (isLoading) return <div className="p-8 text-center text-slate-400">Đang tải thông tin vật phẩm...</div>;
     if (error || !item) return <div className="p-8 text-center text-red-500 text-xs italic">Không tìm thấy thông tin vật phẩm #{itemId}</div>;
 
     return (
         <div className="space-y-4">
-            {item.imageUrls && item.imageUrls.length > 0 ? (
+            {getItemImages(item).length > 0 ? (
                 <div className="grid grid-cols-1 gap-2 mb-4">
-                    {item.imageUrls.map((url: string, idx: number) => (
+                    {getItemImages(item).map((url: string, idx: number) => (
                         <div key={idx} className="aspect-video rounded-lg overflow-hidden border bg-white shadow-sm">
                             <img src={url} alt={`Found Item ${idx}`} className="w-full h-full object-cover" />
                         </div>
@@ -79,29 +131,29 @@ const FoundItemDetailView = ({ itemId }: { itemId: number }) => {
 
             <div className="space-y-3 text-sm">
                 <div>
-                    <h5 className="font-bold text-slate-900 leading-tight mb-1">{item.title}</h5>
-                    <p className="text-slate-500 text-[11px] italic">#{item.foundItemId} • {item.categoryName}</p>
+                    <h5 className="font-bold text-slate-900 leading-tight mb-1">{getItemTitle(item)}</h5>
+                    <p className="text-slate-500 text-[11px] italic">#{getItemId(item)} • {getItemCategory(item, categories)}</p>
                 </div>
 
                 <div className="bg-white p-3 rounded-md border border-slate-200 text-slate-700 text-xs shadow-sm">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mô tả gốc:</p>
-                    <p>{item.description || "Không có mô tả chi tiết."}</p>
+                    <p>{getItemDescription(item)}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                     <div className="flex items-center gap-1.5 text-xs text-slate-600">
                         <MapPin className="w-3.5 h-3.5 text-blue-500" />
-                        <span className="truncate">{item.foundLocation}</span>
+                        <span className="truncate">{getItemLocation(item)}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-slate-600">
                         <Clock className="w-3.5 h-3.5 text-blue-500" />
-                        <span>{format(new Date(item.foundDate), "dd/MM/yyyy")}</span>
+                        <span>{getItemDate(item) ? format(new Date(getItemDate(item)), "dd/MM/yyyy") : "N/A"}</span>
                     </div>
                 </div>
 
                 <div className="bg-blue-50 p-2 rounded text-[10px] text-blue-800 border border-blue-100 mt-2">
                     <Package className="w-3 h-3 inline mr-1" />
-                    Đang được giữ tại: <strong>{item.campusName}</strong>
+                    Đang được giữ tại: <strong>{getItemCampus(item, campuses)}</strong>
                 </div>
             </div>
         </div>
@@ -110,20 +162,22 @@ const FoundItemDetailView = ({ itemId }: { itemId: number }) => {
 
 const MatchComparisonDialog = ({ matchId, isOpen, onOpenChange }: { matchId: number, isOpen: boolean, onOpenChange: (open: boolean) => void }) => {
     const { data: match, isLoading, error } = useGetMatchByIdQuery(matchId, { skip: !matchId || !isOpen });
+    const { data: categories } = useGetCategoriesQuery();
+    const { data: campuses } = useGetCampusesForAdminQuery();
 
     if (!matchId) return null;
 
-    const renderItemCard = (title: string, item: any, type: 'lost' | 'found') => (
+    const renderItemCard = (title: string, item: any, type: 'lost' | 'found', categories?: any[], campuses?: any[]) => (
         <Card className={`p-4 h-full flex flex-col ${type === 'lost' ? 'bg-orange-50/30 border-orange-100' : 'bg-blue-50/30 border-blue-100'}`}>
             <h5 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
                 {type === 'lost' ? <User className="w-4 h-4 text-orange-500" /> : <Package className="w-4 h-4 text-blue-500" />}
                 {title}
             </h5>
 
-            {item?.imageUrls && item.imageUrls.length > 0 ? (
+            {getItemImages(item).length > 0 ? (
                 <div className="grid grid-cols-1 gap-2 mb-4 shrink-0">
                     <div className="aspect-video rounded-lg overflow-hidden border bg-white shadow-sm">
-                        <img src={item.imageUrls[0]} alt={type} className="w-full h-full object-cover" />
+                        <img src={getItemImages(item)[0]} alt={type} className="w-full h-full object-cover" />
                     </div>
                 </div>
             ) : (
@@ -135,26 +189,26 @@ const MatchComparisonDialog = ({ matchId, isOpen, onOpenChange }: { matchId: num
 
             <div className="space-y-3 flex-1">
                 <div>
-                    <div className="font-bold text-slate-900 text-sm leading-tight mb-1">{item?.title || "N/A"}</div>
-                    <div className="text-[10px] text-slate-400 font-mono">ID: {item?.lostItemId || item?.foundItemId} • {item?.categoryName || "N/A"}</div>
+                    <div className="font-bold text-slate-900 text-sm leading-tight mb-1">{getItemTitle(item)}</div>
+                    <div className="text-[10px] text-slate-400 font-mono">ID: {getItemId(item)} • {getItemCategory(item, categories)}</div>
                 </div>
 
                 <div className="bg-white/80 p-3 rounded-md border border-slate-200 text-slate-700 text-xs shadow-sm flex-1">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mô tả:</p>
-                    <p className="line-clamp-4">{item?.description || "Không có mô tả chi tiết."}</p>
+                    <p className="line-clamp-4">{getItemDescription(item)}</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-1.5 mt-auto pt-2">
                     <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
                         <MapPin className="w-3 h-3 text-slate-400" />
-                        <span className="truncate">{item?.lostLocation || item?.foundLocation || "N/A"}</span>
+                        <span className="truncate">{getItemLocation(item)}</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
                         <Clock className="w-3 h-3 text-slate-400" />
-                        <span>{item?.lostDate || item?.foundDate ? format(new Date(item?.lostDate || item.foundDate), "dd/MM/yyyy") : "N/A"}</span>
+                        <span>{getItemDate(item) ? format(new Date(getItemDate(item)), "dd/MM/yyyy") : "N/A"}</span>
                     </div>
                     <div className="bg-white px-2 py-1 rounded border border-slate-100 text-[10px] font-medium text-slate-500 mt-1">
-                        Cơ sở: <strong>{item?.campusName || "N/A"}</strong>
+                        Cơ sở: <strong>{getItemCampus(item, campuses)}</strong>
                     </div>
                 </div>
             </div>
@@ -184,8 +238,8 @@ const MatchComparisonDialog = ({ matchId, isOpen, onOpenChange }: { matchId: num
                     <div className="py-20 text-center text-red-500">Lỗi khi tải dữ liệu đối chiếu.</div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                        {renderItemCard("Tin báo mất (Sinh viên)", match.lostItem, 'lost')}
-                        {renderItemCard("Vật phẩm nhặt được (Kho)", match.foundItem, 'found')}
+                        {renderItemCard("Tin báo mất (Sinh viên)", getProp(match, ['lostItem', 'LostItem']), 'lost', categories, campuses)}
+                        {renderItemCard("Vật phẩm nhặt được (Kho)", getProp(match, ['foundItem', 'FoundItem']), 'found', categories, campuses)}
                     </div>
                 )}
 
@@ -207,6 +261,10 @@ export const ClaimsManagement = () => {
     const [conflictedPage, setConflictedPage] = useState(0);
     const [matchesPage, setMatchesPage] = useState(0);
     const pageSize = 10;
+
+    // Fetch reference data for ID-to-Name resolution
+    const { data: categories } = useGetCategoriesQuery();
+    const { data: campuses } = useGetCampusesForAdminQuery();
 
     // Fetching data for all tabs to get counts for badges
     const { data: pendingData, isLoading: isLoadingPending } = useGetPendingClaimsQuery({ pageNumber: pendingPage + 1, pageSize });
@@ -343,8 +401,8 @@ export const ClaimsManagement = () => {
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    <div className="font-medium text-slate-900 text-sm truncate max-w-[200px]">{claim.foundItemTitle || "N/A"}</div>
-                                    <div className="text-[10px] text-slate-400">ID Vật phẩm: {claim.foundItemId}</div>
+                                    <div className="font-medium text-slate-900 text-sm truncate max-w-[200px]">{getProp(claim, ['foundItemTitle', 'FoundItemTitle']) || "N/A"}</div>
+                                    <div className="text-[10px] text-slate-400">ID Vật phẩm: {getProp(claim, ['foundItemId', 'FoundItemId'])}</div>
                                 </TableCell>
                                 <TableCell className="text-slate-500 text-xs">
                                     {format(new Date(claim.claimDate), "dd/MM/yyyy HH:mm")}
@@ -406,10 +464,10 @@ export const ClaimsManagement = () => {
 
         // Group by foundItemId
         const groups = claimsList.reduce((acc: Record<number, { title: string, items: Claim[] }>, claim) => {
-            const id = claim.foundItemId || 0;
+            const id = Number(getProp(claim, ['foundItemId', 'FoundItemId'])) || 0;
             if (!acc[id]) {
                 acc[id] = {
-                    title: claim.foundItemTitle || "Vật phẩm không xác định",
+                    title: getProp(claim, ['foundItemTitle', 'FoundItemTitle']) || "Vật phẩm không xác định",
                     items: []
                 };
             }
@@ -565,15 +623,15 @@ export const ClaimsManagement = () => {
                                 matches.map((match: any) => (
                                     <TableRow key={match.matchId} className="hover:bg-slate-50/30">
                                         <TableCell>
-                                            <div className="font-medium text-slate-900 text-sm">{match.lostItem.title}</div>
+                                            <div className="font-medium text-slate-900 text-sm">{getItemTitle(getProp(match, ['lostItem', 'LostItem']))}</div>
                                             <div className="text-[10px] text-slate-400 font-mono">
-                                                ID: {match.lostItem.lostItemId} • {match.lostItem.campusName || "N/A"}
+                                                ID: {getItemId(getProp(match, ['lostItem', 'LostItem']))} • {getItemCampus(getProp(match, ['lostItem', 'LostItem']), campuses)}
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="font-medium text-slate-900 text-sm">{match.foundItem.title}</div>
+                                            <div className="font-medium text-slate-900 text-sm">{getItemTitle(getProp(match, ['foundItem', 'FoundItem']))}</div>
                                             <div className="text-[10px] text-slate-400 font-mono">
-                                                ID: {match.foundItem.foundItemId} • {match.foundItem.campusName || "N/A"}
+                                                ID: {getItemId(getProp(match, ['foundItem', 'FoundItem']))} • {getItemCampus(getProp(match, ['foundItem', 'FoundItem']), campuses)}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-slate-500 text-xs">

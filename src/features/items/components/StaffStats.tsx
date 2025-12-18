@@ -18,7 +18,7 @@ export const StaffStats = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalFound}</div>
-            <p className="text-xs text-muted-foreground">+20 so với tháng trước</p>
+            {/* <p className="text-xs text-muted-foreground">+20 so với tháng trước</p> */}
           </CardContent>
         </Card>
 
@@ -64,15 +64,15 @@ export const StaffStats = () => {
           </CardHeader>
           <CardContent className="pl-2">
             <div className="space-y-4">
-               {stats?.categoryStats?.map((cat) => (
-                 <div key={cat.name} className="flex items-center">
-                    <div className="w-[100px] text-sm font-medium text-slate-500">{cat.name}</div>
-                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                       <div className="h-full bg-slate-900" style={{ width: `${(cat.value / 150) * 100}%` }}></div>
-                    </div>
-                    <div className="w-[50px] text-right text-sm">{cat.value}</div>
-                 </div>
-               ))}
+              {stats?.categoryStats?.map((cat) => (
+                <div key={cat.name} className="flex items-center">
+                  <div className="w-[100px] text-sm font-medium text-slate-500">{cat.name}</div>
+                  <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-slate-900" style={{ width: `${(cat.value / 150) * 100}%` }}></div>
+                  </div>
+                  <div className="w-[50px] text-right text-sm">{cat.value}</div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -83,9 +83,9 @@ export const StaffStats = () => {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-slate-500 space-y-2">
-               <p>- Tháng này sinh viên mất thẻ xe nhiều đột biến.</p>
-               <p>- Đã thanh lý 5 bình nước để quên từ năm ngoái.</p>
-               <p>- Cần kiểm tra lại Camera khu vực nhà xe A.</p>
+              <p>- Tháng này sinh viên mất thẻ xe nhiều đột biến.</p>
+              <p>- Đã thanh lý 5 bình nước để quên từ năm ngoái.</p>
+              <p>- Cần kiểm tra lại Camera khu vực nhà xe A.</p>
             </div>
           </CardContent>
         </Card>

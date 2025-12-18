@@ -16,14 +16,11 @@ import type { FoundItem } from '@/types';
 export const IncomingItemsTable = () => {
   const { toast } = useToast();
 
-  // 1. Lấy dữ liệu từ API
-  const { data, isLoading } = useGetIncomingItemsQuery();
+  // 1. Lấy dữ liệu từ API (Chỉ lấy status 'Open' theo yêu cầu)
+  const { data, isLoading } = useGetIncomingItemsQuery({ Status: 'Open', PageNumber: 1, PageSize: 20 });
 
-  // Defensive data extraction (handles flat array or paginated response)
-  const rawItems = (data as any)?.items || (Array.isArray(data) ? data : []);
-
-  // 👇 QUAN TRỌNG: Chỉ lọc lấy những item có status là 'Open'
-  const openItems = rawItems.filter((item: FoundItem) => item.status === 'Open');
+  // 👇 Lấy danh sách items từ response phân trang
+  const openItems = data?.items || [];
 
   // 2. Mutation update status
   const [updateItemStatus, { isLoading: isUpdating }] = useUpdateItemStatusMutation();
