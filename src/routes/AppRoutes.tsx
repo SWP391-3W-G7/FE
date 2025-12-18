@@ -9,6 +9,9 @@ import ReportFoundPage from '@/pages/private/student/ReportFoundPage';
 import FindItemsPage from '@/pages/private/student/FindItemsPage';
 import ClaimItemPage from '@/pages/private/student/ClaimItemPage';
 import StudentDashboard from '@/pages/private/student/StudentDashboard';
+import ProfilePage from '@/pages/private/student/ProfilePage';
+import EditLostItemPage from '@/pages/private/student/EditLostItemPage';
+import EditFoundItemPage from '@/pages/private/student/EditFoundItemPage';
 import SecurityLogPage from '@/pages/private/security/SecurityLogPage';
 import AdminDashboard from '@/pages/private/admin/AdminDashboard';
 import AdminCampusPage from '@/pages/private/admin/AdminCampusPage';
@@ -21,19 +24,17 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<AuthPage />} />
-      <Route path="/unauthorized" element={<div className="p-10 text-red-500 text-center text-xl">403 - Bạn không có quyền truy cập!</div>} />
+      <Route
+        path="/unauthorized"
+        element={<div className="p-10 text-red-500 text-center text-xl">403 - Bạn không có quyền truy cập!</div>}
+      />
 
-      {/* Public Routes */}
+      {/* Public */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/report-lost" element={<ReportItemPage />} />
-        <Route path="/report-found" element={<ReportFoundPage />} />
-        <Route path="/items" element={<FindItemsPage />} />
-        <Route path="/items/:id" element={<ClaimItemPage />} />
-        <Route path="/my-claims" element={<StudentDashboard />} />
       </Route>
 
-      {/* Student Routes */}
+      {/* Student */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.STUDENT]} />}>
         <Route element={<MainLayout />}>
           <Route path="/report-lost" element={<ReportItemPage />} />
@@ -41,10 +42,20 @@ const AppRoutes = () => {
           <Route path="/items" element={<FindItemsPage />} />
           <Route path="/items/:id" element={<ClaimItemPage />} />
           <Route path="/my-claims" element={<StudentDashboard />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/edit-lost/:id" element={<EditLostItemPage />} />
+          <Route path="/edit-found/:id" element={<EditFoundItemPage />} />
         </Route>
       </Route>
 
-      {/* Security Routes */}
+      {/* Staff */}
+      <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF]} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/staff/dashboard" element={<StaffDashboard />} />
+        </Route>
+      </Route>
+
+      {/* Security */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.SECURITY]} />}>
         <Route element={<MainLayout />}>
           <Route path="/security/dashboard" element={<SecurityDashboard />} />
@@ -66,7 +77,7 @@ const AppRoutes = () => {
         </Route>
       </Route>
 
-      {/* Admin Routes */}
+      {/* Admin */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
         <Route element={<MainLayout />}>
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

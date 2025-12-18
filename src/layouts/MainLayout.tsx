@@ -90,7 +90,6 @@ const MainLayout = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                       <Avatar className="h-9 w-9 border border-slate-200">
-                        <AvatarImage src={user.avatarUrl || ""} alt={user.fullName} />
                         <AvatarFallback className="bg-orange-100 text-orange-700 font-bold">
                           {user.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
                         </AvatarFallback>
@@ -124,19 +123,29 @@ const MainLayout = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
                           <PackagePlus className="mr-2 h-4 w-4" />
-                          Trang Quản Trị
+                          Quản lý Lost & Found
                         </DropdownMenuItem>
-                       </>
+                      </>
                     )}
 
+
                     {user.role === 'SECURITY' && (
-                       <>
-                        <DropdownMenuSeparator />
+                      <>
                         <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>
+                          <PackagePlus className="mr-2 h-4 w-4" />
+                          Ghi nhận đồ nhặt
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {/* Admin Menu Items */}
+                    {user.role === 'ADMIN' && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
                           <PackagePlus className="mr-2 h-4 w-4" />
                           Trang Quản Trị
                         </DropdownMenuItem>
-                       </>
+                      </>
                     )}
 
                     {user.role === 'STAFF' && (

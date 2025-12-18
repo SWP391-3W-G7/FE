@@ -28,8 +28,9 @@ export const ReturnCounter = () => {
   const [selectedClaim, setSelectedClaim] = useState<Claim | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Filter: Tìm theo tên SV hoặc MSSV
-  const filteredClaims = claims?.filter(claim => 
+  // Filter: Tìm theo tên SV hoặc MSSV - ensure array safety
+  const claimsArray = Array.isArray(claims) ? claims : [];
+  const filteredClaims = claimsArray.filter(claim => 
     (claim.studentName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     (String(claim.studentId).toLowerCase()).includes(searchTerm.toLowerCase())
   );

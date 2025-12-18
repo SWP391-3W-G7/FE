@@ -1,6 +1,6 @@
 import { rootApi } from "@/services/rootApi";
 import { loginSuccess } from "./authSlice";
-import { type User, type LoginResponse } from "@/types"; // Import type ông đã định nghĩa
+import { type User, type LoginResponse } from "@/types"; 
 
 export const authApi = rootApi.injectEndpoints({
   endpoints: (build) => ({
@@ -8,10 +8,9 @@ export const authApi = rootApi.injectEndpoints({
       query: (credentials) => ({
         url: "/Users/login",
         method: "POST",
-        data: credentials, // Dùng 'data' vì ông dùng axiosBaseQuery
+        data: credentials,
       }),
 
-      // 🔥 ĐOẠN NÀY LÀ QUAN TRỌNG NHẤT
       transformResponse: (rawResult: any) => {
         console.log("📨 Raw API response:", rawResult);
         
@@ -40,7 +39,7 @@ export const authApi = rootApi.injectEndpoints({
 
         console.log("✅ Final role:", role);
 
-        // 3. Gom các trường lẻ tẻ thành object User
+
         const user: User = {
           email: rawResult.email,
           fullName: rawResult.fullName,
@@ -49,9 +48,6 @@ export const authApi = rootApi.injectEndpoints({
           campusId: rawResult.campusId,
         };
 
-        console.log("👤 User object:", user);
-
-        // 4. Trả về đúng cấu trúc { user, token } mà authSlice đang đợi
         return {
           user: user,
           token: accessToken,
@@ -61,9 +57,8 @@ export const authApi = rootApi.injectEndpoints({
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          // data lúc này đã qua transformResponse => { user: {...}, token: "..." }
           
-          dispatch(loginSuccess(data)); // Redux lưu ngon lành!
+          dispatch(loginSuccess(data)); 
         } catch (err) {
           console.error("Login failed: ", err);
         }
@@ -77,7 +72,25 @@ export const authApi = rootApi.injectEndpoints({
         data: userData,
       }),
     }),
+
+    // Update user profile
+    updateProfile: build.mutation<void, { fullName: string }>({
+      query: (data) => ({
+        url: "/Users/profile",
+        method: "PUT",
+        data,
+      }),
+    }),
+
+    // Change password
+    changePassword: build.mutation<void, { currentPassword: string; newPassword: string }>({
+      query: (data) => ({
+        url: "/Users/change-password",
+        method: "PUT",
+        data,
+      }),
+    }),
   }),
 });
 
-export const { useLoginMutation, useRegisterMutation } = authApi;
+export const { useLoginMutation, useRegisterMutation, useUpdateProfileMutation, useChangePasswordMutation } = authApi;

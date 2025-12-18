@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Filter, MapPin, Calendar, ArrowUpRight } from 'lucide-react';
+import { Search, Filter, MapPin, Calendar, ArrowUpRight, PackageOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import { useGetFoundItemsQuery, useGetCategoriesQuery, useGetCampusesQuery } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
@@ -21,10 +21,11 @@ const FindItemsPage = () => {
     const [searchParams] = useSearchParams();
     const urlKeyword = searchParams.get('keyword') || "";
 
-    // API calls
+    // --- API Calls ---
     const { data: campuses = [], isLoading: isCampusesLoading } = useGetCampusesQuery();
     const { data: categories = [] } = useGetCategoriesQuery();
 
+    // --- State Management ---
     const [keyword, setKeyword] = useState(urlKeyword);
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     
@@ -36,13 +37,35 @@ const FindItemsPage = () => {
         return "all";
     });
 
+    // Lấy toàn bộ items theo Campus (API chỉ hỗ trợ filter Campus)
     const { data: items = [], isLoading, isFetching } = useGetFoundItemsQuery({
-        campusId: selectedCampus === "all" ? undefined : selectedCampus
+        campusId: selectedCampus === "all" ? undefined : selectedCampus, status: "Stored"
     });
+
+    // --- Client-side Filtering Logic ---
+    const filteredItems = useMemo(() => {
+        // Ensure items is an array before filtering
+        const itemsArray = Array.isArray(items) ? items : [];
+        if (itemsArray.length === 0) return [];
+
+        return itemsArray.filter((item: FoundItem) => {
+            // 1. Filter theo Keyword (Title hoặc Description)
+            const searchLower = keyword.toLowerCase().trim();
+            const matchesKeyword = 
+                item.title.toLowerCase().includes(searchLower) || 
+                (item.description && item.description.toLowerCase().includes(searchLower));
+
+            // 2. Filter theo Category
+            const matchesCategory = selectedCategory === "all" || item.categoryId.toString() === selectedCategory;
+
+            return matchesKeyword && matchesCategory;
+        });
+    }, [items, keyword, selectedCategory]);
 
     return (
         <div className="container mx-auto px-4 py-8 min-h-screen">
 
+            {/* HEADER */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900">Tìm đồ thất lạc</h1>
@@ -55,9 +78,11 @@ const FindItemsPage = () => {
                 </Button>
             </div>
 
-            <div className="bg-white p-4 rounded-lg border shadow-sm mb-8 top-20 z-10">
+            {/* FILTERS BAR */}
+            <div className="bg-white p-4 rounded-lg border shadow-sm mb-8 top-20 z-10 sticky md:static">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
 
+                    {/* Search Input */}
                     <div className="md:col-span-5 relative">
                         <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                         <Input
@@ -68,6 +93,7 @@ const FindItemsPage = () => {
                         />
                     </div>
 
+                    {/* Campus Select */}
                     <div className="md:col-span-3">
                         <Select value={selectedCampus} onValueChange={setSelectedCampus}>
                             <SelectTrigger>
@@ -87,6 +113,7 @@ const FindItemsPage = () => {
                         </Select>
                     </div>
 
+                    {/* Category Select */}
                     <div className="md:col-span-3">
                         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                             <SelectTrigger>
@@ -106,10 +133,11 @@ const FindItemsPage = () => {
                         </Select>
                     </div>
 
+                    {/* Clear Filter Button */}
                     <div className="md:col-span-1">
                         <Button
                             variant="ghost"
-                            className="w-full text-xs text-slate-500"
+                            className="w-full text-xs text-slate-500 hover:text-red-500"
                             onClick={() => {
                                 setKeyword("");
                                 setSelectedCampus("all");
@@ -122,6 +150,7 @@ const FindItemsPage = () => {
                 </div>
             </div>
 
+            {/* RESULTS GRID */}
             {isLoading || isFetching ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -134,20 +163,28 @@ const FindItemsPage = () => {
                         </div>
                     ))}
                 </div>
-            ) : items.length > 0 ? (
+            ) : filteredItems.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {items.map((item: FoundItem) => (
+                    {filteredItems.map((item: FoundItem) => (
                         <Card key={item.foundItemId} className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-slate-200 flex flex-col">
-
+                            {/* Image Section */}
                             <div className="bg-slate-100 relative">
                                 <AspectRatio ratio={4 / 3}>
-                                    <img
-                                        src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "https://placehold.co/400x300?text=No+Image"} 
-                                        alt={item.title}
-                                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    />
+                                    {item.imageUrls && item.imageUrls.length > 0 ? (
+                                        <img
+                                            src={item.imageUrls[0]}
+                                            alt={item.title}
+                                            className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center bg-slate-50">
+                                            <PackageOpen className="h-10 w-10 text-slate-300" />
+                                        </div>
+                                    )}
                                 </AspectRatio>
-                                <Badge className="absolute top-2 right-2 bg-green-500/90 backdrop-blur-sm">
+                                <Badge className={`absolute top-2 right-2 backdrop-blur-sm ${
+                                    item.status === 'Open' ? 'bg-blue-500/90' : 'bg-green-500/90'
+                                }`}>
                                     {item.status}
                                 </Badge>
                             </div>
@@ -174,7 +211,7 @@ const FindItemsPage = () => {
                                     <Calendar className="h-3 w-3 shrink-0" />
                                     <span>{format(new Date(item.foundDate), "dd/MM/yyyy HH:mm")}</span>
                                 </div>
-                                <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded mt-2 line-clamp-2">
+                                <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded mt-2 line-clamp-2 border border-slate-100">
                                     {item.campusName}
                                 </div>
                             </CardContent>
@@ -194,7 +231,7 @@ const FindItemsPage = () => {
                     </div>
                     <h3 className="text-xl font-medium text-slate-900">Không tìm thấy kết quả nào</h3>
                     <p className="text-slate-500 mt-2 max-w-sm text-center">
-                        Hãy thử thay đổi từ khóa hoặc bộ lọc. Nếu vẫn không thấy, hãy tạo tin báo mất.
+                        Không tìm thấy vật phẩm nào phù hợp với từ khóa <strong>"{keyword}"</strong>.
                     </p>
                     <Button variant="link" onClick={() => navigate('/report-lost')} className="mt-4 text-orange-600">
                         Tạo tin báo mất đồ &rarr;

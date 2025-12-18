@@ -11,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAppSelector } from '@/store'; 
+import { selectCurrentUser } from '@/features/auth/authSlice';
 
-// Validation
 const claimSchema = z.object({
   title: z.string().min(5, "Tiêu đề quá ngắn"),
   description: z.string().min(10, "Vui lòng mô tả kỹ hơn để Staff xác minh (VD: Số tiền, vết trầy, pass...)"),
@@ -28,6 +29,9 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
+  // Lấy user để có CampusId
+  const user = useAppSelector(selectCurrentUser); 
+
   const [createClaim, { isLoading }] = useCreateClaimMutation();
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -40,7 +44,6 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
     },
   });
 
-  // Handle Images (Giống form trước)
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
@@ -56,15 +59,44 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
   };
 
   const onSubmit = async (data: ClaimFormValues) => {
+    // Validate cơ bản
+    if (!user?.campusId) {
+        toast({
+            variant: "destructive",
+            title: "Lỗi",
+            description: "Không xác định được Campus của bạn. Vui lòng đăng nhập lại.",
+        });
+        return;
+    }
+
     try {
       const formData = new FormData();
-      formData.append("foundItemId", foundItemId);
-      formData.append("title", data.title); // Tiêu đề bằng chứng
-      formData.append("description", data.description); // Mô tả chi tiết
       
-      selectedImages.forEach((file) => {
-        formData.append("images", file);
-      });
+      // --- SỬA CÁC KEY CHO KHỚP API ---
+      
+      // 1. FoundItemId (Backend: int32)
+      formData.append("FoundItemId", foundItemId); 
+      
+      // 2. EvidenceTitle (Backend: string)
+      formData.append("EvidenceTitle", data.title); 
+      
+      // 3. EvidenceDescription (Backend: string)
+      formData.append("EvidenceDescription", data.description); 
+      
+      // 4. CampusId (Backend: int32 - Bắt buộc)
+      formData.append("CampusId", user.campusId.toString());
+
+      // 5. EvidenceImages (Backend: array file)
+      // Lưu ý: Key phải là "EvidenceImages" chứ không phải "images"
+      if (selectedImages.length > 0) {
+          selectedImages.forEach((file) => {
+            formData.append("EvidenceImages", file);
+          });
+      } else {
+        // Nếu backend yêu cầu array nhưng không có file, có thể cần xử lý tùy backend
+        // Nhưng thường multipart/form-data bỏ qua cũng được nếu optional
+        // Nếu bắt buộc array rỗng thì backend thường tự handle
+      }
 
       await createClaim(formData).unwrap();
 
@@ -73,7 +105,7 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
         description: "Vui lòng chờ Staff duyệt. Bạn có thể theo dõi trong Lịch sử.",
       });
 
-      navigate('/my-claims'); // Chuyển đến trang lịch sử
+      navigate('/my-claims');
 
     } catch (error) {
       console.error(error);
@@ -87,6 +119,7 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
 
   return (
     <Form {...form}>
+      {/* ... Phần giao diện giữ nguyên ... */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         
         <FormField
@@ -111,7 +144,7 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
               <FormLabel>Mô tả chi tiết (Quan trọng)</FormLabel>
               <FormControl>
                 <Textarea 
-                  placeholder="Hãy mô tả những đặc điểm mà chỉ chủ nhân mới biết. Ví dụ: Trong ví có 500k, thẻ xe buýt, pass điện thoại là 1234, có vết nứt ở góc..." 
+                  placeholder="Hãy mô tả những đặc điểm..." 
                   className="h-32 bg-yellow-50/50 border-yellow-200 focus-visible:ring-yellow-400"
                   {...field} 
                 />

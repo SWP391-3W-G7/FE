@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { CalendarIcon, Loader2, Upload, X } from 'lucide-react';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { useGetCategoriesQuery, useCreateLostItemMutation } from '../../items/itemApi';
+import { useGetCategoriesQuery, useGetCampusesQuery, useCreateLostItemMutation } from '../../items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export const ReportLostForm = () => {
     const user = useAppSelector(selectCurrentUser);
 
     const { data: categories = [] } = useGetCategoriesQuery();
+    const { data: campuses = [] } = useGetCampusesQuery();
     const [createLostItem, { isLoading }] = useCreateLostItemMutation();
 
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -45,9 +46,7 @@ export const ReportLostForm = () => {
 
     const form = useForm<ReportFormValues>({
         resolver: zodResolver(reportSchema),
-        defaultValues: {
-            campusId: user?.campusName || "hcm-nvh",
-        },
+        defaultValues: {},
     });
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,17 +67,19 @@ export const ReportLostForm = () => {
     const onSubmit = async (data: ReportFormValues) => {
         try {
             const formData = new FormData();
-            formData.append("title", data.title);
-            formData.append("description", data.description);
-            formData.append("categoryId", data.categoryId);
-            formData.append("campusId", data.campusId);
-            formData.append("lostDate", data.lostDate.toISOString());
-            formData.append("lostLocation", data.lostLocation);
+            formData.append("Title", data.title);
+            formData.append("Description", data.description);
+            formData.append("CategoryId", data.categoryId);
+            formData.append("CampusId", data.campusId);
+            formData.append("LostDate", data.lostDate.toISOString());
+            formData.append("LostLocation", data.lostLocation);
+            
 
             selectedImages.forEach((file) => {
-                formData.append("images", file);
+                formData.append("Images", file);
             });
 
+            console.log(formData);
             await createLostItem(formData).unwrap();
 
             toast({
@@ -192,13 +193,54 @@ export const ReportLostForm = () => {
                                         <Calendar
                                             mode="single"
                                             selected={field.value}
-                                            onSelect={field.onChange}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    const currentValue = field.value;
+                                                    if (currentValue) {
+                                                        date.setHours(currentValue.getHours());
+                                                        date.setMinutes(currentValue.getMinutes());
+                                                    }
+                                                    field.onChange(date);
+                                                }
+                                            }}
                                             disabled={(date) =>
                                                 date > new Date() || date < new Date("1900-01-01")
                                             }
                                             initialFocus
-                                            locale={vi} // Import locale tiếng Việt
+                                            locale={vi}
                                         />
+                                        <div className="border-t p-3 flex items-center gap-2">
+                                            <span className="text-sm text-muted-foreground">Giờ:</span>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                max={23}
+                                                placeholder="HH"
+                                                className="w-16 text-center"
+                                                value={field.value ? field.value.getHours() : ""}
+                                                onChange={(e) => {
+                                                    const hours = parseInt(e.target.value) || 0;
+                                                    const date = field.value ? new Date(field.value) : new Date();
+                                                    date.setHours(Math.min(23, Math.max(0, hours)));
+                                                    field.onChange(date);
+                                                }}
+                                            />
+                                            <span>:</span>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                max={59}
+                                                placeholder="MM"
+                                                className="w-16 text-center"
+                                                value={field.value ? field.value.getMinutes() : ""}
+                                                onChange={(e) => {
+                                                    const minutes = parseInt(e.target.value) || 0;
+                                                    const date = field.value ? new Date(field.value) : new Date();
+                                                    date.setMinutes(Math.min(59, Math.max(0, minutes)));
+                                                    field.onChange(date);
+                                                }}
+                                            />
+                                        </div>
                                     </PopoverContent>
                                 </Popover>
                                 <FormMessage />
@@ -219,8 +261,11 @@ export const ReportLostForm = () => {
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="hcm-nvh">HCM - NVH Sinh Viên</SelectItem>
-                                        <SelectItem value="hcm-shtp">HCM - SHTP (Q9)</SelectItem>
+                                        {campuses.map((campus) => (
+                                            <SelectItem key={campus.id} value={campus.id.toString()}>
+                                                {campus.description}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />

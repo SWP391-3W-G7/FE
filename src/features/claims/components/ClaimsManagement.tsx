@@ -96,6 +96,9 @@ export const ClaimsManagement = () => {
     // --- RENDER ---
     if (isLoading) return <div className="p-4 text-center text-slate-500">Đang tải danh sách yêu cầu...</div>;
 
+    // Ensure claims is an array
+    const claimsArray = Array.isArray(claims) ? claims : [];
+
     return (
         <div className="bg-white rounded border shadow-sm">
             <Table>
@@ -108,10 +111,10 @@ export const ClaimsManagement = () => {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {!claims || claims.length === 0 ? (
+                    {claimsArray.length === 0 ? (
                         <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Không có yêu cầu nào chờ duyệt.</TableCell></TableRow>
                     ) : (
-                        claims.map((claim) => (
+                        claimsArray.map((claim) => (
                             <TableRow key={claim.claimId}>
                                 <TableCell>
                                     <div className="flex items-center gap-3">
@@ -265,7 +268,7 @@ export const ClaimsManagement = () => {
                                 </TableCell>
                             </TableRow>
                         ))
-                    )}
+                    )})()
                 </TableBody>
             </Table>
         </div>
