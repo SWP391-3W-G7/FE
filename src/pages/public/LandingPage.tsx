@@ -18,14 +18,14 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: items, isLoading } = useGetFoundItemsQuery({ status: "Stored" });
+  const { data: response, isLoading } = useGetFoundItemsQuery({ Status: "Stored" });
 
   const recentItems = useMemo(() => {
-    const itemsArray = Array.isArray(items) ? items : [];
+    const itemsArray = Array.isArray(response?.items) ? response.items : [];
     return [...itemsArray]
       .sort((a, b) => new Date(b.foundDate).getTime() - new Date(a.foundDate).getTime())
       .slice(0, 4);
-  }, [items]);
+  }, [response]);
 
   const handleSearch = () => {
     if (searchTerm.trim()) {

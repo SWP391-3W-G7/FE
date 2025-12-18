@@ -10,11 +10,11 @@ import { ReturnCounter } from '@/features/items/components/ReturnCounter';
 import { LostReportsManager } from '@/features/items/components/LostReportsManager';
 
 // API hooks for counts
-import { 
-  useGetIncomingItemsQuery, 
-  useGetInventoryItemsQuery, 
+import {
+  useGetFoundItemsQuery,
+  useGetInventoryItemsQuery,
   useGetPendingClaimsQuery,
-  useGetReadyToReturnItemsQuery 
+  useGetReadyToReturnItemsQuery
 } from '@/features/items/itemApi';
 
 // UI
@@ -24,16 +24,32 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import type { FoundItem, Claim } from '@/types';
+import { useState } from 'react';
+import { useAppSelector } from '@/store';
+import { selectCurrentUser } from '@/features/auth/authSlice';
 
 export const StaffDashboard = () => {
   // Fetch data for tab counts
-  const { data: incomingItems } = useGetIncomingItemsQuery();
+  const user = useAppSelector(selectCurrentUser);
+
+  const [selectedCampus, setSelectedCampus] = useState<string>(() => {
+    if (user?.campusId) {
+      return user.campusId.toString();
+    }
+    return "all";
+  });
+  const { data: foundItems } = useGetFoundItemsQuery({
+    CampusId: selectedCampus === "all" ? undefined : selectedCampus
+  });
+   const { data: a } = useGetFoundItemsQuery({
+  });
+  console.log("ddasdada",a?.items);
   const { data: inventoryItems } = useGetInventoryItemsQuery();
   const { data: pendingClaims } = useGetPendingClaimsQuery();
   const { data: readyItems } = useGetReadyToReturnItemsQuery();
 
   // Calculate counts - ensure data is array before filtering
-  const incomingArray = Array.isArray(incomingItems) ? incomingItems : [];
+  const incomingArray = Array.isArray(foundItems?.items) ? foundItems?.items : [];
   const inventoryArray = Array.isArray(inventoryItems) ? inventoryItems : [];
   const claimsArray = Array.isArray(pendingClaims) ? pendingClaims : [];
   const readyArray = Array.isArray(readyItems) ? readyItems : [];
@@ -45,7 +61,7 @@ export const StaffDashboard = () => {
 
   return (
     <div className="p-6 max-w-[1400px] mx-auto space-y-8">
-      
+
       {/* PHẦN 1: HEADER & STATS */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -53,7 +69,7 @@ export const StaffDashboard = () => {
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">Staff Dashboard</h1>
             <p className="text-slate-500">Quản lý quy trình Lost & Found tại Campus.</p>
           </div>
-          
+
           {/* Nút bật "Tin Báo Mất" */}
           <Sheet>
             <SheetTrigger asChild>
@@ -74,7 +90,7 @@ export const StaffDashboard = () => {
         </div>
 
         {/* Stats */}
-        <StaffStats /> 
+        <StaffStats />
       </div>
 
       <Separator />
@@ -82,7 +98,7 @@ export const StaffDashboard = () => {
       {/* PHẦN 2: WORKSPACE */}
       <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200">
         <Tabs defaultValue="incoming" className="w-full">
-          
+
           {/* TabsList với số lượng */}
           <TabsList className="grid w-full grid-cols-4 bg-white shadow-sm border h-12">
             <TabsTrigger value="incoming" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-b-2 data-[state=active]:border-blue-700 rounded-none h-full text-base gap-2">
@@ -93,7 +109,7 @@ export const StaffDashboard = () => {
                 </Badge>
               )}
             </TabsTrigger>
-            
+
             <TabsTrigger value="storage" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-b-2 data-[state=active]:border-blue-700 rounded-none h-full text-base gap-2">
               2. Kho hàng
               {inventoryCount > 0 && (
@@ -102,7 +118,7 @@ export const StaffDashboard = () => {
                 </Badge>
               )}
             </TabsTrigger>
-            
+
             <TabsTrigger value="process" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-b-2 data-[state=active]:border-blue-700 rounded-none h-full text-base gap-2">
               3. Xử lý & Duyệt
               {claimsCount > 0 && (
@@ -111,7 +127,7 @@ export const StaffDashboard = () => {
                 </Badge>
               )}
             </TabsTrigger>
-            
+
             <TabsTrigger value="return" className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:border-b-2 data-[state=active]:border-blue-700 rounded-none h-full text-base gap-2">
               4. Trả đồ
               {returnCount > 0 && (
@@ -123,39 +139,39 @@ export const StaffDashboard = () => {
           </TabsList>
 
           {/* NỘI DUNG CÁC BƯỚC */}
-          
+
           {/* STEP 1: NHẬP KHO */}
           <TabsContent value="incoming" className="mt-6">
-             <IncomingItemsTable />
+            <IncomingItemsTable />
           </TabsContent>
 
           {/* STEP 2: KHO HÀNG */}
           <TabsContent value="storage" className="mt-6">
-             <InventoryTable />
+            <InventoryTable />
           </TabsContent>
 
           {/* STEP 3: XỬ LÝ */}
           <TabsContent value="process" className="mt-6 space-y-8">
-             {/* Phần A: Tranh chấp */}
-             <div className="bg-red-50 border border-red-100 rounded-lg p-4">
-                <h3 className="font-bold text-red-800 mb-2 flex items-center gap-2">
-                  ⚠️ Khu vực Tranh chấp (Cần xử lý trước)
-                </h3>
-                <DisputeResolver />
-             </div>
+            {/* Phần A: Tranh chấp */}
+            <div className="bg-red-50 border border-red-100 rounded-lg p-4">
+              <h3 className="font-bold text-red-800 mb-2 flex items-center gap-2">
+                ⚠️ Khu vực Tranh chấp (Cần xử lý trước)
+              </h3>
+              <DisputeResolver />
+            </div>
 
-             {/* Phần B: Duyệt đơn thường */}
-             <div>
-                <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
-                  📋 Danh sách yêu cầu nhận đồ (Claims)
-                </h3>
-                <ClaimsManagement />
-             </div>
+            {/* Phần B: Duyệt đơn thường */}
+            <div>
+              <h3 className="font-bold text-slate-800 mb-2 flex items-center gap-2">
+                📋 Danh sách yêu cầu nhận đồ (Claims)
+              </h3>
+              <ClaimsManagement />
+            </div>
           </TabsContent>
 
           {/* STEP 4: TRẢ ĐỒ */}
           <TabsContent value="return" className="mt-6">
-             <ReturnCounter />
+            <ReturnCounter />
           </TabsContent>
 
         </Tabs>

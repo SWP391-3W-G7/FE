@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { PackageCheck, MapPin, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // API
-import { useGetIncomingItemsQuery, useUpdateItemStatusMutation } from '@/features/items/itemApi';
+import { useGetFoundItemsQuery, useUpdateItemStatusMutation } from '@/features/items/itemApi';
 
 // UI Libs
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,11 @@ const ITEMS_PER_PAGE = 5;
 export const IncomingItemsTable = () => {
   const { toast } = useToast();
   
-  // 1. Lấy dữ liệu từ API
-  const { data: items, isLoading } = useGetIncomingItemsQuery();
+  // 1. Lấy dữ liệu từ API - API returns { items: FoundItem[], totalCount, ... }
+  const { data: response, isLoading } = useGetFoundItemsQuery({ Status: 'Open' });
   
-  // Chỉ lọc lấy những item có status là 'Open' - ensure array safety
-  const itemsArray = Array.isArray(items) ? items : [];
+  // Extract items from paginated response - ensure array safety
+  const itemsArray = Array.isArray(response?.items) ? response.items : [];
   const openItems = itemsArray.filter((item: FoundItem) => item.status === 'Open');
   
   // 2. Mutation update status
