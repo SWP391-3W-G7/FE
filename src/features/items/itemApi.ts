@@ -7,10 +7,11 @@ import {
   type TemporaryFoundItem,
   type SystemReport,
   type CreateCampusRequest,
+  type UserRole,
   type AdminUser,
   type AssignUserRequest,
   type StaffReport,
-  type PaginatedFoundItemsResponse,
+  type PaginatedResponse,
 } from "@/types";
 
 export const itemApi = rootApi.injectEndpoints({
@@ -150,6 +151,18 @@ export const itemApi = rootApi.injectEndpoints({
 
 
     // got it
+    getIncomingItems: build.query<
+      PaginatedResponse<FoundItem>,
+      { Status?: string; PageNumber?: number; PageSize?: number; CampusId?: number } | void
+    >({
+      query: (params) => ({
+        url: "/found-items",
+        method: "GET",
+        params: params || { Status: 'Open', PageNumber: 1, PageSize: 20 }
+      }),
+      providesTags: ["IncomingItems"],
+    }),
+    // got it
     updateItemStatus: build.mutation<void, { id: number; status: string }>({
       query: ({ id, status }) => ({
         url: `/found-items/${id}/status`,
@@ -162,10 +175,14 @@ export const itemApi = rootApi.injectEndpoints({
 
 
     // got it
-    getInventoryItems: build.query<FoundItem[], void>({
-      query: () => ({
+    getInventoryItems: build.query<
+      PaginatedResponse<FoundItem>,
+      { Status?: string; PageNumber?: number; PageSize?: number; CampusId?: number } | void
+    >({
+      query: (params) => ({
         url: "/found-items",
         method: "GET",
+        params: params || { Status: 'Stored', PageNumber: 1, PageSize: 20 }
       }),
       providesTags: ["InventoryItems"],
     }),
@@ -352,13 +369,12 @@ export const itemApi = rootApi.injectEndpoints({
           else if (roleName.includes('admin')) role = 'ADMIN';
           else if (roleName.includes('user') || roleName.includes('student')) role = 'USER';
 
-          const transformed = {
-            id: user.userId?.toString() || user.email,
+          const transformed: AdminUser = {
             userId: user.userId,
             email: user.email,
             fullName: user.fullName,
-            role: role,
-            campusId: user.campusId?.toString() || '',
+            role: role as UserRole,
+            campusId: user.campusId,
             campusName: user.campusName || '',
             isActive: user.status === 'Active',
           };
