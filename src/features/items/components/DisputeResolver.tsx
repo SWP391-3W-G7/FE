@@ -50,10 +50,11 @@ export const DisputeResolver = () => {
   const { data: items, isLoading } = useGetDisputedItemsQuery();
   const [resolveDispute, { isLoading: isResolving }] = useResolveDisputeMutation();
 
-  // 2. Filter: Chỉ lấy item có >= 2 claimRequests
-  const disputedItems = items?.filter((item: FoundItem) => 
+  // 2. Filter: Chỉ lấy item có >= 2 claimRequests - ensure array safety
+  const itemsArray = Array.isArray(items) ? items : [];
+  const disputedItems = itemsArray.filter((item: FoundItem) => 
     item.claimRequests && item.claimRequests.length >= 2
-  ) || [];
+  );
 
   const handlePickWinner = async (itemId: number, winnerClaimId: number, winnerName: string) => {
     try {

@@ -18,11 +18,11 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: items = [], isLoading } = useGetFoundItemsQuery({ status: "stored" });
+  const { data: items, isLoading } = useGetFoundItemsQuery({ status: "Stored" });
 
   const recentItems = useMemo(() => {
-
-    return [...items]
+    const itemsArray = Array.isArray(items) ? items : [];
+    return [...itemsArray]
       .sort((a, b) => new Date(b.foundDate).getTime() - new Date(a.foundDate).getTime())
       .slice(0, 4);
   }, [items]);

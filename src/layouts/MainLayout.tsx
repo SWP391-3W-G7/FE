@@ -90,7 +90,6 @@ const MainLayout = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                       <Avatar className="h-9 w-9 border border-slate-200">
-                        <AvatarImage src={user.avatarUrl || ""} alt={user.fullName} />
                         <AvatarFallback className="bg-orange-100 text-orange-700 font-bold">
                           {user.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
                         </AvatarFallback>
@@ -110,24 +109,51 @@ const MainLayout = () => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/my-claims')}>
-                      <History className="mr-2 h-4 w-4" />
-                      Lịch sử báo mất
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      Hồ sơ cá nhân
-                    </DropdownMenuItem>
 
-                    {(user.role === 'STAFF' || user.role === 'ADMIN') && (
-                       <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                    {/* Student Menu Items */}
+                    {user.role === 'STUDENT' && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/my-claims')}>
+                          <History className="mr-2 h-4 w-4" />
+                          Quản lý hồ sơ
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/profile')}>
+                          <UserIcon className="mr-2 h-4 w-4" />
+                          Cài đặt tài khoản
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {/* Staff Menu Items */}
+                    {user.role === 'STAFF' && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/staff/dashboard')}>
+                          <PackagePlus className="mr-2 h-4 w-4" />
+                          Quản lý Lost & Found
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {/* Security Menu Items */}
+                    {user.role === 'SECURITY' && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>
+                          <PackagePlus className="mr-2 h-4 w-4" />
+                          Ghi nhận đồ nhặt
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {/* Admin Menu Items */}
+                    {user.role === 'ADMIN' && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
                           <PackagePlus className="mr-2 h-4 w-4" />
                           Trang Quản Trị
                         </DropdownMenuItem>
-                       </>
+                      </>
                     )}
+
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />

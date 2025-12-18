@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { formatInTimeZone } from "date-fns-tz";
 import {
   Clock, CheckCircle2, XCircle,
-  Package, FileQuestion, Pencil, Trash2
+  Package, FileQuestion, Pencil, Trash2,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 import {
@@ -30,6 +31,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Claim, FoundItem, LostItem } from '@/types';
+
+const ITEMS_PER_PAGE = 5;
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -86,6 +89,45 @@ const getStatusBadge = (status: string) => {
   }
 };
 
+// Pagination Component
+const Pagination = ({
+  currentPage,
+  totalPages,
+  onPageChange
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) => {
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-between pt-4 border-t mt-4">
+      <span className="text-sm text-slate-500">
+        Trang {currentPage} / {totalPages}
+      </span>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -97,6 +139,11 @@ const StudentDashboard = () => {
   const [deleteLostItem, { isLoading: deletingLost }] = useDeleteLostItemMutation();
   const [deleteFoundItem, { isLoading: deletingFound }] = useDeleteFoundItemMutation();
 
+  // Pagination state
+  const [claimsPage, setClaimsPage] = useState(1);
+  const [lostPage, setLostPage] = useState(1);
+  const [foundPage, setFoundPage] = useState(1);
+
   // Delete dialog state
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
@@ -104,6 +151,21 @@ const StudentDashboard = () => {
     id: number;
     title: string;
   } | null>(null);
+
+  // Paginate helper
+  const paginate = <T,>(items: T[] | undefined, page: number) => {
+    // Ensure items is an array before processing
+    const itemsArray = Array.isArray(items) ? items : [];
+    if (itemsArray.length === 0) return { paginatedItems: [], totalPages: 0 };
+    const totalPages = Math.ceil(itemsArray.length / ITEMS_PER_PAGE);
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    const paginatedItems = itemsArray.slice(start, start + ITEMS_PER_PAGE);
+    return { paginatedItems, totalPages };
+  };
+
+  const { paginatedItems: paginatedClaims, totalPages: claimsTotalPages } = paginate(claims, claimsPage);
+  const { paginatedItems: paginatedLost, totalPages: lostTotalPages } = paginate(lostItems, lostPage);
+  const { paginatedItems: paginatedFound, totalPages: foundTotalPages } = paginate(foundItems, foundPage);
 
   const handleDelete = async () => {
     if (!deleteDialog) return;
@@ -149,9 +211,15 @@ const StudentDashboard = () => {
 
       <Tabs defaultValue="claims" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="claims">Yêu cầu nhận đồ</TabsTrigger>
-          <TabsTrigger value="lost">Tin báo mất</TabsTrigger>
-          <TabsTrigger value="found">Tin báo nhặt</TabsTrigger>
+          <TabsTrigger value="claims">
+            Yêu cầu nhận đồ {claims?.length ? `(${claims.length})` : ''}
+          </TabsTrigger>
+          <TabsTrigger value="lost">
+            Tin báo mất {lostItems?.length ? `(${lostItems.length})` : ''}
+          </TabsTrigger>
+          <TabsTrigger value="found">
+            Tin báo nhặt {foundItems?.length ? `(${foundItems.length})` : ''}
+          </TabsTrigger>
         </TabsList>
 
         {/* --- TAB YÊU CẦU NHẬN ĐỒ (CLAIMS) --- */}
@@ -161,42 +229,49 @@ const StudentDashboard = () => {
               <CardTitle>Lịch sử nhận đồ</CardTitle>
               <CardDescription>Danh sách các món đồ bạn đã gửi yêu cầu xác minh.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {loadClaims ? <Skeleton className="h-20 w-full" /> :
-                claims?.length === 0 ? <p className="text-center text-slate-500 py-4">Chưa có yêu cầu nào.</p> :
-                  claims?.map((claim: Claim) => {
-                    const evidenceImage = claim.evidences && claim.evidences.length > 0 && claim.evidences[0].imageUrls.length > 0
-                      ? claim.evidences[0].imageUrls[0]
-                      : "https://placehold.co/150x150?text=No+Image";
+            <CardContent>
+              <div className="space-y-4">
+                {loadClaims ? <Skeleton className="h-20 w-full" /> :
+                  claims?.length === 0 ? <p className="text-center text-slate-500 py-4">Chưa có yêu cầu nào.</p> :
+                    paginatedClaims?.map((claim: Claim) => {
+                      const evidenceImage = claim.evidences && claim.evidences.length > 0 && claim.evidences[0].imageUrls.length > 0
+                        ? claim.evidences[0].imageUrls[0]
+                        : "https://placehold.co/150x150?text=No+Image";
 
-                    return (
-                      <div key={claim.claimId} className="flex items-center gap-4 border p-4 rounded-lg bg-white shadow-sm hover:bg-slate-50 transition-colors">
-                        <div className="h-16 w-16 bg-slate-100 rounded-md overflow-hidden shrink-0">
-                          <img src={evidenceImage} alt="Evidence" className="h-full w-full object-cover" />
+                      return (
+                        <div key={claim.claimId} className="flex items-center gap-4 border p-4 rounded-lg bg-white shadow-sm hover:bg-slate-50 transition-colors">
+                          <div className="h-16 w-16 bg-slate-100 rounded-md overflow-hidden shrink-0">
+                            <img src={evidenceImage} alt="Evidence" className="h-full w-full object-cover" />
+                          </div>
+
+                          <div className="flex-1">
+                            <h4 className="font-bold text-slate-900 line-clamp-1">
+                              {claim.foundItemTitle || "Đồ vật chưa đặt tên"}
+                            </h4>
+                            <p className="text-xs text-slate-500">
+                              Gửi ngày: {formatInTimeZone(claim.claimDate, "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm")}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-2">
+                            {getStatusBadge(claim.status)}
+
+                            {claim.status === 'Approved' && (
+                              <span className="text-xs text-green-600 font-medium">Vui lòng đến phòng DVSV để nhận đồ</span>
+                            )}
+                            {claim.status === 'Rejected' && (
+                              <span className="text-xs text-red-500">Yêu cầu xác minh không hợp lệ</span>
+                            )}
+                          </div>
                         </div>
-
-                        <div className="flex-1">
-                          <h4 className="font-bold text-slate-900 line-clamp-1">
-                            {claim.foundItemTitle || "Đồ vật chưa đặt tên"}
-                          </h4>
-                          <p className="text-xs text-slate-500">
-                            Gửi ngày: {formatInTimeZone(claim.claimDate, "Asia/Ho_Chi_Minh", "dd/MM/yyyy HH:mm")}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-col items-end gap-2">
-                          {getStatusBadge(claim.status)}
-
-                          {claim.status === 'Approved' && (
-                            <span className="text-xs text-green-600 font-medium">Vui lòng đến phòng DVSV để nhận đồ</span>
-                          )}
-                          {claim.status === 'Rejected' && (
-                            <span className="text-xs text-red-500">Yêu cầu xác minh không hợp lệ</span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+              </div>
+              <Pagination
+                currentPage={claimsPage}
+                totalPages={claimsTotalPages}
+                onPageChange={setClaimsPage}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -213,52 +288,59 @@ const StudentDashboard = () => {
               <CardTitle>Đồ bạn bị mất</CardTitle>
               <CardDescription>Trạng thái tìm kiếm tài sản của bạn.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4">
-              {loadLost ? <Skeleton className="h-20 w-full" /> :
-                !lostItems || lostItems.length === 0 ? <p className="text-center text-slate-500 py-4">Chưa có tin báo mất nào.</p> :
-                  lostItems?.map((item: LostItem) => (
-                    <div key={item.lostItemId} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-red-50 rounded-full text-red-600">
-                          <FileQuestion className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">{item.title}</h4>
-                          <div className="flex gap-2 text-sm text-slate-500 mt-1">
-                            <span>{item.lostLocation}</span>
-                            <span>•</span>
-                            <span>{item.lostDate}</span>
+            <CardContent>
+              <div className="grid gap-4">
+                {loadLost ? <Skeleton className="h-20 w-full" /> :
+                  !lostItems || lostItems.length === 0 ? <p className="text-center text-slate-500 py-4">Chưa có tin báo mất nào.</p> :
+                    paginatedLost?.map((item: LostItem) => (
+                      <div key={item.lostItemId} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-red-50 rounded-full text-red-600">
+                            <FileQuestion className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">{item.title}</h4>
+                            <div className="flex gap-2 text-sm text-slate-500 mt-1">
+                              <span>{item.lostLocation}</span>
+                              <span>•</span>
+                              <span>{item.lostDate}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {getStatusBadge(item.status)}
+                        <div className="flex items-center gap-3">
+                          {getStatusBadge(item.status)}
 
-                        {/* Edit/Delete chỉ hiện khi status = Open */}
-                        {item.status === 'Open' && (
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-blue-600"
-                              onClick={() => navigate(`/edit-lost/${item.lostItemId}`)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-red-600"
-                              onClick={() => openDeleteDialog('lost', item.lostItemId, item.title)}
-                              disabled={deletingLost}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                          {/* Edit/Delete chỉ hiện khi status = Open */}
+                          {item.status === 'Open' && (
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-500 hover:text-blue-600"
+                                onClick={() => navigate(`/edit-lost/${item.lostItemId}`)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-500 hover:text-red-600"
+                                onClick={() => openDeleteDialog('lost', item.lostItemId, item.title)}
+                                disabled={deletingLost}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+              </div>
+              <Pagination
+                currentPage={lostPage}
+                totalPages={lostTotalPages}
+                onPageChange={setLostPage}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -275,52 +357,59 @@ const StudentDashboard = () => {
               <CardTitle>Đồ bạn nhặt được</CardTitle>
               <CardDescription>Cảm ơn bạn đã giúp đỡ cộng đồng.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4">
-              {loadFound ? <Skeleton className="h-20 w-full" /> :
-                !foundItems || foundItems.length === 0 ? <p className="text-center text-slate-500 py-4">Chưa có tin báo nhặt nào.</p> :
-                  foundItems?.map((item: FoundItem) => (
-                    <div key={item.foundItemId} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-blue-50 rounded-full text-blue-600">
-                          <Package className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">{item.title}</h4>
-                          <div className="flex gap-2 text-sm text-slate-500 mt-1">
-                            <span>{item.foundLocation}</span>
-                            <span>•</span>
-                            <span>{item.campusName}</span>
+            <CardContent>
+              <div className="grid gap-4">
+                {loadFound ? <Skeleton className="h-20 w-full" /> :
+                  !foundItems || foundItems.length === 0 ? <p className="text-center text-slate-500 py-4">Chưa có tin báo nhặt nào.</p> :
+                    paginatedFound?.map((item: FoundItem) => (
+                      <div key={item.foundItemId} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-blue-50 rounded-full text-blue-600">
+                            <Package className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">{item.title}</h4>
+                            <div className="flex gap-2 text-sm text-slate-500 mt-1">
+                              <span>{item.foundLocation}</span>
+                              <span>•</span>
+                              <span>{item.campusName}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {getStatusBadge(item.status)}
+                        <div className="flex items-center gap-3">
+                          {getStatusBadge(item.status)}
 
-                        {/* Edit/Delete chỉ hiện khi status = Open */}
-                        {item.status === 'Open' && (
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-blue-600"
-                              onClick={() => navigate(`/edit-found/${item.foundItemId}`)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-500 hover:text-red-600"
-                              onClick={() => openDeleteDialog('found', item.foundItemId, item.title)}
-                              disabled={deletingFound}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
+                          {/* Edit/Delete chỉ hiện khi status = Open */}
+                          {item.status === 'Open' && (
+                            <div className="flex gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-500 hover:text-blue-600"
+                                onClick={() => navigate(`/edit-found/${item.foundItemId}`)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-500 hover:text-red-600"
+                                onClick={() => openDeleteDialog('found', item.foundItemId, item.title)}
+                                disabled={deletingFound}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+              </div>
+              <Pagination
+                currentPage={foundPage}
+                totalPages={foundTotalPages}
+                onPageChange={setFoundPage}
+              />
             </CardContent>
           </Card>
         </TabsContent>

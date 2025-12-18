@@ -114,14 +114,15 @@ const AdminUsersPage = () => {
     },
   });
 
-  // Filter users by keyword and campus
-  let filteredUsers = users;
+  // Filter users by keyword and campus - ensure array safety
+  const usersArray = Array.isArray(users) ? users : [];
+  let filteredUsers = usersArray;
 
   // Filter by keyword
   if (keyword.trim()) {
     filteredUsers = filteredUsers.filter(user =>
-      user.fullName.toLowerCase().includes(keyword.toLowerCase()) ||
-      user.email.toLowerCase().includes(keyword.toLowerCase())
+      (user.fullName || '').toLowerCase().includes(keyword.toLowerCase()) ||
+      (user.email || '').toLowerCase().includes(keyword.toLowerCase())
     );
   }
 

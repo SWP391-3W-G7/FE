@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { PackageCheck, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { PackageCheck, MapPin, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // API
 import { useGetIncomingItemsQuery, useUpdateItemStatusMutation } from '@/features/items/itemApi';
@@ -13,17 +13,26 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import type { FoundItem } from '@/types';
 
+const ITEMS_PER_PAGE = 5;
+
 export const IncomingItemsTable = () => {
   const { toast } = useToast();
   
   // 1. Lấy dữ liệu từ API
   const { data: items, isLoading } = useGetIncomingItemsQuery();
   
-  // 👇 QUAN TRỌNG: Chỉ lọc lấy những item có status là 'Open'
-  const openItems = items?.filter((item: FoundItem) => item.status === 'Open') || [];
+  // Chỉ lọc lấy những item có status là 'Open' - ensure array safety
+  const itemsArray = Array.isArray(items) ? items : [];
+  const openItems = itemsArray.filter((item: FoundItem) => item.status === 'Open');
   
   // 2. Mutation update status
   const [updateItemStatus, { isLoading: isUpdating }] = useUpdateItemStatusMutation();
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(openItems.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedItems = openItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   // State cho Modal
   const [isOpen, setIsOpen] = useState(false);
@@ -81,16 +90,14 @@ export const IncomingItemsTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {/* 👇 SỬA: Kiểm tra độ dài của openItems thay vì items gốc */}
-          {openItems.length === 0 ? (
+          {paginatedItems.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="h-24 text-center text-slate-500">
                 Không có vật phẩm nào cần nhập kho (Status: Open).
               </TableCell>
             </TableRow>
           ) : (
-            // 👇 SỬA: Map qua openItems
-            openItems.map((item: FoundItem) => (
+            paginatedItems.map((item: FoundItem) => (
               <TableRow key={item.foundItemId}>
                 {/* Cột 1: Ảnh */}
                 <TableCell>
@@ -149,6 +156,33 @@ export const IncomingItemsTable = () => {
           )}
         </TableBody>
       </Table>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t bg-slate-50">
+          <span className="text-sm text-slate-500">
+            Hiển thị {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, openItems.length)} / {openItems.length} vật phẩm
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => p - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => p + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* MODAL CONFIRM */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

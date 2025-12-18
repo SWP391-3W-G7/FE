@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { format, differenceInDays } from 'date-fns';
-import { Search, AlertTriangle, Loader2 } from 'lucide-react';
+import { Search, AlertTriangle, Loader2, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 
-// API: Chỉ cần Query, không cần Mutation nữa
-import { useGetInventoryItemsQuery } from '@/features/items/itemApi';
+// API
+import { useGetInventoryItemsQuery, useGetCategoriesQuery } from '@/features/items/itemApi';
 
 // UI Libs
 import { Button } from "@/components/ui/button";
@@ -11,18 +11,44 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { FoundItem } from '@/types';
 
+const ITEMS_PER_PAGE = 5;
+
 export const InventoryTable = () => {
-  // 1. Chỉ lấy dữ liệu để hiển thị
+  // 1. Lấy dữ liệu
   const { data: items, isLoading } = useGetInventoryItemsQuery();
+  const { data: categories = [] } = useGetCategoriesQuery();
 
+  // State
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // 2. Lọc danh sách (Chỉ tìm theo tên item)
-  const filteredItems = items?.filter((item: FoundItem) => 
-    item.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 2. Lọc danh sách - ensure array safety
+  const itemsArray = Array.isArray(items) ? items : [];
+  const filteredItems = itemsArray.filter((item: FoundItem) => {
+    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || item.categoryName === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedItems = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Reset page when filter changes
+  const handleFilterChange = (value: string) => {
+    setCategoryFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
 
   if (isLoading) {
     return (
@@ -35,16 +61,39 @@ export const InventoryTable = () => {
 
   return (
     <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="flex w-full max-w-sm items-center space-x-2">
-        <Input 
-          placeholder="Tìm kiếm vật phẩm..." 
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <Button size="icon" variant="secondary">
+      {/* Filter Bar */}
+      <div className="flex flex-wrap gap-4 items-center">
+        <div className="flex w-full max-w-sm items-center space-x-2">
+          <Input 
+            placeholder="Tìm kiếm vật phẩm..." 
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
+          <Button size="icon" variant="secondary">
             <Search className="h-4 w-4" />
-        </Button>
+          </Button>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-slate-500" />
+          <Select value={categoryFilter} onValueChange={handleFilterChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Tất cả danh mục" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả danh mục</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.categoryId} value={cat.categoryName}>
+                  {cat.categoryName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <Badge variant="outline" className="ml-auto">
+          Tổng: {filteredItems.length} vật phẩm
+        </Badge>
       </div>
 
       {/* Table Data */}
@@ -59,14 +108,14 @@ export const InventoryTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {!filteredItems || filteredItems.length === 0 ? (
+            {paginatedItems.length === 0 ? (
                <TableRow>
                  <TableCell colSpan={4} className="h-24 text-center text-slate-500">
                    Không tìm thấy vật phẩm nào trong kho.
                  </TableCell>
                </TableRow>
             ) : (
-              filteredItems.map((item: FoundItem) => {
+              paginatedItems.map((item: FoundItem) => {
                 // Tính số ngày tồn kho
                 const daysInStorage = differenceInDays(new Date(), new Date(item.foundDate));
                 const isOverdue = daysInStorage > 180; // > 6 tháng
@@ -137,6 +186,33 @@ export const InventoryTable = () => {
             )}
           </TableBody>
         </Table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t bg-slate-50">
+            <span className="text-sm text-slate-500">
+              Trang {currentPage} / {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => p - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => p + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

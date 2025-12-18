@@ -44,9 +44,11 @@ const FindItemsPage = () => {
 
     // --- Client-side Filtering Logic ---
     const filteredItems = useMemo(() => {
-        if (!items) return [];
+        // Ensure items is an array before filtering
+        const itemsArray = Array.isArray(items) ? items : [];
+        if (itemsArray.length === 0) return [];
 
-        return items.filter((item: FoundItem) => {
+        return itemsArray.filter((item: FoundItem) => {
             // 1. Filter theo Keyword (Title hoặc Description)
             const searchLower = keyword.toLowerCase().trim();
             const matchesKeyword = 
