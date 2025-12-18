@@ -15,7 +15,9 @@ export const rootApi = createApi({
     "ReadyItems",
     "InventoryItems",
     "StatusItems",
-    "Disputes"
+    "Disputes",
+    "MyLostItems",
+    "MyFoundItems"
   ],
   endpoints: () => ({}),
 });

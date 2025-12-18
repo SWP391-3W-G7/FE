@@ -43,7 +43,13 @@ const ClaimItemPage = () => {
           <Card className="overflow-hidden border-slate-200">
             <div className="bg-slate-100">
                <AspectRatio ratio={16 / 9}>
-                 <img src={item.imageUrls[0]} alt={item.title} className="w-full h-full object-cover" />
+                 {item.imageUrls && item.imageUrls.length > 0 ? (
+                   <img src={item.imageUrls[0]} alt={item.title} className="w-full h-full object-cover" />
+                 ) : (
+                   <div className="flex h-full w-full items-center justify-center bg-slate-50">
+                     <span className="text-slate-400">Không có ảnh</span>
+                   </div>
+                 )}
                </AspectRatio>
             </div>
             <CardContent className="p-6 space-y-4">

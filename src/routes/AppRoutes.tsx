@@ -9,6 +9,9 @@ import ReportFoundPage from '@/pages/private/student/ReportFoundPage';
 import FindItemsPage from '@/pages/private/student/FindItemsPage';
 import ClaimItemPage from '@/pages/private/student/ClaimItemPage';
 import StudentDashboard from '@/pages/private/student/StudentDashboard';
+import ProfilePage from '@/pages/private/student/ProfilePage';
+import EditLostItemPage from '@/pages/private/student/EditLostItemPage';
+import EditFoundItemPage from '@/pages/private/student/EditFoundItemPage';
 import SecurityLogPage from '@/pages/private/security/SecurityLogPage';
 import AdminDashboard from '@/pages/private/admin/AdminDashboard';
 import AdminCampusPage from '@/pages/private/admin/AdminCampusPage';
@@ -39,6 +42,9 @@ const AppRoutes = () => {
           <Route path="/items" element={<FindItemsPage />} />
           <Route path="/items/:id" element={<ClaimItemPage />} />
           <Route path="/my-claims" element={<StudentDashboard />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/edit-lost/:id" element={<EditLostItemPage />} />
+          <Route path="/edit-found/:id" element={<EditFoundItemPage />} />
         </Route>
       </Route>
 

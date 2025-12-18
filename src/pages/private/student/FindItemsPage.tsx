@@ -39,7 +39,7 @@ const FindItemsPage = () => {
 
     // Lấy toàn bộ items theo Campus (API chỉ hỗ trợ filter Campus)
     const { data: items = [], isLoading, isFetching } = useGetFoundItemsQuery({
-        campusId: selectedCampus === "all" ? undefined : selectedCampus
+        campusId: selectedCampus === "all" ? undefined : selectedCampus, status: "Stored"
     });
 
     // --- Client-side Filtering Logic ---
