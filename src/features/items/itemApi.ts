@@ -81,6 +81,12 @@ export const itemApi = rootApi.injectEndpoints({
         method: "GET",
       }),
     }),
+    getLostItemById: build.query<LostItem, string | number>({
+      query: (id) => ({
+        url: `/lost-items/${id}`,
+        method: "GET",
+      }),
+    }),
     getFoundItemDetails: build.query<any, number>({
       query: (id) => ({
         url: `/found-items/${id}/details`,
@@ -516,6 +522,7 @@ export const {
   useGetLostItemsForVerificationQuery,
   useVerifyLostItemMutation,
   useGetSystemReportsQuery,
+  useGetLostItemByIdQuery,
   useGetCampusesForAdminQuery,
   useCreateCampusMutation,
   useUpdateCampusMutation,

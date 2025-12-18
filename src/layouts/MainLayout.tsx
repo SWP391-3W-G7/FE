@@ -127,15 +127,6 @@ const MainLayout = () => {
                         </DropdownMenuItem>
                       </>
                     )}
-                    {(user.role === 'STAFF') && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate('/staff/dashboard')}>
-                          <PackagePlus className="mr-2 h-4 w-4" />
-                          Trang Quản Trị
-                        </DropdownMenuItem>
-                      </>
-                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
