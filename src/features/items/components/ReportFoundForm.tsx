@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { CalendarIcon, Loader2, Upload, X } from 'lucide-react';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { useGetCategoriesQuery, useCreateFoundItemMutation } from '../../items/itemApi';
+import { useGetCategoriesQuery, useGetCampusesQuery, useCreateFoundItemMutation } from '../../items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ export const ReportFoundForm = () => {
     const user = useAppSelector(selectCurrentUser);
 
     const { data: categories = [] } = useGetCategoriesQuery();
+    const { data: campuses = [] } = useGetCampusesQuery();
     const [createFoundItem, { isLoading }] = useCreateFoundItemMutation();
 
     const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -44,9 +45,7 @@ export const ReportFoundForm = () => {
 
     const form = useForm<FoundReportFormValues>({
         resolver: zodResolver(foundReportSchema),
-        defaultValues: {
-            campusId: user?.campusId || "hcm-nvh",
-        },
+        defaultValues: {},
     });
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,7 +128,7 @@ export const ReportFoundForm = () => {
                                     </FormControl>
                                     <SelectContent>
                                         {categories.map((cat) => (
-                                            <SelectItem key={cat.categoryID} value={cat.categoryID.toString()}>
+                                            <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
                                                 {cat.categoryName}
                                             </SelectItem>
                                         ))}
@@ -182,11 +181,52 @@ export const ReportFoundForm = () => {
                                         <Calendar
                                             mode="single"
                                             selected={field.value}
-                                            onSelect={field.onChange}
+                                            onSelect={(date) => {
+                                                if (date) {
+                                                    const currentValue = field.value;
+                                                    if (currentValue) {
+                                                        date.setHours(currentValue.getHours());
+                                                        date.setMinutes(currentValue.getMinutes());
+                                                    }
+                                                    field.onChange(date);
+                                                }
+                                            }}
                                             disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                                             initialFocus
                                             locale={vi}
                                         />
+                                        <div className="border-t p-3 flex items-center gap-2">
+                                            <span className="text-sm text-muted-foreground">Giờ:</span>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                max={23}
+                                                placeholder="HH"
+                                                className="w-16 text-center"
+                                                value={field.value ? field.value.getHours() : ""}
+                                                onChange={(e) => {
+                                                    const hours = parseInt(e.target.value) || 0;
+                                                    const date = field.value ? new Date(field.value) : new Date();
+                                                    date.setHours(Math.min(23, Math.max(0, hours)));
+                                                    field.onChange(date);
+                                                }}
+                                            />
+                                            <span>:</span>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                max={59}
+                                                placeholder="MM"
+                                                className="w-16 text-center"
+                                                value={field.value ? field.value.getMinutes() : ""}
+                                                onChange={(e) => {
+                                                    const minutes = parseInt(e.target.value) || 0;
+                                                    const date = field.value ? new Date(field.value) : new Date();
+                                                    date.setMinutes(Math.min(59, Math.max(0, minutes)));
+                                                    field.onChange(date);
+                                                }}
+                                            />
+                                        </div>
                                     </PopoverContent>
                                 </Popover>
                                 <FormMessage />
@@ -205,12 +245,15 @@ export const ReportFoundForm = () => {
                                         <SelectTrigger><SelectValue placeholder="Chọn Campus" /></SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="hcm-nvh">HCM - NVH Sinh Viên</SelectItem>
-                                        <SelectItem value="hcm-shtp">HCM - SHTP (Q9)</SelectItem>
+                                        {campuses.map((campus) => (
+                                            <SelectItem key={campus.id} value={campus.id.toString()}>
+                                                {campus.description}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
-                            </FormItem>
+                            </FormItem> 
                         )}
                     />
                 </div>

@@ -21,20 +21,17 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<AuthPage />} />
-      <Route path="/unauthorized" element={<div className="p-10 text-red-500 text-center text-xl">403 - Bạn không có quyền truy cập!</div>} />
+      <Route
+        path="/unauthorized"
+        element={<div className="p-10 text-red-500 text-center text-xl">403 - Bạn không có quyền truy cập!</div>}
+      />
 
-      {/* Public Routes */}
+      {/* Public */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/report-lost" element={<ReportItemPage />} />
-        <Route path="/report-found" element={<ReportFoundPage />} />
-        <Route path="/items" element={<FindItemsPage />} />
-        <Route path="/items/:id" element={<ClaimItemPage />} />
-        <Route path="/my-claims" element={<StudentDashboard />} />
-        <Route path="/dashboard" element={<StaffDashboard />} />
       </Route>
 
-      {/* Student Routes */}
+      {/* Student */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.STUDENT]} />}>
         <Route element={<MainLayout />}>
           <Route path="/report-lost" element={<ReportItemPage />} />
@@ -45,22 +42,23 @@ const AppRoutes = () => {
         </Route>
       </Route>
 
-      {/* Security Routes */}
+      {/* Staff */}
+      <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF]} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/staff/dashboard" element={<StaffDashboard />} />
+        </Route>
+      </Route>
+
+      {/* Security */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.SECURITY]} />}>
         <Route element={<MainLayout />}>
           <Route path="/security/dashboard" element={<SecurityDashboard />} />
           <Route path="/security/log-item" element={<SecurityLogPage />} />
           <Route path="/security/verification" element={<SecurityVerificationPage />} />
         </Route>
-      <Route element={<ProtectedRoute allowedRoles={['STAFF', 'ADMIN']} />}>
-        {/* <Route path="/staff/dashboard" element={<StaffDashboard />} /> */}
       </Route>
 
-      <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.SECURITY]} />}>
-        <Route path="/dashboard" element={<div className='p-10 text-2xl font-bold text-center'>Dashboard Quản Lý (Dành cho Staff/Security)</div>} />
-      </Route>
-
-      {/* Admin Routes */}
+      {/* Admin */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
         <Route element={<MainLayout />}>
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

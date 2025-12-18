@@ -15,18 +15,16 @@ const getInitialState = (): AuthState => {
 
     if (token && userStr) {
       const user = JSON.parse(userStr) as User;
-      if (user && user.id) {
-        return { token, user, isAuthenticated: true };
-      }
+      return { token, user, isAuthenticated: true };
     }
-  } catch (e) {
-    console.error("Error parsing user from local storage", e);
+  } catch {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
   }
 
   return { token: null, user: null, isAuthenticated: false };
 };
+
 
 const authSlice = createSlice({
   name: 'auth',
@@ -35,18 +33,12 @@ const authSlice = createSlice({
     loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
       const { user, token } = action.payload;
       
-      // Ensure user has id, use email as fallback
-      const userWithId = {
-        ...user,
-        id: user.id || (user as any).email || 'unknown',
-      };
-      
-      state.user = userWithId;
+      state.user = user;
       state.token = token;
       state.isAuthenticated = true;
 
       localStorage.setItem('accessToken', token);
-      localStorage.setItem('user', JSON.stringify(userWithId));
+      localStorage.setItem('user', JSON.stringify(user));
     },
     logout: (state) => {
       state.user = null;
