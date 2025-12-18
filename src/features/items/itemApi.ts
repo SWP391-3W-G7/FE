@@ -29,7 +29,7 @@ export const itemApi = rootApi.injectEndpoints({
         method: "GET",
       }),
     }),
-
+    //got it 
     createLostItem: build.mutation<LostItem, FormData>({
       query: (formData) => ({
         url: "/lost-items",
@@ -40,7 +40,7 @@ export const itemApi = rootApi.injectEndpoints({
         },
       }),
     }),
-
+    // got it
     createFoundItem: build.mutation<FoundItem, FormData>({
       query: (formData) => ({
         url: "/found-items/public",
@@ -91,6 +91,51 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/lost-items",
         method: "GET",
       }),
+      providesTags: ["MyLostItems"],
+    }),
+
+    // Update lost item (only if status = Open)
+    updateLostItem: build.mutation<LostItem, { id: number; formData: FormData }>({
+      query: ({ id, formData }) => ({
+        url: `/lost-items/${id}`,
+        method: "PUT",
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }),
+      invalidatesTags: ["MyLostItems"],
+    }),
+
+    // Delete lost item (only if status = Open)
+    deleteLostItem: build.mutation<void, number>({
+      query: (id) => ({
+        url: `/lost-items/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["MyLostItems"],
+    }),
+
+    // Update found item (only if status = Open)
+    updateFoundItem: build.mutation<FoundItem, { id: number; formData: FormData }>({
+      query: ({ id, formData }) => ({
+        url: `/found-items/${id}`,
+        method: "PUT",
+        data: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }),
+      invalidatesTags: ["MyFoundItems"],
+    }),
+
+    // Delete found item (only if status = Open)
+    deleteFoundItem: build.mutation<void, number>({
+      query: (id) => ({
+        url: `/found-items/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["MyFoundItems"],
     }),
     // got it
     getMyFoundItems: build.query<FoundItem[], void>({
@@ -98,6 +143,7 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/found-items/my-found-items",
         method: "GET",
       }),
+      providesTags: ["MyFoundItems"],
     }),
 
     // got it
@@ -485,6 +531,10 @@ export const {
   useUpdateItemStatusMutation,
   useCreateClaimMutation,
   useGetMyLostItemsQuery,
+  useUpdateLostItemMutation,
+  useDeleteLostItemMutation,
+  useUpdateFoundItemMutation,
+  useDeleteFoundItemMutation,
   useGetMyFoundItemsQuery,
   useGetMyClaimsQuery,
   useCreateTemporaryFoundItemMutation,

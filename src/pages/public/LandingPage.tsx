@@ -1,57 +1,32 @@
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Bell, PackagePlus, Calendar, ArrowRight } from 'lucide-react';
+import { Search, Bell, PackagePlus, Calendar, ArrowRight, PackageOpen } from 'lucide-react';
+import { format } from 'date-fns';
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { useState } from 'react';
+import { Skeleton } from "@/components/ui/skeleton";
 
-// ==========================================
-// MOCK DATA (Đã có lại imageURL)
-// ==========================================
-const RECENT_FOUND_ITEMS = [
-  {
-    foundItemID: 1,
-    title: "Ví da nam màu nâu (Có thẻ SV)",
-    foundDate: "2025-12-10",
-    status: "Stored",
-    categoryName: "Ví/Túi",
-    imageURL: "https://placehold.co/400x300/e2e8f0/1e293b?text=Wallet"
-  },
-  {
-    foundItemID: 2,
-    title: "Chìa khóa xe AirBlade",
-    foundDate: "2025-12-11",
-    status: "Stored",
-    categoryName: "Chìa khóa",
-    imageURL: "https://placehold.co/400x300/e2e8f0/1e293b?text=Key"
-  },
-  {
-    foundItemID: 3,
-    title: "Bình giữ nhiệt Lock&Lock Xanh",
-    foundDate: "2025-12-11",
-    status: "Stored",
-    categoryName: "Đồ gia dụng",
-    imageURL: "https://placehold.co/400x300/e2e8f0/1e293b?text=Bottle"
-  },
-  {
-    foundItemID: 4,
-    title: "Tai nghe AirPods Pro",
-    foundDate: "2025-12-11",
-    status: "Stored",
-    categoryName: "Điện tử",
-    imageURL: "https://placehold.co/400x300/e2e8f0/1e293b?text=Airpods"
-  }
-];
+import { useGetFoundItemsQuery } from '@/features/items/itemApi';
+import type { FoundItem } from '@/types';
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // --- SEARCH LOGIC ---
-  // Chỉ điều hướng và truyền param, FE bên trang /items sẽ lo việc filter
+  const { data: items = [], isLoading } = useGetFoundItemsQuery({ status: "stored" });
+
+  const recentItems = useMemo(() => {
+
+    return [...items]
+      .sort((a, b) => new Date(b.foundDate).getTime() - new Date(a.foundDate).getTime())
+      .slice(0, 4);
+  }, [items]);
+
   const handleSearch = () => {
     if (searchTerm.trim()) {
       navigate(`/items?keyword=${encodeURIComponent(searchTerm)}`);
@@ -69,9 +44,7 @@ const LandingPage = () => {
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
 
-      {/* --- HERO SECTION --- */}
       <section className="relative py-20 lg:py-32 bg-slate-50 overflow-hidden">
-        {/* Background Pattern */}
         <div className="absolute inset-0 -z-10 h-full w-full bg-white [background:radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]"></div>
 
         <div className="container mx-auto px-4 text-center">
@@ -88,7 +61,6 @@ const LandingPage = () => {
             Kết nối sinh viên FPTU. Tra cứu nhanh chóng, xác minh dễ dàng.
           </p>
 
-          {/* Search Bar */}
           <div className="max-w-2xl mx-auto flex gap-2 mb-10 shadow-lg p-2 rounded-lg bg-white border border-slate-100">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
@@ -109,7 +81,6 @@ const LandingPage = () => {
             </Button>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button
               size="lg"
@@ -133,7 +104,6 @@ const LandingPage = () => {
 
       <Separator />
 
-      {/* --- RECENT ITEMS SECTION --- */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
@@ -146,57 +116,79 @@ const LandingPage = () => {
             </Button>
           </div>
 
-          {/* Grid hiển thị Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            {RECENT_FOUND_ITEMS.map((item) => (
-              <Card key={item.foundItemID} className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-slate-200 overflow-hidden flex flex-col h-full">
 
-                {/* Phần hiển thị Ảnh */}
-                <div className="w-full bg-slate-100 relative border-b border-slate-100">
-                  <AspectRatio ratio={4 / 3}>
-                    <img
-                      src={item.imageURL}
-                      alt={item.title}
-                      className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </AspectRatio>
-                  <Badge className="absolute top-2 right-2 bg-green-500 hover:bg-green-600 shadow-sm">
-                    Đang giữ
-                  </Badge>
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex flex-col space-y-3">
+                  <Skeleton className="h-[200px] w-full rounded-xl" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[250px]" />
+                    <Skeleton className="h-4 w-[200px]" />
+                  </div>
                 </div>
-
-                <CardHeader className="p-4 pb-2">
-                  <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
-                    {item.categoryName}
+              ))
+            ) : recentItems.length > 0 ? (
+              recentItems.map((item: FoundItem) => (
+                <Card key={item.foundItemId}
+                  className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-slate-200 overflow-hidden flex flex-col h-full"
+                  onClick={() => navigate(`/items/${item.foundItemId}`)}
+                >
+                  <div className="w-full bg-slate-100 relative border-b border-slate-100">
+                    <AspectRatio ratio={4 / 3}>
+                      {item.imageUrls && item.imageUrls.length > 0 ? (
+                        <img
+                          src={item.imageUrls[0]}
+                          alt={item.title}
+                          className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-slate-50">
+                          <PackageOpen className="h-10 w-10 text-slate-300" />
+                        </div>
+                      )}
+                    </AspectRatio>
+                    <Badge className={`absolute top-2 right-2 shadow-sm ${item.status === 'Returned' ? 'bg-slate-500' : 'bg-green-500 hover:bg-green-600'
+                      }`}>
+                      {item.status}
+                    </Badge>
                   </div>
-                  <CardTitle className="text-base line-clamp-2 min-h-[3rem] group-hover:text-orange-600 transition-colors">
-                    {item.title}
-                  </CardTitle>
-                </CardHeader>
 
-                <CardContent className="p-4 pt-0 space-y-2 text-sm text-slate-600 flex-grow">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-slate-400" />
-                    <span>{item.foundDate}</span>
-                  </div>
-                </CardContent>
+                  <CardHeader className="p-4 pb-2">
+                    <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
+                      {item.categoryName}
+                    </div>
+                    <CardTitle className="text-base line-clamp-2 min-h-[3rem] group-hover:text-orange-600 transition-colors">
+                      {item.title}
+                    </CardTitle>
+                  </CardHeader>
 
-                <CardFooter className="p-4 pt-0 mt-auto pb-4">
-                  <Button
-                    variant="secondary"
-                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium"
-                    onClick={() => navigate('/login')}
-                  >
-                    Chi tiết
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                  <CardContent className="p-4 pt-0 space-y-2 text-sm text-slate-600 flex-grow">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-slate-400" />
+                      <span>{format(new Date(item.foundDate), "dd/MM/yyyy")}</span>
+                    </div>
+                  </CardContent>
+
+                  <CardFooter className="p-4 pt-0 mt-auto pb-4">
+                    <Button
+                      variant="secondary"
+                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium"
+                    >
+                      Chi tiết
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-10 text-slate-500">
+                Chưa có đồ thất lạc nào được ghi nhận gần đây.
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* --- STATS SECTION --- */}
       <section className="py-12 bg-slate-900 text-white">
         <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
@@ -212,7 +204,6 @@ const LandingPage = () => {
           ))}
         </div>
       </section>
-
     </div>
   );
 };
