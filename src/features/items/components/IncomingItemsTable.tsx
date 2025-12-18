@@ -15,13 +15,16 @@ import type { FoundItem } from '@/types';
 
 export const IncomingItemsTable = () => {
   const { toast } = useToast();
-  
+
   // 1. Lấy dữ liệu từ API
-  const { data: items, isLoading } = useGetIncomingItemsQuery();
-  
+  const { data, isLoading } = useGetIncomingItemsQuery();
+
+  // Defensive data extraction (handles flat array or paginated response)
+  const rawItems = (data as any)?.items || (Array.isArray(data) ? data : []);
+
   // 👇 QUAN TRỌNG: Chỉ lọc lấy những item có status là 'Open'
-  const openItems = items?.filter((item: FoundItem) => item.status === 'Open') || [];
-  
+  const openItems = rawItems.filter((item: FoundItem) => item.status === 'Open');
+
   // 2. Mutation update status
   const [updateItemStatus, { isLoading: isUpdating }] = useUpdateItemStatusMutation();
 
@@ -38,11 +41,11 @@ export const IncomingItemsTable = () => {
     if (!selectedItemId) return;
 
     try {
-      await updateItemStatus({ 
-        id: selectedItemId, 
-        status: 'Stored' 
+      await updateItemStatus({
+        id: selectedItemId,
+        status: 'Stored'
       }).unwrap();
-      
+
       toast({
         title: "Nhập kho thành công!",
         description: `Vật phẩm #${selectedItemId} đã được chuyển sang trạng thái Stored.`,
@@ -95,14 +98,14 @@ export const IncomingItemsTable = () => {
                 {/* Cột 1: Ảnh */}
                 <TableCell>
                   <div className="h-12 w-12 rounded border border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center">
-                    <img 
-                      src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "https://placehold.co/100?text=No+Img"} 
-                      alt="Thumbnail" 
-                      className="h-full w-full object-cover" 
+                    <img
+                      src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "https://placehold.co/100?text=No+Img"}
+                      alt="Thumbnail"
+                      className="h-full w-full object-cover"
                     />
                   </div>
                 </TableCell>
-                
+
                 {/* Cột 2: Tên & Danh mục */}
                 <TableCell>
                   <div className="font-semibold text-slate-900 line-clamp-2" title={item.title}>
@@ -135,8 +138,8 @@ export const IncomingItemsTable = () => {
 
                 {/* Cột 5: Nút bấm Action */}
                 <TableCell className="text-right">
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="bg-[#EC6824] hover:bg-[#EC6824]/90 text-white shadow-sm"
                     onClick={() => handleOpenModal(item.foundItemId)}
                   >
@@ -159,13 +162,13 @@ export const IncomingItemsTable = () => {
               Xác nhận nhập kho
             </DialogTitle>
             <DialogDescription className="pt-2">
-              Bạn có chắc chắn muốn chuyển vật phẩm <strong>#{selectedItemId}</strong> sang trạng thái 
+              Bạn có chắc chắn muốn chuyển vật phẩm <strong>#{selectedItemId}</strong> sang trạng thái
               <span className="font-bold text-slate-900"> Đã lưu kho (Stored)</span>?
-              <br/><br/>
+              <br /><br />
               Hành động này xác nhận rằng bạn đã nhận được vật phẩm và cất giữ an toàn.
             </DialogDescription>
           </DialogHeader>
-          
+
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setIsOpen(false)}>Hủy bỏ</Button>
             <Button onClick={handleConfirm} disabled={isUpdating} className="bg-orange-600 hover:bg-orange-700">

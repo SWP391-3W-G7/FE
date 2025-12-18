@@ -15,12 +15,15 @@ import type { FoundItem } from '@/types';
 
 export const InventoryTable = () => {
   // 1. Chỉ lấy dữ liệu để hiển thị
-  const { data: items, isLoading } = useGetInventoryItemsQuery();
+  const { data, isLoading } = useGetInventoryItemsQuery();
 
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Robust data extraction (handles flat array or paginated response)
+  const rawItems = (data as any)?.items || (Array.isArray(data) ? data : []);
+
   // 2. Lọc danh sách (Chỉ tìm theo tên item)
-  const filteredItems = items?.filter((item: FoundItem) => 
+  const filteredItems = rawItems.filter((item: FoundItem) =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -37,13 +40,13 @@ export const InventoryTable = () => {
     <div className="space-y-4">
       {/* Search Bar */}
       <div className="flex w-full max-w-sm items-center space-x-2">
-        <Input 
-          placeholder="Tìm kiếm vật phẩm..." 
+        <Input
+          placeholder="Tìm kiếm vật phẩm..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
         <Button size="icon" variant="secondary">
-            <Search className="h-4 w-4" />
+          <Search className="h-4 w-4" />
         </Button>
       </div>
 
@@ -60,11 +63,11 @@ export const InventoryTable = () => {
           </TableHeader>
           <TableBody>
             {!filteredItems || filteredItems.length === 0 ? (
-               <TableRow>
-                 <TableCell colSpan={4} className="h-24 text-center text-slate-500">
-                   Không tìm thấy vật phẩm nào trong kho.
-                 </TableCell>
-               </TableRow>
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center text-slate-500">
+                  Không tìm thấy vật phẩm nào trong kho.
+                </TableCell>
+              </TableRow>
             ) : (
               filteredItems.map((item: FoundItem) => {
                 // Tính số ngày tồn kho
@@ -77,36 +80,36 @@ export const InventoryTable = () => {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded border border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center shrink-0">
-                           <img 
-                             src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "https://placehold.co/100?text=Img"} 
-                             alt="" 
-                             className="h-full w-full object-cover" 
-                           />
+                          <img
+                            src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "https://placehold.co/100?text=Img"}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
                         </div>
                         <div>
                           <div className="font-medium text-slate-900 line-clamp-1" title={item.title}>
-                              {item.title}
+                            {item.title}
                           </div>
                           {/* Hiển thị ID nhỏ bên dưới để dễ đối soát */}
                           <div className="text-[10px] text-slate-400">#{item.foundItemId}</div>
                         </div>
                       </div>
                     </TableCell>
-                    
+
                     {/* Cột 2: Danh mục */}
                     <TableCell>
-                         <Badge variant="outline" className="font-normal">
-                             {item.categoryName}
-                         </Badge>
+                      <Badge variant="outline" className="font-normal">
+                        {item.categoryName}
+                      </Badge>
                     </TableCell>
 
                     {/* Cột 3: Thời gian */}
                     <TableCell>
                       <div className="text-sm font-medium text-slate-700">
-                          {format(new Date(item.foundDate), "dd/MM/yyyy")}
+                        {format(new Date(item.foundDate), "dd/MM/yyyy")}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                          Đã lưu {daysInStorage} ngày
+                        Đã lưu {daysInStorage} ngày
                       </div>
                     </TableCell>
 
@@ -127,7 +130,7 @@ export const InventoryTable = () => {
                         </TooltipProvider>
                       ) : (
                         <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
-                            Đang lưu giữ
+                          Đang lưu giữ
                         </Badge>
                       )}
                     </TableCell>

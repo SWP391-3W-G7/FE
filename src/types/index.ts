@@ -19,9 +19,9 @@ export interface Category {
 
 export interface LostItem {
   lostItemId: number;
-  title: string; 
-  description: string; 
-  lostDate: string; 
+  title: string;
+  description: string;
+  lostDate: string;
   lostLocation: string;
   status: "Open" | "Closed" | "Found";
   campusId: number;
@@ -71,7 +71,7 @@ export interface TemporaryFoundItem extends FoundItem {
 
 // Extended Claim với thông tin chi tiết hơn cho Security
 export interface DisputedClaim extends Claim {
-  foundItem: {
+  foundItemDetails?: {
     id: number;
     title: string;
     thumbnail: string;
@@ -81,16 +81,6 @@ export interface DisputedClaim extends Claim {
   claimantName?: string;
   evidenceDescription?: string;
   disputeReason?: string;
-  status: "Open" | "Stored" | "Returned";
-  campusId: number;
-  campusName: string;
-  categoryId: number;
-  categoryName: string;
-  createdBy: number;
-  storedBy: number | null;
-  imageUrls: string[];
-  claimRequests: Claim[] | null;
-  actionLogs: null;
 }
 
 
@@ -125,8 +115,6 @@ export interface CampusStat {
 // Extended User for Admin management
 export interface AdminUser extends User {
   userId: number;
-  campusName?: string;
-  assignedAt?: string;
   isActive: boolean;
 }
 
@@ -150,6 +138,22 @@ export interface LoginResponse {
   token: string;
 }
 
+export interface ActionLog {
+  actionId: number;
+  lostItemId: number | null;
+  foundItemId: number | null;
+  claimRequestId: number | null;
+  actionType: string;
+  actionDetails: string;
+  oldStatus: string | null;
+  newStatus: string | null;
+  actionDate: string;
+  performedBy: number;
+  performedByName: string;
+  campusId: number;
+  campusName: string;
+}
+
 export interface Campus {
   id: number;
   name: string;
@@ -159,14 +163,16 @@ export interface Campus {
 export interface Claim {
   claimId: number
   claimDate: string
-  status: 'Pending' | 'Approved' | 'Rejected'
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Conflicted'
   foundItemId: number | null
   lostItemId: number | null
   foundItemTitle: string | null
+  lostItemTitle?: string | null
+  priority?: string | null
   studentId: number
   studentName: string | null
   evidences: Evidence[]
-  actionLogs: string
+  actionLogs: ActionLog[]
 }
 
 export interface Evidence {
@@ -184,4 +190,29 @@ export interface StaffReport {
   activeClaims: number;
   returnRate: number;
   categoryStats: { name: string; value: number }[];
+}
+export interface MatchedItem {
+  matchId: number;
+  matchStatus: string;
+  createdAt: string;
+  status: string;
+  lostItemId: number;
+  lostItem: LostItem;
+  foundItemId: number;
+  foundItem: FoundItem;
+}
+
+export interface PaginatedResponse<T> {
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  totalCount: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+  items: T[];
+}
+
+export interface StaffWorkItems {
+  pendingAndConflictedClaims: PaginatedResponse<Claim>;
+  matchedItems: PaginatedResponse<MatchedItem>;
 }
