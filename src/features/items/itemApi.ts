@@ -22,11 +22,17 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/categories",
         method: "GET",
       }),
+      transformResponse: (response: any[]) => {
+        return response.map((category) => ({
+          categoryId: category.id || category.categoryId || category.categoryID,
+          categoryName: category.name || category.categoryName,
+        }));
+      },
     }),
     // got it
     getCampuses: build.query<Campus[], void>({
       query: () => ({
-        url: "/Campus/enum-values",
+        url: "/Campus",
         method: "GET",
       }),
     }),
@@ -317,7 +323,7 @@ export const itemApi = rootApi.injectEndpoints({
 
 
     // Admin: Get system reports
-    getSystemReports: build.query<SystemReport, void>({
+    getSystemReports: build.query<SystemReport, { campusId?: number } | void>({
       queryFn: async () => {
         // Mock data
         const mock: SystemReport = {
@@ -348,8 +354,8 @@ export const itemApi = rootApi.injectEndpoints({
         };
         return { data: mock };
       },
+      providesTags: ["SystemReports"],
     }),
-
     // Admin: Get all campuses
     getCampusesForAdmin: build.query<Campus[], void>({
       query: () => ({
@@ -368,12 +374,12 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Get all users (for assignment)
-    getAdminUsers: build.query<AdminUser[], { role?: string; campusId?: string }>({
-      query: ({ role, campusId }) => {
+    getAdminUsers: build.query<AdminUser[], { role?: string; campusId?: string } | void>({
+      query: (params) => {
         // Map role string to roleId number
         let roleId: number | undefined;
-        if (role === 'STAFF') roleId = 2;
-        else if (role === 'SECURITY') roleId = 3;
+        if (params?.role === 'STAFF') roleId = 2;
+        else if (params?.role === 'SECURITY') roleId = 3;
 
         return {
           url: "/admin/get-users-by-role",
@@ -397,11 +403,12 @@ export const itemApi = rootApi.injectEndpoints({
           else if (roleName.includes('user') || roleName.includes('student')) role = 'USER';
 
           const transformed: AdminUser = {
+            id: user.userId?.toString() || user.email,
             userId: user.userId,
             email: user.email,
             fullName: user.fullName,
             role: role as UserRole,
-            campusId: user.campusId,
+            campusId: user.campusId?.toString() || '',
             campusName: user.campusName || '',
             isActive: user.status === 'Active',
           };

@@ -60,6 +60,16 @@ type AssignUserFormValues = z.infer<typeof assignUserSchema>;
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
 type EditUserFormValues = z.infer<typeof editUserSchema>;
 
+// Helper function to safely get property from object with multiple possible keys
+const getProp = (obj: any, keys: string[]) => {
+  for (const key of keys) {
+    if (obj && obj[key] !== undefined && obj[key] !== null) {
+      return obj[key];
+    }
+  }
+  return undefined;
+};
+
 const AdminUsersPage = () => {
   const { toast } = useToast();
   const [keyword, setKeyword] = useState<string>("");
@@ -120,15 +130,15 @@ const AdminUsersPage = () => {
   // Filter by keyword
   if (keyword.trim()) {
     filteredUsers = filteredUsers.filter(user =>
-      user.fullName.toLowerCase().includes(keyword.toLowerCase()) ||
-      user.email.toLowerCase().includes(keyword.toLowerCase())
+      (user.fullName || "").toLowerCase().includes(keyword.toLowerCase()) ||
+      (user.email || "").toLowerCase().includes(keyword.toLowerCase())
     );
   }
 
   // Filter by campus
   if (selectedCampus !== "all") {
     filteredUsers = filteredUsers.filter(user =>
-      user.campusName && campuses.find(c => c.campusID.toString() === selectedCampus)?.campusName === user.campusName
+      user.campusName && campuses.find(c => (getProp(c, ['campusId', 'campusID', 'id']) || "").toString() === selectedCampus)?.campusName === user.campusName
     );
   }
 
@@ -144,7 +154,7 @@ const AdminUsersPage = () => {
     }
 
     // Then sort by name alphabetically
-    return a.fullName.localeCompare(b.fullName);
+    return (a.fullName || "").localeCompare(b.fullName || "");
   });
 
   console.log("Sorted users:", sortedUsers.map(u => ({ name: u.fullName, role: u.role })));
@@ -152,7 +162,7 @@ const AdminUsersPage = () => {
   // Sort campuses alphabetically
   console.log("Campuses from API:", campuses);
   const sortedCampuses = [...campuses].sort((a, b) =>
-    a.campusName.localeCompare(b.campusName)
+    (a.campusName || a.name || "").localeCompare(b.campusName || b.name || "")
   );
 
   const handleOpenAssignDialog = (userId: string) => {
@@ -317,7 +327,7 @@ const AdminUsersPage = () => {
     }
   };
 
-  const getRoleBadge = (role: string) => {
+  const getRoleBadge = (role: string): React.ReactNode => {
     switch (role) {
       case 'STAFF':
         return <Badge className="bg-blue-500 hover:bg-blue-600">Staff</Badge>;
@@ -451,8 +461,8 @@ const AdminUsersPage = () => {
                           </FormControl>
                           <SelectContent>
                             {sortedCampuses.map((campus) => (
-                              <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
-                                {campus.campusName}
+                              <SelectItem key={getProp(campus, ['campusId', 'campusID', 'id'])} value={(getProp(campus, ['campusId', 'campusID', 'id']) || "").toString()}>
+                                {campus.campusName || campus.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -511,8 +521,8 @@ const AdminUsersPage = () => {
                 <SelectContent>
                   <SelectItem value="all">Tất cả Campus</SelectItem>
                   {sortedCampuses.map((campus) => (
-                    <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
-                      {campus.campusName}
+                    <SelectItem key={getProp(campus, ['campusId', 'campusID', 'id'])} value={(getProp(campus, ['campusId', 'campusID', 'id']) || "").toString()}>
+                      {campus.campusName || campus.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -638,8 +648,8 @@ const AdminUsersPage = () => {
                         </FormControl>
                         <SelectContent>
                           {sortedCampuses.map((campus) => (
-                            <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
-                              {campus.campusName}
+                            <SelectItem key={getProp(campus, ['campusId', 'campusID', 'id'])} value={(getProp(campus, ['campusId', 'campusID', 'id']) || "").toString()}>
+                              {campus.campusName || campus.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -721,8 +731,8 @@ const AdminUsersPage = () => {
                         </FormControl>
                         <SelectContent>
                           {sortedCampuses.map((campus) => (
-                            <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
-                              {campus.campusName}
+                            <SelectItem key={getProp(campus, ['campusId', 'campusID', 'id'])} value={(getProp(campus, ['campusId', 'campusID', 'id']) || "").toString()}>
+                              {campus.campusName || campus.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
