@@ -64,6 +64,19 @@ const AppRoutes = () => {
         </Route>
       </Route>
 
+      {/* Staff Routes */}
+      <Route element={<ProtectedRoute allowedRoles={['STAFF', 'ADMIN']} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/staff/dashboard" element={<StaffDashboard />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.SECURITY]} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/dashboard" element={<div className='p-10 text-2xl font-bold text-center'>Dashboard Quản Lý (Dành cho Staff/Security)</div>} />
+        </Route>
+      </Route>
+
       {/* Admin */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
         <Route element={<MainLayout />}>

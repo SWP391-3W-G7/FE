@@ -1,16 +1,24 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGetSystemReportsQuery } from '@/features/items/itemApi';
+import { useGetSystemReportsQuery, useGetCampusesQuery } from '@/features/items/itemApi';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Package, FileQuestion, Archive, CheckCircle2, Clock, MapPin, Users } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Package, FileQuestion, Archive, CheckCircle2, Clock, MapPin, Users, Filter } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AdminNav from '@/components/AdminNav';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { data: reports, isLoading } = useGetSystemReportsQuery();
+  const [selectedCampusId, setSelectedCampusId] = useState<number | undefined>(undefined);
+  
+  const { data: reports, isLoading } = useGetSystemReportsQuery({ campusId: selectedCampusId });
+  const { data: campuses = [], isLoading: campusesLoading, error: campusesError } = useGetCampusesQuery();
+
+  console.log('Campuses data:', campuses);
+  console.log('Campuses loading:', campusesLoading);
+  console.log('Campuses error:', campusesError);
 
   if (isLoading) {
     return (
@@ -40,235 +48,130 @@ const AdminDashboard = () => {
             Tổng quan về tình trạng đồ vật thất lạc và nhặt được trong hệ thống.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => navigate('/admin/campus')}
-            variant="outline"
-            className="border-blue-600 text-blue-600 hover:bg-blue-50"
-          >
-            <MapPin className="mr-2 h-4 w-4" />
-            Quản lý Campus
-          </Button>
-          <Button 
-            onClick={() => navigate('/admin/users')}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Users className="mr-2 h-4 w-4" />
-            Quản lý người dùng
-          </Button>
-        </div>
+        <Select 
+          value={selectedCampusId?.toString() || "all"} 
+          onValueChange={(value) => setSelectedCampusId(value === "all" ? undefined : parseInt(value))}
+        >
+          <SelectTrigger className="w-[200px]">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Chọn Campus" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tất cả Campus</SelectItem>
+            {campuses.filter((c: any) => c?.campusId).map((campus: any) => (
+              <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
+                {campus.campusName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tổng đồ mất</CardTitle>
-            <FileQuestion className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{reports.totalLostItems}</div>
-            <p className="text-xs text-muted-foreground">Báo cáo mất đồ</p>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tổng đồ nhặt được</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{reports.totalFoundItems}</div>
-            <p className="text-xs text-muted-foreground">Đồ vật đã nhặt</p>
+            <div className="text-2xl font-bold text-blue-600">{reports.totalFound || 0}</div>
+            <p className="text-xs text-muted-foreground">Đồ vật đã nhặt được</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đang lưu kho</CardTitle>
-            <Archive className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Tổng yêu cầu nhận đồ</CardTitle>
+            <FileQuestion className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{reports.itemsInStorage}</div>
-            <p className="text-xs text-muted-foreground">Chờ chủ nhân nhận</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đã trả về</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{reports.itemsReturned}</div>
-            <p className="text-xs text-muted-foreground">Đã trả cho chủ nhân</p>
+            <div className="text-2xl font-bold text-orange-600">{reports.totalClaims || 0}</div>
+            <p className="text-xs text-muted-foreground">Yêu cầu đang xử lý</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Additional Stats */}
+      {/* Stats Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Found Items Stats */}
         <Card>
           <CardHeader>
-            <CardTitle>Trạng thái đồ vật</CardTitle>
+            <CardTitle>Trạng thái đồ nhặt được</CardTitle>
             <CardDescription>Phân bổ theo trạng thái hiện tại</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-orange-500" />
-                <span className="text-sm">Tạm thời (Open)</span>
-              </div>
-              <Badge variant="outline" className="text-orange-600">
-                {reports.itemsOpen}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Archive className="h-4 w-4 text-blue-500" />
-                <span className="text-sm">Đang lưu kho</span>
-              </div>
-              <Badge variant="outline" className="text-blue-600">
-                {reports.itemsInStorage}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Package className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm">Đã được nhận (Claimed)</span>
-              </div>
-              <Badge variant="outline" className="text-yellow-600">
-                {reports.itemsClaimed}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Đã trả về</span>
-              </div>
-              <Badge variant="outline" className="text-green-600">
-                {reports.itemsReturned}
-              </Badge>
-            </div>
+            {reports.foundItemStats?.map((stat: { statusName: string; count: number }) => {
+              const getIcon = (status: string) => {
+                switch (status) {
+                  case 'Open': return <Clock className="h-4 w-4 text-orange-500" />;
+                  case 'Stored': return <Archive className="h-4 w-4 text-blue-500" />;
+                  case 'Claimed': return <Package className="h-4 w-4 text-yellow-500" />;
+                  case 'Returned': return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+                  default: return <Package className="h-4 w-4 text-gray-500" />;
+                }
+              };
+              
+              return (
+                <div key={stat.statusName} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {getIcon(stat.statusName)}
+                    <span className="text-sm">{stat.statusName}</span>
+                  </div>
+                  <Badge variant="outline">{stat.count}</Badge>
+                </div>
+              );
+            })}
           </CardContent>
         </Card>
 
+        {/* Claim Stats */}
         <Card>
           <CardHeader>
-            <CardTitle>Tỷ lệ thành công</CardTitle>
-            <CardDescription>Hiệu quả hoạt động hệ thống</CardDescription>
+            <CardTitle>Trạng thái yêu cầu nhận đồ</CardTitle>
+            <CardDescription>Phân bổ theo trạng thái xử lý</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Tỷ lệ trả về</span>
-                  <span className="font-medium">
-                    {reports.totalFoundItems > 0
-                      ? Math.round((reports.itemsReturned / reports.totalFoundItems) * 100)
-                      : 0}%
-                  </span>
+          <CardContent className="space-y-4">
+            {reports.claimStats?.map((stat: { statusName: string; count: number }) => {
+              const getColor = (status: string) => {
+                switch (status) {
+                  case 'Pending': return 'text-orange-600';
+                  case 'Approved': return 'text-green-600';
+                  case 'Rejected': return 'text-red-600';
+                  case 'Returned': return 'text-blue-600';
+                  case 'Conflicted': return 'text-purple-600';
+                  default: return 'text-gray-600';
+                }
+              };
+              
+              return (
+                <div key={stat.statusName} className="flex items-center justify-between">
+                  <span className="text-sm">{stat.statusName}</span>
+                  <Badge variant="outline" className={getColor(stat.statusName)}>
+                    {stat.count}
+                  </Badge>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-2">
-                  <div
-                    className="bg-green-600 h-2 rounded-full"
-                    style={{
-                      width: `${reports.totalFoundItems > 0 ? (reports.itemsReturned / reports.totalFoundItems) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span>Tỷ lệ tìm thấy</span>
-                  <span className="font-medium">
-                    {reports.totalLostItems > 0
-                      ? Math.round((reports.totalFoundItems / reports.totalLostItems) * 100)
-                      : 0}%
-                  </span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full"
-                    style={{
-                      width: `${reports.totalLostItems > 0 ? (reports.totalFoundItems / reports.totalLostItems) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
+              );
+            })}
           </CardContent>
         </Card>
       </div>
 
-      {/* Campus-level Analytics */}
-      <Card>
+      {/* Category Stats */}
+      <Card className="mb-8">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Thống kê theo Campus
-          </CardTitle>
-          <CardDescription>Phân tích chi tiết theo từng cơ sở</CardDescription>
+          <CardTitle>Thống kê theo loại đồ vật</CardTitle>
+          <CardDescription>Phân loại đồ nhặt được theo category</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all">Tổng quan</TabsTrigger>
-              <TabsTrigger value="lost">Đồ mất</TabsTrigger>
-              <TabsTrigger value="found">Đồ nhặt</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all" className="space-y-4 mt-4">
-              {reports.campusStats.map((campus) => (
-                <div key={campus.campusID} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">{campus.campusName}</h3>
-                    <Badge variant="outline">{campus.campusID}</Badge>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-slate-500 mb-1">Đồ mất</p>
-                      <p className="text-lg font-bold text-red-600">{campus.totalLostItems}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500 mb-1">Đồ nhặt</p>
-                      <p className="text-lg font-bold text-blue-600">{campus.totalFoundItems}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500 mb-1">Đang lưu</p>
-                      <p className="text-lg font-bold text-orange-600">{campus.itemsInStorage}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500 mb-1">Đã trả</p>
-                      <p className="text-lg font-bold text-green-600">{campus.itemsReturned}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="lost" className="space-y-4 mt-4">
-              {reports.campusStats.map((campus) => (
-                <div key={campus.campusID} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">{campus.campusName}</h3>
-                    <div className="text-2xl font-bold text-red-600">{campus.totalLostItems}</div>
-                  </div>
-                </div>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="found" className="space-y-4 mt-4">
-              {reports.campusStats.map((campus) => (
-                <div key={campus.campusID} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">{campus.campusName}</h3>
-                    <div className="text-2xl font-bold text-blue-600">{campus.totalFoundItems}</div>
-                  </div>
-                </div>
-              ))}
-            </TabsContent>
-          </Tabs>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {reports.categoryStats?.map((cat: { name: string; value: number }) => (
+              <div key={cat.name} className="border rounded-lg p-4 text-center hover:shadow-md transition-shadow">
+                <div className="text-2xl font-bold text-blue-600 mb-1">{cat.value}</div>
+                <div className="text-sm text-slate-600">{cat.name}</div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

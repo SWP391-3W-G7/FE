@@ -129,8 +129,13 @@ const AdminUsersPage = () => {
   // Filter by campus
   if (selectedCampus !== "all") {
     filteredUsers = filteredUsers.filter(user => 
-      user.campusName && campuses.find(c => c.campusID.toString() === selectedCampus)?.campusName === user.campusName
+      user.campusName && campuses.find(c => c.campusId.toString() === selectedCampus)?.campusName === user.campusName
     );
+  }
+
+  // Filter by role
+  if (selectedRole !== "all") {
+    filteredUsers = filteredUsers.filter(user => user.role === selectedRole);
   }
 
   // Sort users by roleId: USER(1) > STAFF(2) > SECURITY(3), then by name
@@ -152,7 +157,7 @@ const AdminUsersPage = () => {
 
   // Sort campuses alphabetically
   console.log("Campuses from API:", campuses);
-  const sortedCampuses = [...campuses].sort((a, b) => 
+  const sortedCampuses = [...campuses].filter(c => c?.campusName).sort((a, b) => 
     a.campusName.localeCompare(b.campusName)
   );
 
@@ -451,8 +456,8 @@ const AdminUsersPage = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {sortedCampuses.map((campus) => (
-                            <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
+                          {sortedCampuses.filter(campus => campus?.campusId).map((campus) => (
+                            <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
                               {campus.campusName}
                             </SelectItem>
                           ))}
@@ -495,6 +500,7 @@ const AdminUsersPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả vai trò</SelectItem>
+                <SelectItem value="USER">User</SelectItem>
                 <SelectItem value="STAFF">Staff</SelectItem>
                 <SelectItem value="SECURITY">Security</SelectItem>
               </SelectContent>
@@ -511,8 +517,8 @@ const AdminUsersPage = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả Campus</SelectItem>
-                {sortedCampuses.map((campus) => (
-                  <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
+                {sortedCampuses.filter(campus => campus?.campusId).map((campus) => (
+                  <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
                     {campus.campusName}
                   </SelectItem>
                 ))}
@@ -638,8 +644,8 @@ const AdminUsersPage = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {sortedCampuses.map((campus) => (
-                          <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
+                        {sortedCampuses.filter(campus => campus?.campusId).map((campus) => (
+                          <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
                             {campus.campusName}
                           </SelectItem>
                         ))}
@@ -721,8 +727,8 @@ const AdminUsersPage = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {sortedCampuses.map((campus) => (
-                          <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
+                        {sortedCampuses.filter(campus => campus?.campusId).map((campus) => (
+                          <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
                             {campus.campusName}
                           </SelectItem>
                         ))}

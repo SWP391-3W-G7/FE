@@ -21,11 +21,17 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/categories",
         method: "GET",
       }),
+      transformResponse: (response: any[]) => {
+        return response.map((category) => ({
+          categoryId: category.id || category.categoryId || category.categoryID,
+          categoryName: category.name || category.categoryName,
+        }));
+      },
     }),
     // got it
     getCampuses: build.query<Campus[], void>({
       query: () => ({
-        url: "/Campus/enum-values",
+        url: "/Campus",
         method: "GET",
       }),
     }),
@@ -348,46 +354,13 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
 
-    // Admin: Get system reports
-    getSystemReports: build.query<SystemReport, void>({
-      queryFn: async () => {
-        // Mock data
-        const mock: SystemReport = {
-          totalLostItems: 45,
-          totalFoundItems: 78,
-          itemsInStorage: 32,
-          itemsReturned: 28,
-          itemsClaimed: 12,
-          itemsOpen: 6,
-          campusStats: [
-            {
-              campusID: 1,
-              campusName: "HCM - NVH Sinh Viên",
-              totalLostItems: 25,
-              totalFoundItems: 42,
-              itemsInStorage: 18,
-              itemsReturned: 16,
-            },
-            {
-              campusID: 2,
-              campusName: "HCM - SHTP (Q9)",
-              totalLostItems: 20,
-              totalFoundItems: 36,
-              itemsInStorage: 14,
-              itemsReturned: 12,
-            },
-          ],
-        };
-        return { data: mock };
-      },
-    }),
-
-    // Admin: Get all campuses
-    getCampusesForAdmin: build.query<Campus[], void>({
-      query: () => ({
-        url: "/Campus",
+    // Admin: Get system reports (dashboard stats)
+    getSystemReports: build.query<any, { campusId?: number }>({
+      query: ({ campusId }) => ({
+        url: "/reports/dashboard",
         method: "GET",
-      })
+        params: campusId ? { campusId } : undefined,
+      }),
     }),
 
     // Admin: Create new campus
@@ -543,7 +516,6 @@ export const {
   useGetLostItemsForVerificationQuery,
   useVerifyLostItemMutation,
   useGetSystemReportsQuery,
-  useGetCampusesForAdminQuery,
   useCreateCampusMutation,
   useUpdateCampusMutation,
   useDeleteCampusMutation,

@@ -109,32 +109,26 @@ const MainLayout = () => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate('/my-claims')}>
+                      <History className="mr-2 h-4 w-4" />
+                      Lịch sử báo mất
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      Hồ sơ cá nhân
+                    </DropdownMenuItem>
 
-                    {/* Student Menu Items */}
-                    {user.role === 'STUDENT' && (
-                      <>
-                        <DropdownMenuItem onClick={() => navigate('/my-claims')}>
-                          <History className="mr-2 h-4 w-4" />
-                          Quản lý hồ sơ
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/profile')}>
-                          <UserIcon className="mr-2 h-4 w-4" />
-                          Cài đặt tài khoản
-                        </DropdownMenuItem>
-                      </>
-                    )}
-
-                    {/* Staff Menu Items */}
-                    {user.role === 'STAFF' && (
-                      <>
-                        <DropdownMenuItem onClick={() => navigate('/staff/dashboard')}>
+                    {user.role === 'ADMIN' && (
+                       <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
                           <PackagePlus className="mr-2 h-4 w-4" />
                           Quản lý Lost & Found
                         </DropdownMenuItem>
                       </>
                     )}
 
-                    {/* Security Menu Items */}
+
                     {user.role === 'SECURITY' && (
                       <>
                         <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>
@@ -154,6 +148,15 @@ const MainLayout = () => {
                       </>
                     )}
 
+                    {user.role === 'STAFF' && (
+                       <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>
+                          <PackagePlus className="mr-2 h-4 w-4" />
+                          Trang Quản Trị
+                        </DropdownMenuItem>
+                       </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
