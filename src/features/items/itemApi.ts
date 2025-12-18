@@ -7,7 +7,6 @@ import {
   type LostItem,
   type TemporaryFoundItem,
   type SystemReport,
-  type Campus,
   type CreateCampusRequest,
   type AdminUser,
   type AssignUserRequest,
@@ -23,17 +22,16 @@ export const itemApi = rootApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (response: any[]) => {
-        // API trả về categoryId (lowercase), cần transform sang categoryID (uppercase)
         return response.map((category) => ({
-          categoryID: category.categoryId,
-          categoryName: category.categoryName,
+          categoryId: category.id || category.categoryId || category.categoryID,
+          categoryName: category.name || category.categoryName,
         }));
       },
     }),
     // got it
     getCampuses: build.query<Campus[], void>({
       query: () => ({
-        url: "/Campus/enum-values",
+        url: "/Campus",
         method: "GET",
       }),
     }),
@@ -306,55 +304,13 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
 
-    // Admin: Get system reports
-    getSystemReports: build.query<SystemReport, void>({
-      queryFn: async () => {
-        // Mock data
-        const mock: SystemReport = {
-          totalLostItems: 45,
-          totalFoundItems: 78,
-          itemsInStorage: 32,
-          itemsReturned: 28,
-          itemsClaimed: 12,
-          itemsOpen: 6,
-          campusStats: [
-            {
-              campusID: 1,
-              campusName: "HCM - NVH Sinh Viên",
-              totalLostItems: 25,
-              totalFoundItems: 42,
-              itemsInStorage: 18,
-              itemsReturned: 16,
-            },
-            {
-              campusID: 2,
-              campusName: "HCM - SHTP (Q9)",
-              totalLostItems: 20,
-              totalFoundItems: 36,
-              itemsInStorage: 14,
-              itemsReturned: 12,
-            },
-          ],
-        };
-        return { data: mock };
-      },
-    }),
-
-    // Admin: Get all campuses
-    getCampuses: build.query<Campus[], void>({
-      query: () => ({
-        url: "/Campus",
+    // Admin: Get system reports (dashboard stats)
+    getSystemReports: build.query<any, { campusId?: number }>({
+      query: ({ campusId }) => ({
+        url: "/reports/dashboard",
         method: "GET",
+        params: campusId ? { campusId } : undefined,
       }),
-      transformResponse: (response: any[]) => {
-        // API trả về campusId (lowercase), cần transform sang campusID (uppercase)
-        return response.map((campus) => ({
-          campusID: campus.campusId,
-          campusName: campus.campusName,
-          address: campus.address,
-          storageLocation: campus.storageLocation,
-        }));
-      },
     }),
 
     // Admin: Create new campus
@@ -506,7 +462,6 @@ export const {
   useGetLostItemsForVerificationQuery,
   useVerifyLostItemMutation,
   useGetSystemReportsQuery,
-  useGetCampusesQuery,
   useCreateCampusMutation,
   useUpdateCampusMutation,
   useDeleteCampusMutation,

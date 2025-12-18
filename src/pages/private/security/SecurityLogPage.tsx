@@ -163,9 +163,9 @@ const SecurityLogPage = () => {
                                                             <SelectItem value="loading" disabled>Đang tải...</SelectItem>
                                                         ) : (
                                                             categories
-                                                                .filter((cat) => cat && cat.categoryID != null)
+                                                                .filter((cat) => cat && cat.categoryId != null)
                                                                 .map((cat) => (
-                                                                    <SelectItem key={cat.categoryID} value={cat.categoryID.toString()}>
+                                                                    <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
                                                                         {cat.categoryName || 'Chưa có tên'}
                                                                     </SelectItem>
                                                                 ))
@@ -243,7 +243,7 @@ const SecurityLogPage = () => {
                                                     </FormControl>
                                                     <SelectContent>
                                                         {campuses.map((campus) => (
-                                                            <SelectItem key={campus.campusID} value={campus.campusID.toString()}>
+                                                            <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
                                                                 {campus.campusName}
                                                             </SelectItem>
                                                         ))}

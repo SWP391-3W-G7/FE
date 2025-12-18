@@ -78,11 +78,9 @@ const FindItemsPage = () => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Tất cả Campus</SelectItem>
-                                {/* 👇 UPDATE: Sửa mapping theo JSON mới của BE */}
-                                {/* campus.id là khóa chính, campus.description là tên hiển thị (VD: Hà Nội) */}
                                 {campuses.map((campus: Campus) => (
-                                    <SelectItem key={campus.id} value={campus.id.toString()}>
-                                        {campus.description}
+                                    <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
+                                        {campus.campusName}
                                     </SelectItem>
                                 ))}
                             </SelectContent>

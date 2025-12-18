@@ -113,7 +113,7 @@ const AdminCampusPage = () => {
 
     try {
       await updateCampus({
-        id: selectedCampus.campusID,
+        id: selectedCampus.campusId,
         ...data,
       }).unwrap();
 
@@ -145,7 +145,7 @@ const AdminCampusPage = () => {
     if (!selectedCampus) return;
 
     try {
-      await deleteCampus(selectedCampus.campusID).unwrap();
+      await deleteCampus(selectedCampus.campusId).unwrap();
 
       toast({
         title: "Đã xóa campus",
@@ -167,25 +167,33 @@ const AdminCampusPage = () => {
 
   // Sort campuses
   console.log("Sort state:", { sortField, sortOrder });
-  const sortedCampuses = [...campuses].sort((a, b) => {
-    let comparison = 0;
-    
-    switch (sortField) {
-      case 'name':
-        comparison = a.campusName.localeCompare(b.campusName);
-        break;
-      case 'id':
-        comparison = a.campusID - b.campusID;
-        break;
-      case 'storage':
-        comparison = a.storageLocation.localeCompare(b.storageLocation);
-        break;
-    }
-    
-    return sortOrder === 'asc' ? comparison : -comparison;
-  });
+  const sortedCampuses = [...campuses]
+    .filter(c => c && c.campusId) // Filter out undefined/null items
+    .sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'name': {
+          const nameA = a.campusName || '';
+          const nameB = b.campusName || '';
+          comparison = nameA.localeCompare(nameB);
+          break;
+        }
+        case 'id':
+          comparison = a.campusId - b.campusId;
+          break;
+        case 'storage': {
+          const storageA = a.storageLocation || '';
+          const storageB = b.storageLocation || '';
+          comparison = storageA.localeCompare(storageB);
+          break;
+        }
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
   
-  console.log("Sorted campuses:", sortedCampuses.map(c => ({ id: c.campusID, name: c.campusName })));
+  console.log("Sorted campuses:", sortedCampuses.map(c => ({ id: c.campusId, name: c.campusName })));
 
   const toggleSort = (field: SortField) => {
     console.log("Toggle sort clicked:", field);
@@ -348,7 +356,7 @@ const AdminCampusPage = () => {
       ) : campuses.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedCampuses.map((campus) => (
-            <Card key={campus.campusID} className="hover:shadow-lg transition-shadow">
+            <Card key={campus.campusId} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
@@ -357,7 +365,7 @@ const AdminCampusPage = () => {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{campus.campusName}</CardTitle>
-                      <Badge variant="outline" className="mt-1">ID: {campus.campusID}</Badge>
+                      <Badge variant="outline" className="mt-1">ID: {campus.campusId}</Badge>
                     </div>
                   </div>
                 </div>

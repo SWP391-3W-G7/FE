@@ -118,7 +118,7 @@ const MainLayout = () => {
                       <UserIcon className="mr-2 h-4 w-4" />
                       Hồ sơ cá nhân
                     </DropdownMenuItem>
-                    {/* Admin - Trang Quản Trị */}
+
                     {user.role === 'ADMIN' && (
                        <>
                         <DropdownMenuSeparator />
@@ -128,8 +128,18 @@ const MainLayout = () => {
                         </DropdownMenuItem>
                        </>
                     )}
-                    {/* Security - Trang Quản Trị */}
+
                     {user.role === 'SECURITY' && (
+                       <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>
+                          <PackagePlus className="mr-2 h-4 w-4" />
+                          Trang Quản Trị
+                        </DropdownMenuItem>
+                       </>
+                    )}
+
+                    {user.role === 'STAFF' && (
                        <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>

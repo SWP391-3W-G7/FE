@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Package, Plus, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useGetSecurityTemporaryItemsQuery, useUpdateSecurityItemStatusMutation } from '@/features/items/itemApi';
+import { useGetSecurityTemporaryItemsQuery, useUpdateSecurityItemStatusMutation, useGetCampusesQuery } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ const SecurityDashboard = () => {
   const [keyword, setKeyword] = useState<string>("");
   const [selectedCampus, setSelectedCampus] = useState<string>(user?.campusId || "all");
 
+  const { data: campuses = [] } = useGetCampusesQuery();
   const { data: items = [], isLoading, isFetching, refetch } = useGetSecurityTemporaryItemsQuery({
     campusId: selectedCampus === "all" ? undefined : selectedCampus,
   });
@@ -94,13 +95,16 @@ const SecurityDashboard = () => {
               <SelectTrigger>
                 <div className="flex items-center gap-2 text-slate-600">
                   <MapPin className="h-4 w-4" />
-                  <SelectValue placeholder="Campus" />
+                  <SelectValue placeholder="Chọn Campus" />
                 </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả Campus</SelectItem>
-                <SelectItem value="hcm-nvh">HCM - NVH Sinh Viên</SelectItem>
-                <SelectItem value="hcm-shtp">HCM - SHTP (Q9)</SelectItem>
+                {campuses.map((campus) => (
+                  <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
+                    {campus.campusName}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

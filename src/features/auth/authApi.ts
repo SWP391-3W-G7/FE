@@ -13,15 +13,32 @@ export const authApi = rootApi.injectEndpoints({
 
       // 🔥 ĐOẠN NÀY LÀ QUAN TRỌNG NHẤT
       transformResponse: (rawResult: any) => {
-        // rawResult là cái cục JSON ông vừa paste cho tôi đó
+        console.log("📨 Raw API response:", rawResult);
         
         // 1. Map 'token' của BE thành biến 'token' cho FE
         const accessToken = rawResult.token; 
 
-        // 2. Xử lý Role: BE trả về "User" -> FE đổi thành "STUDENT"
-        // (Hoặc giữ nguyên nếu ông muốn, nhưng nên chuẩn hóa Uppercase)
-        let role = rawResult.roleName.toUpperCase();
-        if (role === 'USER') role = 'STUDENT';
+        // 2. Xử lý Role: Normalize role từ API
+        const roleFromApi = rawResult.roleName || 'User';
+        let role = roleFromApi.toUpperCase();
+        
+        console.log("📋 Original roleName:", roleFromApi, "→ Uppercase:", role);
+        
+        // Map các role name từ API sang frontend (check substring trước)
+        if (role.includes('SECURITY') || role === 'MANAGER') {
+          role = 'SECURITY';
+        } else if (role.includes('ADMIN')) {
+          role = 'ADMIN';
+        } else if (role.includes('STAFF')) {
+          role = 'STAFF';
+        } else if (role === 'USER' || role === 'STUDENT') {
+          role = 'STUDENT';
+        } else {
+          // Default fallback
+          role = 'STUDENT';
+        }
+
+        console.log("✅ Final role:", role);
 
         // 3. Gom các trường lẻ tẻ thành object User
         const user: User = {
@@ -31,6 +48,8 @@ export const authApi = rootApi.injectEndpoints({
           role: role, 
           campusId: rawResult.campusId,
         };
+
+        console.log("👤 User object:", user);
 
         // 4. Trả về đúng cấu trúc { user, token } mà authSlice đang đợi
         return {

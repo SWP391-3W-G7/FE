@@ -31,7 +31,6 @@ const AppRoutes = () => {
         <Route path="/items" element={<FindItemsPage />} />
         <Route path="/items/:id" element={<ClaimItemPage />} />
         <Route path="/my-claims" element={<StudentDashboard />} />
-        <Route path="/staff/dashboard" element={<StaffDashboard />} />
       </Route>
 
       {/* Student Routes */}
@@ -52,12 +51,19 @@ const AppRoutes = () => {
           <Route path="/security/log-item" element={<SecurityLogPage />} />
           <Route path="/security/verification" element={<SecurityVerificationPage />} />
         </Route>
+      </Route>
+
+      {/* Staff Routes */}
       <Route element={<ProtectedRoute allowedRoles={['STAFF', 'ADMIN']} />}>
-        {/* <Route path="/staff/dashboard" element={<StaffDashboard />} /> */}
+        <Route element={<MainLayout />}>
+          <Route path="/staff/dashboard" element={<StaffDashboard />} />
+        </Route>
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.SECURITY]} />}>
-        <Route path="/dashboard" element={<div className='p-10 text-2xl font-bold text-center'>Dashboard Quản Lý (Dành cho Staff/Security)</div>} />
+        <Route element={<MainLayout />}>
+          <Route path="/dashboard" element={<div className='p-10 text-2xl font-bold text-center'>Dashboard Quản Lý (Dành cho Staff/Security)</div>} />
+        </Route>
       </Route>
 
       {/* Admin Routes */}

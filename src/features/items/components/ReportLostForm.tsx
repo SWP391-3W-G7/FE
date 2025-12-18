@@ -131,7 +131,7 @@ export const ReportLostForm = () => {
                                     </FormControl>
                                     <SelectContent>
                                         {categories.map((cat: Category) => (
-                                            <SelectItem key={cat.categoryID} value={cat.categoryID.toString()}>
+                                            <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
                                                 {cat.categoryName}
                                             </SelectItem>
                                         ))}

@@ -24,7 +24,6 @@ const foundReportSchema = z.object({
     title: z.string().min(5, "Vui lòng nhập tên đồ vật rõ ràng"),
     description: z.string().min(2, "Mô tả ngắn gọn về tình trạng đồ"),
     categoryId: z.string("Chọn loại tài sản"),
-    campusId: z.string("Chọn cơ sở nhặt được"),
     foundDate: z.date("Chọn thời gian nhặt"),
     foundLocation: z.string().min(2, "Nhập vị trí nhặt được"),
 });
@@ -45,7 +44,7 @@ export const ReportFoundForm = () => {
     const form = useForm<FoundReportFormValues>({
         resolver: zodResolver(foundReportSchema),
         defaultValues: {
-            campusId: user?.campusId || "hcm-nvh",
+            campusId: user?.campusId,
         },
     });
 
@@ -128,7 +127,7 @@ export const ReportFoundForm = () => {
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {categories.map((cat) => (
+                                        {categories.filter(cat => cat?.categoryID).map((cat) => (
                                             <SelectItem key={cat.categoryID} value={cat.categoryID.toString()}>
                                                 {cat.categoryName}
                                             </SelectItem>

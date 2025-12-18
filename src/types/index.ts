@@ -151,9 +151,10 @@ export interface LoginResponse {
 }
 
 export interface Campus {
-  id: number;
-  name: string;
-  description: string;
+  campusId: number;
+  campusName: string;
+  address: string;
+  storageLocation: string;
 }
 
 export interface Claim {

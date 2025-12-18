@@ -46,7 +46,7 @@ export const LoginForm = () => {
                 redirectPath = '/security/dashboard';
                 console.log("🔄 Redirecting SECURITY to:", redirectPath);
             } else if (userRole === 'STAFF') {
-                redirectPath = '/admin/dashboard';
+                redirectPath = '/staff/dashboard';
                 console.log("🔄 Redirecting STAFF to:", redirectPath);
             } else {
                 console.log("🔄 Redirecting", userRole, "to:", redirectPath);
