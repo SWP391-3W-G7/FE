@@ -1,9 +1,8 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2 } from 'lucide-react';
 import { useLoginMutation } from '../authApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '../authSlice';
@@ -12,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from 'lucide-react';
+import { ROLES } from '@/config/roles';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import type { SerializedError } from '@reduxjs/toolkit';
 
@@ -34,17 +35,17 @@ export const LoginForm = () => {
         if (currentUser?.role) {
             console.log("✅ User updated in Redux:", currentUser);
             console.log("✅ User role:", currentUser.role, "Type:", typeof currentUser.role);
-            
+
             const userRole = currentUser.role as UserRole;
             let redirectPath = '/items';
 
-            if (userRole === 'ADMIN') {
+            if (userRole === ROLES.ADMIN) {
                 redirectPath = '/admin/dashboard';
                 console.log("🔄 Redirecting ADMIN to:", redirectPath);
-            } else if (userRole === 'SECURITY') {
+            } else if (userRole === ROLES.SECURITY || userRole === 'SECURITY') {
                 redirectPath = '/security/dashboard';
                 console.log("🔄 Redirecting SECURITY to:", redirectPath);
-            } else if (userRole === 'STAFF') {
+            } else if (userRole === ROLES.STAFF) {
                 redirectPath = '/staff/dashboard';
                 console.log("🔄 Redirecting STAFF to:", redirectPath);
             } else {
