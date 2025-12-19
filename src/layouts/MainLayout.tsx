@@ -10,6 +10,7 @@ import {
 
 import { useAppDispatch, useAppSelector } from '@/store';
 import { logout, selectCurrentUser, selectIsAuthenticated } from '@/features/auth/authSlice';
+import { ROLES } from '@/config/roles';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -118,7 +119,7 @@ const MainLayout = () => {
                       Hồ sơ cá nhân
                     </DropdownMenuItem>
 
-                    {(user.role === 'STAFF' || user.role === 'ADMIN') && (
+                    {(user.role === ROLES.STAFF || user.role === ROLES.ADMIN || user.role === ROLES.SECURITY) && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => navigate('/dashboard')}>

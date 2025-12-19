@@ -330,36 +330,11 @@ export const itemApi = rootApi.injectEndpoints({
 
     // Admin: Get system reports
     getSystemReports: build.query<SystemReport, { campusId?: number } | void>({
-      queryFn: async () => {
-        // Mock data
-        const mock: SystemReport = {
-          totalLostItems: 45,
-          totalFoundItems: 78,
-          itemsInStorage: 32,
-          itemsReturned: 28,
-          itemsClaimed: 12,
-          itemsOpen: 6,
-          campusStats: [
-            {
-              campusID: 1,
-              campusName: "HCM - NVH Sinh Viên",
-              totalLostItems: 25,
-              totalFoundItems: 42,
-              itemsInStorage: 18,
-              itemsReturned: 16,
-            },
-            {
-              campusID: 2,
-              campusName: "HCM - SHTP (Q9)",
-              totalLostItems: 20,
-              totalFoundItems: 36,
-              itemsInStorage: 14,
-              itemsReturned: 12,
-            },
-          ],
-        };
-        return { data: mock };
-      },
+      query: (params) => ({
+        url: "/reports/dashboard",
+        method: "GET",
+        params: params || undefined,
+      }),
       providesTags: ["SystemReports"],
     }),
     // Admin: Get all campuses
@@ -409,12 +384,11 @@ export const itemApi = rootApi.injectEndpoints({
           else if (roleName.includes('user') || roleName.includes('student')) role = 'USER';
 
           const transformed: AdminUser = {
-            id: user.userId?.toString() || user.email,
             userId: user.userId,
             email: user.email,
             fullName: user.fullName,
             role: role as UserRole,
-            campusId: user.campusId?.toString() || '',
+            campusId: Number(user.campusId) || 0,
             campusName: user.campusName || '',
             isActive: user.status === 'Active',
           };

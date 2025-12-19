@@ -1,4 +1,4 @@
-export type UserRole = "STUDENT" | "STAFF" | "SECURITY" | "ADMIN";
+export type UserRole = "STUDENT" | "STAFF" | "SECURITY" | "ADMIN" | "SECURITY OFFICER";
 // ==========================================
 // MAP THEO DATABASE TABLES
 // ==========================================
@@ -90,6 +90,7 @@ export interface User {
   role: UserRole;
   campusName: string;
   campusId: number;
+  avatarUrl?: string;
 }
 
 // System Reports for Admin
