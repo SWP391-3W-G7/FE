@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { formatVN } from '@/utils/dateUtils';
-import { PackageCheck, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { PackageCheck, MapPin, Loader2, AlertCircle, Bell } from 'lucide-react';
 
 // API
-import { useGetIncomingItemsQuery, useUpdateItemStatusMutation } from '@/features/items/itemApi';
+import { useGetIncomingItemsQuery, useUpdateItemStatusMutation, useRequestDropoffMutation } from '@/features/items/itemApi';
 
 // UI Libs
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 import type { FoundItem } from '@/types';
 
 export const IncomingItemsTable = () => {
@@ -24,14 +25,28 @@ export const IncomingItemsTable = () => {
 
   // 2. Mutation update status
   const [updateItemStatus, { isLoading: isUpdating }] = useUpdateItemStatusMutation();
+  
+  // 3. Mutation request dropoff (notification)
+  const [requestDropoff, { isLoading: isSendingNotification }] = useRequestDropoffMutation();
 
-  // State cho Modal
+  // State cho Modal Nhập kho
   const [isOpen, setIsOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  
+  // State cho Modal Gửi thông báo
+  const [isNotifyOpen, setIsNotifyOpen] = useState(false);
+  const [notifyItemId, setNotifyItemId] = useState<number | null>(null);
+  const [notifyNote, setNotifyNote] = useState("");
 
   const handleOpenModal = (id: number) => {
     setSelectedItemId(id);
     setIsOpen(true);
+  };
+  
+  const handleOpenNotifyModal = (id: number) => {
+    setNotifyItemId(id);
+    setNotifyNote("");
+    setIsNotifyOpen(true);
   };
 
   const handleConfirm = async () => {
@@ -54,6 +69,32 @@ export const IncomingItemsTable = () => {
       toast({
         title: "Có lỗi xảy ra",
         description: "Không thể cập nhật trạng thái. Vui lòng thử lại.",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleSendNotification = async () => {
+    if (!notifyItemId) return;
+
+    try {
+      await requestDropoff({
+        id: notifyItemId,
+        note: notifyNote || "Vui lòng mang đồ đến phòng lưu kho để nhận lại."
+      }).unwrap();
+
+      toast({
+        title: "Gửi thông báo thành công!",
+        description: `Đã gửi thông báo cho người nhặt được vật phẩm #${notifyItemId}.`,
+        className: "bg-blue-50 border-blue-200 text-blue-800",
+      });
+      setIsNotifyOpen(false);
+      setNotifyNote("");
+    } catch (error) {
+      console.error("Failed to send notification:", error);
+      toast({
+        title: "Có lỗi xảy ra",
+        description: "Không thể gửi thông báo. Vui lòng thử lại.",
         variant: "destructive"
       });
     }
@@ -135,14 +176,25 @@ export const IncomingItemsTable = () => {
 
                 {/* Cột 5: Nút bấm Action */}
                 <TableCell className="text-right">
-                  <Button
-                    size="sm"
-                    className="bg-[#EC6824] hover:bg-[#EC6824]/90 text-white shadow-sm"
-                    onClick={() => handleOpenModal(item.foundItemId)}
-                  >
-                    <PackageCheck className="w-4 h-4 mr-2" />
-                    Nhập kho
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                      onClick={() => handleOpenNotifyModal(item.foundItemId)}
+                    >
+                      <Bell className="w-4 h-4 mr-2" />
+                      Gửi thông báo
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-[#EC6824] hover:bg-[#EC6824]/90 text-white shadow-sm"
+                      onClick={() => handleOpenModal(item.foundItemId)}
+                    >
+                      <PackageCheck className="w-4 h-4 mr-2" />
+                      Nhập kho
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))
@@ -150,7 +202,7 @@ export const IncomingItemsTable = () => {
         </TableBody>
       </Table>
 
-      {/* MODAL CONFIRM */}
+      {/* MODAL CONFIRM NHẬP KHO */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
           <DialogHeader>
@@ -171,6 +223,41 @@ export const IncomingItemsTable = () => {
             <Button onClick={handleConfirm} disabled={isUpdating} className="bg-orange-600 hover:bg-orange-700">
               {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Xác nhận nhập kho
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* MODAL GỬI THÔNG BÁO */}
+      <Dialog open={isNotifyOpen} onOpenChange={setIsNotifyOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-600">
+              <Bell className="h-5 w-5" />
+              Gửi thông báo nhận đồ
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              Gửi thông báo đến người đã nhặt được vật phẩm <strong>#{notifyItemId}</strong> để họ mang đến phòng lưu kho.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <label className="text-sm font-medium text-slate-700 mb-2 block">
+              Nội dung thông báo (tùy chọn)
+            </label>
+            <Textarea
+              placeholder="Vui lòng mang đồ đến phòng lưu kho để nhận lại..."
+              value={notifyNote}
+              onChange={(e) => setNotifyNote(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
+
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={() => setIsNotifyOpen(false)}>Hủy bỏ</Button>
+            <Button onClick={handleSendNotification} disabled={isSendingNotification} className="bg-blue-600 hover:bg-blue-700">
+              {isSendingNotification && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Gửi thông báo
             </Button>
           </DialogFooter>
         </DialogContent>

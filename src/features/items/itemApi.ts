@@ -178,6 +178,15 @@ export const itemApi = rootApi.injectEndpoints({
       invalidatesTags: ["StatusItems", "IncomingItems", "InventoryItems"],
     }),
 
+    // Staff: Request dropoff notification
+    requestDropoff: build.mutation<void, { id: number; note: string }>({
+      query: ({ id, note }) => ({
+        url: `/staff/found-items/${id}/request-dropoff`,
+        method: "POST",
+        data: { note },
+      }),
+    }),
+
 
 
     // got it
@@ -683,6 +692,7 @@ export const {
   useGetFoundItemByIdQuery,
   useGetFoundItemDetailsQuery,
   useUpdateItemStatusMutation,
+  useRequestDropoffMutation,
   useGetMyLostItemsQuery,
   useUpdateLostItemMutation,
   useDeleteLostItemMutation,

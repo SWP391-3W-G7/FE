@@ -139,29 +139,35 @@ export const StaffStats = () => {
           </CardHeader>
           <CardContent className="pl-2">
             <div className="space-y-4">
-              {stats?.categoryStats && stats.categoryStats.length > 0 ? (
-                stats.categoryStats.map((cat) => {
-                  const maxCount = Math.max(...stats.categoryStats.map(c => c.count), 1);
-                  return (
-                    <div key={cat.categoryName} className="flex items-center">
-                      <div className="w-[120px] text-sm font-medium text-slate-600 truncate">
-                        {cat.categoryName}
-                      </div>
-                      <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden mx-2">
-                        <div 
-                          className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all" 
-                          style={{ width: `${(cat.count / maxCount) * 100}%` }}
-                        />
-                      </div>
-                      <div className="w-[40px] text-right text-sm font-semibold text-slate-700">
-                        {cat.count}
-                      </div>
+              {(() => {
+                // Filter out categories with no name or count = 0
+                const validCategories = stats?.categoryStats?.filter(
+                  (cat) => cat.categoryName && cat.count > 0
+                ) || [];
+                
+                if (validCategories.length === 0) {
+                  return <p className="text-sm text-slate-400 italic">Chưa có dữ liệu phân loại</p>;
+                }
+                
+                const maxCount = Math.max(...validCategories.map(c => c.count), 1);
+                
+                return validCategories.map((cat) => (
+                  <div key={cat.categoryName} className="flex items-center">
+                    <div className="w-[120px] text-sm font-medium text-slate-600 truncate">
+                      {cat.categoryName}
                     </div>
-                  );
-                })
-              ) : (
-                <p className="text-sm text-slate-400 italic">Chưa có dữ liệu phân loại</p>
-              )}
+                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden mx-2">
+                      <div 
+                        className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all" 
+                        style={{ width: `${(cat.count / maxCount) * 100}%` }}
+                      />
+                    </div>
+                    <div className="w-[40px] text-right text-sm font-semibold text-slate-700">
+                      {cat.count}
+                    </div>
+                  </div>
+                ));
+              })()}
             </div>
           </CardContent>
         </Card>
