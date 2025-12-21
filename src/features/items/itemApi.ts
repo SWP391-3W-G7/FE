@@ -433,8 +433,9 @@ export const itemApi = rootApi.injectEndpoints({
       id: number;
       fullName: string;
       phoneNumber: string;
+      roleId: number;
       campusId: number;
-      status: string;
+      isActive: boolean;
     }>({
       query: ({ id, ...data }) => ({
         url: `/admin/users/${id}`,
@@ -449,6 +450,14 @@ export const itemApi = rootApi.injectEndpoints({
         url: `/admin/users/${id}/ban-status`,
         method: "PATCH",
         params: { isBan },
+      }),
+    }),
+
+    // Admin: Get user detail
+    getUserDetail: build.query<any, number>({
+      query: (id) => ({
+        url: `/admin/users/${id}`,
+        method: "GET",
       }),
     }),
 
@@ -472,6 +481,193 @@ export const itemApi = rootApi.injectEndpoints({
         url: `/Campus/${id}`,
         method: "DELETE",
       }),
+    }),
+
+    // Admin: Get pending users
+    getPendingUsers: build.query<any[], void>({
+      query: () => ({
+        url: "/admin/users/pending",
+        method: "GET",
+      }),
+      transformResponse: (response: any[]) => {
+        return response.map((user) => ({
+          userId: user.userID || user.userId,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          roleId: user.roleId || user.roleID,
+          status: user.status,
+          campusId: user.campusId || user.campusID,
+          phoneNumber: user.phoneNumber,
+          roleName: user.roleName,
+          campusName: user.campusName,
+          studentIdCardUrl: user.studentIdCardUrl,
+        }));
+      },
+      providesTags: ["PendingUsers"],
+    }),
+
+    // Admin: Approve user
+    approveUser: build.mutation<void, number>({
+      query: (id) => ({
+        url: `/admin/users/${id}/approve`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["PendingUsers"],
+    }),
+
+    // Admin: Reject user
+    rejectUser: build.mutation<void, number>({
+      query: (id) => ({
+        url: `/admin/users/${id}/reject`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["PendingUsers"],
+    }),
+
+    // Admin Dashboard APIs
+    getUnreturnedItemsCount: build.query<number, void>({
+      query: () => ({
+        url: "/admin/dashboard/unreturned-items-count",
+        method: "GET",
+      }),
+      transformResponse: (response: any) => {
+        return response?.count || 0;
+      },
+    }),
+
+    getFoundItemsMonthly: build.query<any[], void>({
+      query: () => ({
+        url: "/admin/dashboard/found-items-monthly",
+        method: "GET",
+      }),
+      transformResponse: (response: any) => {
+        const data = response?.data;
+        if (!Array.isArray(data)) return [];
+        
+        const months = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+        return data.map((count: number, index: number) => ({
+          month: months[index],
+          name: months[index],
+          count: count
+        }));
+      },
+    }),
+
+    getTopContributor: build.query<any[], void>({
+      query: () => ({
+        url: "/admin/dashboard/top-contributor",
+        method: "GET",
+      }),
+      transformResponse: (response: any) => {
+        const data = response?.data;
+        if (!data) return [];
+        
+        // API trả về single object, wrap vào array
+        return [{
+          userId: data.userId,
+          userName: data.fullName,
+          fullName: data.fullName,
+          email: data.email,
+          count: data.totalFoundItems || 0,
+          itemCount: data.totalFoundItems || 0
+        }];
+      },
+    }),
+
+    getCampusMostLostItems: build.query<any[], void>({
+      query: () => ({
+        url: "/admin/dashboard/campus-most-lost-items",
+        method: "GET",
+      }),
+      transformResponse: (response: any) => {
+        const data = response?.data;
+        if (!data) return [];
+        
+        // API trả về single object, wrap vào array
+        return [{
+          campusId: data.campusId,
+          campusName: data.campusName,
+          count: data.totalLostItems || 0,
+          lostItemCount: data.totalLostItems || 0
+        }];
+      },
+    }),
+
+    getUserMostLostItems: build.query<any[], void>({
+      query: () => ({
+        url: "/admin/dashboard/user-most-lost-items",
+        method: "GET",
+      }),
+      transformResponse: (response: any) => {
+        const data = response?.data;
+        if (!data) return [];
+        
+        // API trả về single object, wrap vào array
+        return [{
+          userId: data.userId,
+          userName: data.fullName,
+          fullName: data.fullName,
+          email: data.email,
+          count: data.totalLostItems || 0,
+          lostItemCount: data.totalLostItems || 0
+        }];
+      },
+    }),
+
+    getLostItemsStatusStats: build.query<any[], void>({
+      query: () => ({
+        url: "/admin/dashboard/lost-items-status-stats",
+        method: "GET",
+      }),
+      transformResponse: (response: any) => {
+        const data = response?.data;
+        if (!data) return [];
+        
+        return [
+          { status: 'Lost', count: data.totalLost || 0 },
+          { status: 'Matched', count: data.totalMatched || 0 },
+          { status: 'Returned', count: data.totalReturned || 0 },
+        ];
+      },
+    }),
+
+    getFoundItemsStatusStats: build.query<any[], void>({
+      query: () => ({
+        url: "/admin/dashboard/found-items-status-stats",
+        method: "GET",
+      }),
+      transformResponse: (response: any) => {
+        const data = response?.data;
+        if (!data) return [];
+        
+        return [
+          { status: 'Open', count: data.totalOpen || 0 },
+          { status: 'Stored', count: data.totalStored || 0 },
+          { status: 'Claimed', count: data.totalClaimed || 0 },
+          { status: 'Returned', count: data.totalReturned || 0 },
+          { status: 'Closed', count: data.totalClosed || 0 },
+        ];
+      },
+    }),
+
+    getClaimStatusStats: build.query<any[], void>({
+      query: () => ({
+        url: "/admin/dashboard/claim-status-stats",
+        method: "GET",
+      }),
+      transformResponse: (response: any) => {
+        const data = response?.data;
+        if (!data) return [];
+        
+        return [
+          { status: 'Pending', count: data.totalPending || 0 },
+          { status: 'Approved', count: data.totalApproved || 0 },
+          { status: 'Rejected', count: data.totalRejected || 0 },
+          { status: 'Returned', count: data.totalReturned || 0 },
+          { status: 'Conflicted', count: data.totalConflicted || 0 },
+        ];
+      },
     }),
   }),
 });
@@ -507,10 +703,22 @@ export const {
   useCreateUserMutation,
   useUpdateUserMutation,
   useBanUserMutation,
+  useGetUserDetailQuery,
   useGetIncomingItemsQuery,
   useGetInventoryItemsQuery,
   useGetAllLostItemsQuery,
   useGetStaffStatsQuery,
   useResolveDisputeMutation,
   useGetDisputedItemsQuery,
+  useGetPendingUsersQuery,
+  useApproveUserMutation,
+  useRejectUserMutation,
+  useGetUnreturnedItemsCountQuery,
+  useGetFoundItemsMonthlyQuery,
+  useGetTopContributorQuery,
+  useGetCampusMostLostItemsQuery,
+  useGetUserMostLostItemsQuery,
+  useGetLostItemsStatusStatsQuery,
+  useGetFoundItemsStatusStatsQuery,
+  useGetClaimStatusStatsQuery,
 } = itemApi;

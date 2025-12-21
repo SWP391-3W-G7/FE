@@ -128,6 +128,9 @@ export interface CampusStat {
 export interface AdminUser extends User {
   userId: number;
   isActive: boolean;
+  status?: string;
+  id?: string;
+  phone?: string;
 }
 
 // Create Campus Request

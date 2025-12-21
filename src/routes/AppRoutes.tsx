@@ -17,8 +17,8 @@ import SecurityLogPage from '@/pages/private/security/SecurityLogPage';
 import AdminDashboard from '@/pages/private/admin/AdminDashboard';
 import AdminCampusPage from '@/pages/private/admin/AdminCampusPage';
 import AdminUsersPage from '@/pages/private/admin/AdminUsersPage';
+import PendingUsersPage from '@/pages/private/admin/PendingUsersPage';
 import SecurityDashboard from '@/pages/private/security/SecurityDashboard';
-import SecurityVerificationPage from '@/pages/private/security/SecurityVerificationPage';
 import { StaffDashboard } from '@/pages/private/staff/StaffDashboard';
 
 const AppRoutes = () => {
@@ -62,7 +62,6 @@ const AppRoutes = () => {
         <Route element={<MainLayout />}>
           <Route path="/security/dashboard" element={<SecurityDashboard />} />
           <Route path="/security/log-item" element={<SecurityLogPage />} />
-          <Route path="/security/verification" element={<SecurityVerificationPage />} />
         </Route>
       </Route>
 
@@ -86,6 +85,7 @@ const AppRoutes = () => {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/campus" element={<AdminCampusPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/pending-users" element={<PendingUsersPage />} />
         </Route>
       </Route>
 

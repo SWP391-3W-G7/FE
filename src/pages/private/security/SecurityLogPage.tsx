@@ -74,7 +74,17 @@ const SecurityLogPage = () => {
             }
             formData.append("categoryId", data.categoryId);
             formData.append("campusId", data.campusId);
-            formData.append("foundDate", data.foundDate.toISOString());
+            
+            // Format date as local datetime string (yyyy-MM-ddTHH:mm:ss)
+            const year = data.foundDate.getFullYear();
+            const month = String(data.foundDate.getMonth() + 1).padStart(2, '0');
+            const day = String(data.foundDate.getDate()).padStart(2, '0');
+            const hours = String(data.foundDate.getHours()).padStart(2, '0');
+            const minutes = String(data.foundDate.getMinutes()).padStart(2, '0');
+            const seconds = String(data.foundDate.getSeconds()).padStart(2, '0');
+            const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+            
+            formData.append("foundDate", localDateTimeString);
             formData.append("foundLocation", data.foundLocation);
 
             selectedImages.forEach((file) => {
@@ -224,6 +234,21 @@ const SecurityLogPage = () => {
                                                             initialFocus
                                                             locale={vi}
                                                         />
+                                                        <div className="p-3 border-t">
+                                                            <div className="flex items-center gap-2">
+                                                                <Input
+                                                                    type="time"
+                                                                    value={field.value ? format(field.value, "HH:mm") : "00:00"}
+                                                                    onChange={(e) => {
+                                                                        const [hours, minutes] = e.target.value.split(':');
+                                                                        const newDate = field.value ? new Date(field.value) : new Date();
+                                                                        newDate.setHours(parseInt(hours), parseInt(minutes));
+                                                                        field.onChange(newDate);
+                                                                    }}
+                                                                    className="w-full"
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </PopoverContent>
                                                 </Popover>
                                                 <FormMessage />
