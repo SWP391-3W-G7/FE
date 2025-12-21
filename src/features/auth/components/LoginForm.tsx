@@ -70,7 +70,7 @@ export const LoginForm = () => {
             if (userRole === ROLES.ADMIN) {
                 redirectPath = '/admin/dashboard';
                 console.log("🔄 Redirecting ADMIN to:", redirectPath);
-            } else if (userRole === ROLES.SECURITY || userRole === 'SECURITY') {
+            } else if (userRole === ROLES.SECURITY || userRole === 'SECURITY OFFICER') {
                 redirectPath = '/security/dashboard';
                 console.log("🔄 Redirecting SECURITY to:", redirectPath);
             } else if (userRole === ROLES.STAFF) {
