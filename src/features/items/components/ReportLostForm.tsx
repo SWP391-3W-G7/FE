@@ -7,8 +7,6 @@ import { CalendarIcon, Loader2, Upload, X } from 'lucide-react';
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { useGetCategoriesQuery, useGetCampusesQuery, useCreateLostItemMutation } from '../../items/itemApi';
-import { useAppSelector } from '@/store';
-import { selectCurrentUser } from '@/features/auth/authSlice';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +33,6 @@ type ReportFormValues = z.infer<typeof reportSchema>;
 export const ReportLostForm = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
-    const user = useAppSelector(selectCurrentUser);
 
     const { data: categories = [] } = useGetCategoriesQuery();
     const { data: campuses = [] } = useGetCampusesQuery();
@@ -262,8 +259,8 @@ export const ReportLostForm = () => {
                                     </FormControl>
                                     <SelectContent>
                                         {campuses.map((campus) => (
-                                            <SelectItem key={campus.id} value={campus.id.toString()}>
-                                                {campus.description}
+                                            <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
+                                                {campus.campusName}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

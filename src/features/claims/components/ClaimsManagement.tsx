@@ -3,13 +3,13 @@ import { format } from 'date-fns';
 import { Eye, User, MapPin, Send, MessageSquare, Package, Check, X, Clock, AlertTriangle, ChevronLeft, ChevronRight, History } from 'lucide-react';
 
 // API
-import { useGetStaffWorkItemsQuery, useGetClaimByIdQuery, useRequestMoreInfoMutation, useVerifyClaimMutation, useUpdateClaimStatusMutation, useGetMatchByIdQuery, useGetPendingClaimsQuery, useGetConflictedClaimsQuery, useGetMatchingItemsQuery } from '@/features/claims/claimApi';
+import { useGetClaimByIdQuery, useRequestMoreInfoMutation, useVerifyClaimMutation, useUpdateClaimStatusMutation, useGetMatchByIdQuery, useGetPendingClaimsQuery, useGetConflictedClaimsQuery, useGetMatchingItemsQuery } from '@/features/claims/claimApi';
 import { useGetFoundItemDetailsQuery, useGetCategoriesQuery, useGetCampusesForAdminQuery, useGetLostItemByIdQuery } from '@/features/items/itemApi';
 
 // UI
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
@@ -163,7 +163,6 @@ const FoundItemDetailView = ({ itemId }: { itemId: number }) => {
 const LostItemDetailView = ({ itemId }: { itemId: number }) => {
     const { data: item, isLoading, error } = useGetLostItemByIdQuery(itemId);
     const { data: categories } = useGetCategoriesQuery();
-    const { data: campuses } = useGetCampusesForAdminQuery();
 
     if (isLoading) return <div className="p-4 text-center text-slate-400 text-xs">Đang tải tin báo mất...</div>;
     if (error || !item) return null;
@@ -313,7 +312,6 @@ export const ClaimsManagement = () => {
     const pageSize = 10;
 
     // Fetch reference data for ID-to-Name resolution
-    const { data: categories } = useGetCategoriesQuery();
     const { data: campuses } = useGetCampusesForAdminQuery();
 
     // Fetching data for all tabs to get counts for badges
@@ -788,9 +786,11 @@ export const ClaimsManagement = () => {
                                 {selectedClaim?.lostItemId && (
                                     <LostItemDetailView itemId={selectedClaim.lostItemId} />
                                 )}
-                                {((fullClaim?.evidences || selectedClaim?.evidences) && (fullClaim?.evidences || selectedClaim?.evidences).length > 0) ? (
+                                {(() => {
+                                    const evidences = fullClaim?.evidences || selectedClaim?.evidences || [];
+                                    return evidences.length > 0 ? (
                                     <div className="space-y-6">
-                                        {(fullClaim?.evidences || selectedClaim?.evidences).map((ev: Evidence, index: number) => (
+                                        {evidences.map((ev: Evidence, index: number) => (
                                             <div key={ev.evidenceId || index} className="border-b border-blue-50 pb-4 last:border-0 last:pb-0">
                                                 <div className="font-semibold text-sm text-blue-900 mb-1">
                                                     #{index + 1}: {ev.title}
@@ -817,7 +817,8 @@ export const ClaimsManagement = () => {
                                     <div className="text-center py-10 text-slate-400 italic text-xs">
                                         Sinh viên chưa gửi bằng chứng nào.
                                     </div>
-                                )}
+                                );
+                                })()}
                             </ScrollArea>
                         </Card>
 

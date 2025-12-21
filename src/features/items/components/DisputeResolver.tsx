@@ -17,6 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export interface Evidence {
   evidenceId: number;
   imageUrl?: string;    // Giả định trường này chứa link ảnh
+  imageUrls?: string[]; // Array of image URLs
   description?: string; // Giả định trường này chứa mô tả text
 }
 
@@ -92,7 +93,7 @@ export const DisputeResolver = () => {
 
   return (
     <div className="space-y-8">
-      {disputedItems.map((item) => (
+      {disputedItems.map((item: FoundItem) => (
         <Card key={item.foundItemId} className="border-orange-200 shadow-md overflow-hidden bg-white">
           {/* Header: Thông tin vật phẩm */}
           <CardHeader className="bg-orange-50 border-b border-orange-100 pb-4">
@@ -128,7 +129,7 @@ export const DisputeResolver = () => {
           {/* Content: Danh sách người nhận (Claims) */}
           <CardContent className="pt-6 bg-slate-50/50">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {item.claimRequests?.map((claim) => (
+              {item.claimRequests?.map((claim: Claim) => (
                 <div
                   key={claim.claimId}
                   className="flex flex-col border rounded-xl bg-white shadow-sm hover:border-blue-400 transition-all duration-200"
@@ -162,20 +163,20 @@ export const DisputeResolver = () => {
                       <ScrollArea className="h-[120px] w-full rounded-md border p-2 bg-slate-50">
                         {claim.evidences && claim.evidences.length > 0 ? (
                           <div className="space-y-3">
-                            {claim.evidences.map((evidence, idx) => (
+                            {claim.evidences.map((evidence: Evidence, idx: number) => (
                               <div key={idx} className="text-sm text-slate-700">
                                 {/* Trường hợp là Text */}
                                 {evidence.description && (
                                   <div className="mb-1 italic">"{evidence.description}"</div>
                                 )}
                                 {/* Trường hợp là Ảnh */}
-                                {evidence.imageUrls[0] && (
+                                {evidence.imageUrls?.[0] && (
                                   <div className="relative group mt-2">
                                     <img
-                                      src={evidence.imageUrls[0]}
+                                      src={evidence.imageUrls?.[0]}
                                       alt="Evidence"
                                       className="h-32 w-full object-cover rounded-md border cursor-pointer hover:opacity-90"
-                                      onClick={() => window.open(evidence.imageUrls[0], '_blank')}
+                                      onClick={() => window.open(evidence.imageUrls?.[0], '_blank')}
                                     />
                                     <div className="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1 rounded flex items-center">
                                       <ImageIcon className="w-3 h-3 mr-1" /> Ảnh minh chứng

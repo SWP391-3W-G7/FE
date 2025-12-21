@@ -7,7 +7,7 @@ import { useGetAdminUsersQuery, useGetCampusesQuery, useAssignUserMutation, useC
 import { Button } from "@/components/ui/button";
 import AdminNav from '@/components/AdminNav';
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,7 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const assignUserSchema = z.object({
   userId: z.string().min(1, "Vui lòng chọn người dùng"),
-  role: z.enum(['STAFF', 'SECURITY'], { required_error: "Vui lòng chọn vai trò" }),
+  role: z.enum(['STAFF', 'SECURITY'], { message: "Vui lòng chọn vai trò" }),
   campusId: z.string().min(1, "Vui lòng chọn campus"),
 });
 
@@ -45,7 +45,7 @@ const createUserSchema = z.object({
   fullName: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
   phone: z.string().regex(/(84|0[3|5|7|8|9])+([0-9]{8})\b/, "Số điện thoại không hợp lệ"),
   password: z.string().min(6, "Mật khẩu tối thiểu 6 ký tự"),
-  role: z.enum(['STAFF', 'SECURITY'], { required_error: "Vui lòng chọn vai trò" }),
+  role: z.enum(['STAFF', 'SECURITY'], { message: "Vui lòng chọn vai trò" }),
   campusId: z.string().min(1, "Vui lòng chọn campus"),
 });
 
@@ -79,7 +79,7 @@ const AdminUsersPage = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
-  const [selectedUserForAssign, setSelectedUserForAssign] = useState<string | null>(null);
+  const [_selectedUserForAssign, setSelectedUserForAssign] = useState<string | null>(null);
   const [selectedUserForEdit, setSelectedUserForEdit] = useState<any>(null);
   const [selectedUserForBan, setSelectedUserForBan] = useState<any>(null);
 
@@ -162,17 +162,17 @@ const AdminUsersPage = () => {
   // Sort campuses alphabetically
   console.log("Campuses from API:", campuses);
   const sortedCampuses = [...campuses].sort((a, b) =>
-    (a.campusName || a.name || "").localeCompare(b.campusName || b.name || "")
+    (a.campusName || "").localeCompare(b.campusName || "")
   );
 
   const handleOpenAssignDialog = (userId: string) => {
-    const user = users.find(u => u.id === userId);
+    const user = users.find(u => u.userId?.toString() === userId);
     if (user) {
       setSelectedUserForAssign(userId);
       assignForm.reset({
         userId: userId,
         role: user.role === 'STAFF' || user.role === 'SECURITY' ? user.role : 'STAFF',
-        campusId: user.campusId || "",
+        campusId: user.campusId?.toString() || "",
       });
       setAssignDialogOpen(true);
     }
@@ -462,7 +462,7 @@ const AdminUsersPage = () => {
                           <SelectContent>
                             {sortedCampuses.map((campus) => (
                               <SelectItem key={getProp(campus, ['campusId', 'campusID', 'id'])} value={(getProp(campus, ['campusId', 'campusID', 'id']) || "").toString()}>
-                                {campus.campusName || campus.name}
+                                {campus.campusName}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -522,7 +522,7 @@ const AdminUsersPage = () => {
                   <SelectItem value="all">Tất cả Campus</SelectItem>
                   {sortedCampuses.map((campus) => (
                     <SelectItem key={getProp(campus, ['campusId', 'campusID', 'id'])} value={(getProp(campus, ['campusId', 'campusID', 'id']) || "").toString()}>
-                      {campus.campusName || campus.name}
+                      {campus.campusName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -649,7 +649,7 @@ const AdminUsersPage = () => {
                         <SelectContent>
                           {sortedCampuses.map((campus) => (
                             <SelectItem key={getProp(campus, ['campusId', 'campusID', 'id'])} value={(getProp(campus, ['campusId', 'campusID', 'id']) || "").toString()}>
-                              {campus.campusName || campus.name}
+                              {campus.campusName}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -732,7 +732,7 @@ const AdminUsersPage = () => {
                         <SelectContent>
                           {sortedCampuses.map((campus) => (
                             <SelectItem key={getProp(campus, ['campusId', 'campusID', 'id'])} value={(getProp(campus, ['campusId', 'campusID', 'id']) || "").toString()}>
-                              {campus.campusName || campus.name}
+                              {campus.campusName}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -831,7 +831,7 @@ const renderUsersList = (
   onAssign: (userId: string) => void,
   onEdit: (user: any) => void,
   onBan: (user: any) => void,
-  getRoleBadge: (role: string) => JSX.Element
+  getRoleBadge: (role: string) => React.ReactNode
 ) => {
   if (isLoading) {
     return (
