@@ -186,6 +186,7 @@ export interface Claim {
   studentName: string | null
   evidences: Evidence[]
   actionLogs: ActionLog[]
+  matchId?: number // Match ID for return API
 }
 
 export interface Evidence {
