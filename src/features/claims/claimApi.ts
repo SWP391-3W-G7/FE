@@ -55,9 +55,10 @@ export const claimApi = rootApi.injectEndpoints({
             providesTags: ["Claims"],
         }),
 
-        getReadyToReturnItems: build.query<Claim[], void>({
+        // Lấy danh sách matches đã approved - sẵn sàng trả đồ
+        getApprovedMatches: build.query<PaginatedResponse<MatchedItem>, void>({
             query: () => ({
-                url: "claim-requests?status=Approved",
+                url: "/Matching/approved",
                 method: "GET",
             }),
             providesTags: ["Claims"],
@@ -106,7 +107,7 @@ export const claimApi = rootApi.injectEndpoints({
         }),
         getMatchingItems: build.query<PaginatedResponse<MatchedItem>, { pageNumber?: number; pageSize?: number } | void>({
             query: (params) => ({
-                url: "/Matching",
+                url: "/Matching/pending",
                 method: "GET",
                 params: {
                     PageNumber: params?.pageNumber || 1,
@@ -114,6 +115,33 @@ export const claimApi = rootApi.injectEndpoints({
                 },
             }),
             providesTags: ["Claims"],
+        }),
+
+        // Confirm matching (approve) - Duyệt
+        confirmMatch: build.mutation<void, number>({
+            query: (matchId) => ({
+                url: `/Matching/${matchId}/confirm`,
+                method: "PUT",
+            }),
+            invalidatesTags: ["Claims"],
+        }),
+
+        // Dismiss matching (reject) - Từ chối
+        dismissMatch: build.mutation<void, number>({
+            query: (matchId) => ({
+                url: `/Matching/${matchId}/dismiss`,
+                method: "PUT",
+            }),
+            invalidatesTags: ["Claims"],
+        }),
+
+        // Return item - Đánh dấu đã trả đồ
+        returnMatch: build.mutation<void, number>({
+            query: (matchId) => ({
+                url: `/Matching/${matchId}/return`,
+                method: "PUT",
+            }),
+            invalidatesTags: ["Claims"],
         }),
     }),
 });
@@ -125,10 +153,13 @@ export const {
     useGetConflictedClaimsQuery,
     useCreateClaimMutation,
     useGetMyClaimsQuery,
-    useGetReadyToReturnItemsQuery,
+    useGetApprovedMatchesQuery,
     useRequestMoreInfoMutation,
     useVerifyClaimMutation,
     useUpdateClaimStatusMutation,
     useGetMatchByIdQuery,
     useGetMatchingItemsQuery,
+    useConfirmMatchMutation,
+    useDismissMatchMutation,
+    useReturnMatchMutation,
 } = claimApi;
