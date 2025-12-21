@@ -7,14 +7,12 @@ import { useLoginMutation } from '../authApi';
 import { useGetCampusesQuery } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '../authSlice';
-import { type UserRole } from '@/types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from 'lucide-react';
-import { ROLES } from '@/config/roles';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import type { SerializedError } from '@reduxjs/toolkit';
 
@@ -64,16 +62,16 @@ export const LoginForm = () => {
             console.log("✅ User updated in Redux:", currentUser);
             console.log("✅ User role:", currentUser.role, "Type:", typeof currentUser.role);
 
-            const userRole = currentUser.role as UserRole;
+            const userRole = currentUser.role;
             let redirectPath = '/items';
 
-            if (userRole === ROLES.ADMIN) {
+            if (userRole === 'ADMIN') {
                 redirectPath = '/admin/dashboard';
                 console.log("🔄 Redirecting ADMIN to:", redirectPath);
-            } else if (userRole === ROLES.SECURITY || userRole === 'SECURITY OFFICER') {
+            } else if (userRole === 'SECURITY') {
                 redirectPath = '/security/dashboard';
                 console.log("🔄 Redirecting SECURITY to:", redirectPath);
-            } else if (userRole === ROLES.STAFF) {
+            } else if (userRole === 'STAFF') {
                 redirectPath = '/staff/dashboard';
                 console.log("🔄 Redirecting STAFF to:", redirectPath);
             } else {
