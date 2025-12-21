@@ -1,4 +1,4 @@
-export type UserRole = "STUDENT" | "STAFF" | "SECURITY" | "ADMIN" | "SECURITY OFFICER" | "USER";
+export type UserRole = "STUDENT" | "STAFF" | "SECURITY" | "ADMIN" | "USER";
 // ==========================================
 // MAP THEO DATABASE TABLES
 // ==========================================
