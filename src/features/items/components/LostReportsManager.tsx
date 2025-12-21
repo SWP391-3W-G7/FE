@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { formatDateVN, formatTimeVN } from '@/utils/dateUtils';
 import { Search, Trash2, MoreHorizontal, MapPin, Tag, Image as ImageIcon } from 'lucide-react';
 
 // API
@@ -123,9 +123,9 @@ export const LostReportsManager = () => {
 
                            {/* Cột Ngày giờ */}
                            <TableCell className="text-sm text-slate-500">
-                              {format(new Date(item.lostDate), "dd/MM/yyyy")}
+                              {formatDateVN(item.lostDate)}
                               <div className="text-xs text-slate-400">
-                                 {format(new Date(item.lostDate), "HH:mm")}
+                                 {formatTimeVN(item.lostDate)}
                               </div>
                            </TableCell>
 

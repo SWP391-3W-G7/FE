@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search, UserCheck, PackageCheck, Loader2, MapPin, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatDateVN } from '@/utils/dateUtils';
 
 // API
 import { useGetApprovedMatchesQuery, useReturnMatchMutation } from '@/features/claims/claimApi';
@@ -125,7 +125,7 @@ export const ReturnCounter = () => {
                   </div>
                   <div className="flex items-center gap-2 text-slate-600">
                     <Calendar className="w-4 h-4 text-blue-500" />
-                    <span>{match.lostItem?.lostDate ? format(new Date(match.lostItem.lostDate), "dd/MM/yyyy") : "N/A"}</span>
+                    <span>{match.lostItem?.lostDate ? formatDateVN(match.lostItem.lostDate) : "N/A"}</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-500 bg-white border p-2 rounded">
                     <PackageCheck className="w-4 h-4 text-green-500" />

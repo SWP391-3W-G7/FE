@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { formatDateVN } from '@/utils/dateUtils';
 import { User, MapPin, Clock, Package, Check, X, Loader2 } from 'lucide-react';
 
 // API
@@ -111,7 +111,7 @@ export const MatchComparisonDialog = ({ matchId, isOpen, onOpenChange }: MatchCo
                     </div>
                     <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
                         <Clock className="w-3 h-3 text-slate-400" />
-                        <span>{getItemDate(item) ? format(new Date(getItemDate(item)), "dd/MM/yyyy") : "N/A"}</span>
+                        <span>{getItemDate(item) ? formatDateVN(getItemDate(item)) : "N/A"}</span>
                     </div>
                     <div className="bg-white px-2 py-1 rounded border border-slate-100 text-[10px] font-medium text-slate-500 mt-1">
                         Cơ sở: <strong>{getItemCampus(item, campuses)}</strong>

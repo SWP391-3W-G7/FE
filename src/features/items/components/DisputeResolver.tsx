@@ -1,5 +1,5 @@
 import { CheckCircle, ShieldAlert, Gavel, User, FileText, Image as ImageIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatVN } from '@/utils/dateUtils';
 
 // API
 import { useGetDisputedItemsQuery, useResolveDisputeMutation } from '@/features/items/itemApi';
@@ -116,7 +116,7 @@ export const DisputeResolver = () => {
                     <span className="font-semibold">Nơi nhặt:</span> {item.foundLocation}
                   </div>
                   <div className="text-sm text-slate-600">
-                    <span className="font-semibold">Thời gian:</span> {format(new Date(item.foundDate), "dd/MM/yyyy HH:mm")}
+                    <span className="font-semibold">Thời gian:</span> {formatVN(item.foundDate)}
                   </div>
                 </div>
               </div>
@@ -194,7 +194,7 @@ export const DisputeResolver = () => {
                       </ScrollArea>
 
                       <div className="text-[10px] text-slate-400 text-right mt-1">
-                        Gửi yêu cầu lúc: {format(new Date(claim.claimDate), "dd/MM/yyyy HH:mm")}
+                        Gửi yêu cầu lúc: {formatVN(claim.claimDate)}
                       </div>
                     </div>
                   </div>

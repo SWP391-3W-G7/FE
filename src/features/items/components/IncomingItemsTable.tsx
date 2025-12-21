@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { formatVN } from '@/utils/dateUtils';
 import { PackageCheck, MapPin, Loader2, AlertCircle } from 'lucide-react';
 
 // API
@@ -121,7 +121,7 @@ export const IncomingItemsTable = () => {
                       <span className="line-clamp-1">{item.foundLocation}</span>
                     </div>
                     <span className="text-xs text-slate-400 ml-4">
-                      {format(new Date(item.foundDate), "dd/MM/yyyy HH:mm")}
+                      {formatVN(item.foundDate)}
                     </span>
                   </div>
                 </TableCell>

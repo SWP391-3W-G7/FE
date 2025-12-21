@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, PackagePlus, Calendar, ArrowRight, PackageOpen } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatDateVN } from '@/utils/dateUtils';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -179,7 +179,7 @@ const LandingPage = () => {
                       <CardContent className="p-4 pt-0 space-y-2 text-sm text-slate-600 flex-grow">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-slate-400" />
-                          <span>{format(new Date(item.foundDate), "dd/MM/yyyy")}</span>
+                          <span>{formatDateVN(item.foundDate)}</span>
                         </div>
                       </CardContent>
 

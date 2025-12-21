@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, MapPin, Calendar, ArrowUpRight, PackageOpen } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatVN } from '@/utils/dateUtils';
 import { useGetFoundItemsQuery, useGetCategoriesQuery, useGetCampusesQuery } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
@@ -209,7 +209,7 @@ const FindItemsPage = () => {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-slate-400">
                                     <Calendar className="h-3 w-3 shrink-0" />
-                                    <span>{format(new Date(item.foundDate), "dd/MM/yyyy HH:mm")}</span>
+                                    <span>{formatVN(item.foundDate)}</span>
                                 </div>
                                 <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded mt-2 line-clamp-2 border border-slate-100">
                                     {item.campusName}

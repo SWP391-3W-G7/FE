@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { formatDateVN } from '@/utils/dateUtils';
 import { MapPin, Clock, History } from 'lucide-react';
 
 // API
@@ -52,7 +52,7 @@ export const LostItemDetailView = ({ itemId }: LostItemDetailViewProps) => {
                         <MapPin className="w-3 h-3" /> {getItemLocation(item)}
                     </div>
                     <div className="flex items-center gap-1 text-[10px] text-slate-500">
-                        <Clock className="w-3 h-3" /> {getItemDate(item) ? format(new Date(getItemDate(item)), "dd/MM/yyyy") : "N/A"}
+                        <Clock className="w-3 h-3" /> {getItemDate(item) ? formatDateVN(getItemDate(item)) : "N/A"}
                     </div>
                 </div>
             </div>

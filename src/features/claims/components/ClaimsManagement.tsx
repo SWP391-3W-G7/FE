@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
-import { Eye, User, Send, MessageSquare, Package, Check, X, Clock, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, User, Send, Package, Check, X, Clock, AlertTriangle, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import { formatVN } from '@/utils/dateUtils';
 
 // API
-import { useGetClaimByIdQuery, useRequestMoreInfoMutation, useVerifyClaimMutation, useUpdateClaimStatusMutation, useGetPendingClaimsQuery, useGetConflictedClaimsQuery, useGetMatchingItemsQuery } from '@/features/claims/claimApi';
+import { useGetClaimByIdQuery, useVerifyClaimMutation, useUpdateClaimStatusMutation, useGetPendingClaimsQuery, useGetConflictedClaimsQuery, useGetMatchingItemsQuery } from '@/features/claims/claimApi';
 import { useGetCampusesForAdminQuery } from '@/features/items/itemApi';
 
 // UI
@@ -29,7 +29,6 @@ import { MatchComparisonDialog } from './MatchComparisonDialog';
 
 // Utils
 import { getProp, getItemTitle, getItemId, getItemCampus } from '../utils/claimsHelpers';
-
 
 export const ClaimsManagement = () => {
     const { toast } = useToast();
@@ -71,7 +70,7 @@ export const ClaimsManagement = () => {
 
     const [verifyClaim, { isLoading: isVerifying }] = useVerifyClaimMutation();
     const [updateClaimStatus, { isLoading: isStatusUpdating }] = useUpdateClaimStatusMutation();
-    const [requestMoreInfo, { isLoading: isRequesting }] = useRequestMoreInfoMutation();
+
 
     const [selectedClaimId, setSelectedClaimId] = useState<number | null>(null);
     const { data: fullClaim, isLoading: isDetailLoading } = useGetClaimByIdQuery(selectedClaimId || 0, { skip: !selectedClaimId });
@@ -86,31 +85,11 @@ export const ClaimsManagement = () => {
     const [selectedMatchId, setSelectedMatchId] = useState<number | null>(null);
     const [isMatchDialogOpen, setIsMatchDialogOpen] = useState(false);
 
-    // State cho Request Info
-    const [infoMessage, setInfoMessage] = useState("");
-    const [showRequestDialog, setShowRequestDialog] = useState(false);
+
 
     // --- HANDLERS ---
 
-    const handleRequestInfo = async () => {
-        if (!selectedClaim || !infoMessage) return;
-        try {
-            await requestMoreInfo({
-                claimId: selectedClaim.claimId,
-                title: "Yêu cầu bổ sung thông tin",
-                description: infoMessage,
-                images: []
-            }).unwrap();
 
-            toast({ title: "Đã gửi yêu cầu", description: "Hệ thống đã cập nhật yêu cầu bổ sung bằng chứng." });
-            setShowRequestDialog(false);
-            setIsOpen(false);
-            setInfoMessage("");
-        } catch (e) {
-            console.error(e);
-            toast({ variant: "destructive", title: "Lỗi", description: "Không thể gửi yêu cầu." });
-        }
-    };
 
     const handleApprove = async (claimId?: number) => {
         const targetId = claimId || selectedClaim?.claimId;
@@ -183,7 +162,7 @@ export const ClaimsManagement = () => {
                                     <div className="text-[10px] text-slate-400">ID Vật phẩm: {getProp(claim, ['foundItemId', 'FoundItemId'])}</div>
                                 </TableCell>
                                 <TableCell className="text-slate-500 text-xs">
-                                    {format(new Date(claim.claimDate), "dd/MM/yyyy HH:mm")}
+                                    {formatVN(claim.claimDate)}
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
@@ -215,7 +194,6 @@ export const ClaimsManagement = () => {
                                                 setSelectedClaim(claim);
                                                 setSelectedClaimId(claim.claimId);
                                                 setIsOpen(true);
-                                                setShowRequestDialog(false);
                                                 setRejectReason("");
                                             }}
                                         >
@@ -291,7 +269,7 @@ export const ClaimsManagement = () => {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-slate-500 text-[11px]">
-                                            {format(new Date(claim.claimDate), "dd/MM/yyyy HH:mm")}
+                                            {formatVN(claim.claimDate)}
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex gap-1">
@@ -333,7 +311,6 @@ export const ClaimsManagement = () => {
                                                         setSelectedClaim(claim);
                                                         setSelectedClaimId(claim.claimId);
                                                         setIsOpen(true);
-                                                        setShowRequestDialog(false);
                                                         setRejectReason("");
                                                     }}
                                                 >
@@ -413,7 +390,7 @@ export const ClaimsManagement = () => {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-slate-500 text-xs">
-                                            {format(new Date(match.createdAt), "dd/MM/yyyy HH:mm")}
+                                            {formatVN(match.createdAt)}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Button
@@ -538,7 +515,7 @@ export const ClaimsManagement = () => {
                                                     "{ev.description}"
                                                 </div>
                                                 <div className="text-[9px] text-slate-400 mt-1 text-right italic font-mono">
-                                                    {format(new Date(ev.createdAt), "dd/MM/yyyy HH:mm")}
+                                                    {formatVN(ev.createdAt)}
                                                 </div>
                                             </div>
                                         ))}
@@ -571,48 +548,25 @@ export const ClaimsManagement = () => {
                     </div>
 
                     <div className="mt-4 shrink-0">
-                        {!showRequestDialog && (
-                            <div className="mb-4">
-                                <label className="text-sm font-medium mb-1.5 block">Lý do từ chối (Nếu chọn Reject):</label>
-                                <Textarea
-                                    placeholder="VD: Ảnh xác minh không khớp, mô tả sai màu sắc..."
-                                    value={rejectReason}
-                                    onChange={(e) => setRejectReason(e.target.value)}
-                                    className="h-20"
-                                />
-                            </div>
-                        )}
+                        <div className="mb-4">
+                            <label className="text-sm font-medium mb-1.5 block">Lý do từ chối (Nếu chọn Reject):</label>
+                            <Textarea
+                                placeholder="VD: Ảnh xác minh không khớp, mô tả sai màu sắc..."
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                className="h-20"
+                            />
+                        </div>
 
                         <DialogFooter className="gap-2 sm:gap-0 flex-col sm:flex-row">
-                            {!showRequestDialog ? (
-                                <div className="flex w-full gap-2 justify-end">
-                                    <Button variant="outline" className="border-yellow-400 text-yellow-700 hover:bg-yellow-50" onClick={() => setShowRequestDialog(true)}>
-                                        <MessageSquare className="w-4 h-4 mr-2" /> Yêu cầu thêm info
-                                    </Button>
-                                    <Button variant="destructive" onClick={() => handleReject()} disabled={isProcessing}>
-                                        Từ chối
-                                    </Button>
-                                    <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleApprove()} disabled={isProcessing}>
-                                        Duyệt
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="w-full space-y-3 bg-yellow-50 p-3 rounded border border-yellow-200">
-                                    <label className="text-sm font-medium text-yellow-800">Nhắn tin cho sinh viên:</label>
-                                    <Textarea
-                                        placeholder="Em vui lòng chụp thêm ảnh mặt sau của thẻ..."
-                                        className="bg-white min-h-[80px]"
-                                        value={infoMessage}
-                                        onChange={(e) => setInfoMessage(e.target.value)}
-                                    />
-                                    <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="sm" onClick={() => setShowRequestDialog(false)}>Hủy</Button>
-                                        <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700 text-white" onClick={handleRequestInfo} disabled={isRequesting}>
-                                            <Send className="w-3 h-3 mr-1" /> Gửi yêu cầu
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
+                            <div className="flex w-full gap-2 justify-end">
+                                <Button variant="destructive" onClick={() => handleReject()} disabled={isProcessing}>
+                                    Từ chối
+                                </Button>
+                                <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleApprove()} disabled={isProcessing}>
+                                    Duyệt
+                                </Button>
+                            </div>
                         </DialogFooter>
                     </div>
                 </DialogContent>

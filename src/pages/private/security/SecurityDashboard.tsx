@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Package, Plus, CheckCircle2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatVN } from '@/utils/dateUtils';
 import { useGetSecurityTemporaryItemsQuery, useUpdateSecurityItemStatusMutation, useGetCampusesQuery } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
@@ -177,7 +177,7 @@ const SecurityDashboard = () => {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <Calendar className="h-3 w-3 shrink-0" />
-                  <span>{format(new Date(item.foundDate), "dd/MM/yyyy HH:mm")}</span>
+                  <span>{formatVN(item.foundDate)}</span>
                 </div>
                 {item.categoryName && (
                   <div className="border-t pt-2 mt-2">

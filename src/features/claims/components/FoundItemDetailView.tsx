@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { formatDateVN } from '@/utils/dateUtils';
 import { MapPin, Clock, Package } from 'lucide-react';
 
 // API
@@ -54,7 +54,7 @@ export const FoundItemDetailView = ({ itemId }: FoundItemDetailViewProps) => {
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-slate-600">
                         <Clock className="w-3.5 h-3.5 text-blue-500" />
-                        <span>{getItemDate(item) ? format(new Date(getItemDate(item)), "dd/MM/yyyy") : "N/A"}</span>
+                        <span>{getItemDate(item) ? formatDateVN(getItemDate(item)) : "N/A"}</span>
                     </div>
                 </div>
 
