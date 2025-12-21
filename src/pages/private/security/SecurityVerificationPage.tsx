@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search, MapPin, Calendar, FileQuestion, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatVN } from '@/utils/dateUtils';
 import { useGetLostItemsForVerificationQuery, useVerifyLostItemMutation } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
@@ -193,7 +193,7 @@ const SecurityVerificationPage = () => {
                         <div>
                           <p className="font-medium text-slate-700">Thời gian mất:</p>
                           <p className="text-slate-600">
-                            {format(new Date(item.lostDate), "dd/MM/yyyy HH:mm")}
+                            {formatVN(item.lostDate)}
                           </p>
                         </div>
                       </div>

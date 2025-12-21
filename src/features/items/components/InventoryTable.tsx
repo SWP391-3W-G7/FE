@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
+import { formatDateVN } from '@/utils/dateUtils';
 import { Search, AlertTriangle, Loader2, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // API: Chỉ cần Query, không cần Mutation nữa
@@ -159,7 +160,7 @@ export const InventoryTable = () => {
                     {/* Cột 3: Thời gian */}
                     <TableCell>
                       <div className="text-sm font-medium text-slate-700">
-                        {format(new Date(item.foundDate), "dd/MM/yyyy")}
+                        {formatDateVN(item.foundDate)}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
                         Đã lưu {daysInStorage} ngày

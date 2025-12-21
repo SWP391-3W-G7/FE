@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { formatDateVN } from '@/utils/dateUtils';
 import { Eye, User, Calendar } from 'lucide-react';
 
 // API
@@ -103,7 +103,7 @@ export const ConflictedClaimsTable = () => {
                                 <TableCell className="text-sm text-slate-600">
                                     <div className="flex items-center gap-1">
                                         <Calendar className="w-3 h-3 text-slate-400" />
-                                        {format(new Date(claim.claimDate), "dd/MM/yyyy")}
+                                        {formatDateVN(claim.claimDate)}
                                     </div>
                                 </TableCell>
                                 <TableCell>

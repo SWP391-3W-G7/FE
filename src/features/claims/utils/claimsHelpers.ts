@@ -1,7 +1,7 @@
 // Helper functions for Claims Management
 // Extracted from ClaimsManagement.tsx for reusability
 
-import { format } from 'date-fns';
+import { formatVN } from '@/utils/dateUtils';
 
 /**
  * Get property from object with multiple possible key names
@@ -88,7 +88,7 @@ export const getItemDescription = (item: any) => getProp(item, ['description', '
 export const formatDate = (dateString: string | null | undefined, formatStr: string = "dd/MM/yyyy") => {
     if (!dateString) return "N/A";
     try {
-        return format(new Date(dateString), formatStr);
+        return formatVN(dateString, formatStr);
     } catch {
         return "N/A";
     }

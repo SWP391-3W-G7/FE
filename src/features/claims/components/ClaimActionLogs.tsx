@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { formatShortVN } from '@/utils/dateUtils';
 import { Clock } from 'lucide-react';
 import { type ActionLog } from '@/types';
 
@@ -22,7 +22,7 @@ export const ClaimActionLogs = ({ logs }: ClaimActionLogsProps) => {
                     <div className="flex-1">
                         <div className="flex justify-between items-start mb-0.5">
                             <span className="text-[10px] font-bold text-slate-700 uppercase tracking-tight">{log.actionType}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">{format(new Date(log.actionDate), "dd/MM HH:mm")}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">{formatShortVN(log.actionDate)}</span>
                         </div>
                         <p className="text-xs text-slate-600 leading-snug mb-1">{log.actionDetails}</p>
                         <div className="flex items-center gap-1.5 opacity-70">
