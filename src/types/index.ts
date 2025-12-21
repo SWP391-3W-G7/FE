@@ -199,11 +199,10 @@ export interface Evidence {
 
 export interface StaffReport {
   totalFound: number;
-  returnedCount: number;
-  disposedCount: number;
-  activeClaims: number;
-  returnRate: number;
-  categoryStats: { name: string; value: number }[];
+  totalClaims: number;
+  foundItemStats: { statusName: string; count: number }[];
+  claimStats: { statusName: string; count: number }[];
+  categoryStats: { categoryName: string; count: number }[];
 }
 export interface MatchedItem {
   matchId: number;

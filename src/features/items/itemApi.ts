@@ -202,10 +202,11 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // got it
-    getStaffStats: build.query<StaffReport, void>({
-      query: () => ({
-        url: "reports/dashboard",
+    getStaffStats: build.query<StaffReport, { campusId?: number } | void>({
+      query: (params) => ({
+        url: "/reports/dashboard",
         method: "GET",
+        params: params || undefined,
       }),
     }),
 

@@ -21,7 +21,6 @@ export const ReturnCounter = () => {
 
   // 1. Lấy danh sách Matches đã Approved (sẵn sàng trả đồ)
   const { data: approvedMatches, isLoading } = useGetApprovedMatchesQuery();
-console.log("approvedMatches", approvedMatches);
   // 2. Hook xác nhận trả đồ qua Matching API
   const [returnMatch, { isLoading: isProcessing }] = useReturnMatchMutation();
 
