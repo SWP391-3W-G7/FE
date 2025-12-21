@@ -386,12 +386,14 @@ export const itemApi = rootApi.injectEndpoints({
 
           const transformed: AdminUser = {
             userId: user.userId,
+            id: user.userId?.toString(),
             email: user.email,
             fullName: user.fullName,
             role: role as UserRole,
             campusId: Number(user.campusId) || 0,
             campusName: user.campusName || '',
             isActive: user.status === 'Active',
+            phone: user.phoneNumber,
           };
 
           console.log(`User: ${user.fullName}, roleName: ${user.roleName}, normalized role: ${role}`);

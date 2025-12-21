@@ -862,348 +862,6 @@ const AdminUsersPage = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-
-
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border shadow-sm mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div className="md:col-span-5 relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Tìm theo tên, email..."
-              className="pl-9"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-            />
-          </div>
-
-          <div className="md:col-span-3">
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
-              <SelectTrigger>
-                <SelectValue placeholder="Vai trò" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả vai trò</SelectItem>
-                <SelectItem value="USER">User</SelectItem>
-                <SelectItem value="STAFF">Staff</SelectItem>
-                <SelectItem value="SECURITY">Security</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="md:col-span-3">
-            <Select value={selectedCampus} onValueChange={setSelectedCampus}>
-              <SelectTrigger>
-                <div className="flex items-center gap-2 text-slate-600">
-                  <MapPin className="h-4 w-4" />
-                  <SelectValue placeholder="Campus" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả Campus</SelectItem>
-                {sortedCampuses.filter(campus => campus?.campusId).map((campus) => (
-                  <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
-                    {campus.campusName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="md:col-span-1">
-            <Button
-              variant="ghost"
-              className="w-full text-xs text-slate-500"
-              onClick={() => {
-                setKeyword("");
-                setSelectedRole("all");
-                setSelectedCampus("all");
-              }}
-            >
-              Xóa lọc
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="all" className="mb-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="all">Tất cả ({sortedUsers.length})</TabsTrigger>
-          <TabsTrigger value="USER">User ({sortedUsers.filter(u => u.role === 'USER' || u.role === 'STUDENT').length})</TabsTrigger>
-          <TabsTrigger value="STAFF">Staff ({sortedUsers.filter(u => u.role === 'STAFF').length})</TabsTrigger>
-          <TabsTrigger value="SECURITY">Security ({sortedUsers.filter(u => u.role === 'SECURITY').length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all">
-          {renderUsersList(sortedUsers, isLoading, handleOpenAssignDialog, handleOpenEditDialog, handleOpenBanDialog, handleOpenDetailDialog, getRoleBadge)}
-        </TabsContent>
-
-        <TabsContent value="SECURITY">
-          {renderUsersList(
-            sortedUsers.filter(u => u.role === 'SECURITY'),
-            isLoading,
-            handleOpenAssignDialog,
-            handleOpenEditDialog,
-            handleOpenBanDialog,
-            handleOpenDetailDialog,
-            getRoleBadge
-          )}
-        </TabsContent>
-
-        <TabsContent value="STAFF">
-          {renderUsersList(
-            sortedUsers.filter(u => u.role === 'STAFF'),
-            isLoading,
-            handleOpenAssignDialog,
-            handleOpenEditDialog,
-            handleOpenBanDialog,
-            handleOpenDetailDialog,
-            getRoleBadge
-          )}
-        </TabsContent>
-
-        <TabsContent value="USER">
-          {renderUsersList(
-            sortedUsers.filter(u => u.role === 'USER' || u.role === 'STUDENT'),
-            isLoading,
-            handleOpenAssignDialog,
-            handleOpenEditDialog,
-            handleOpenBanDialog,
-            handleOpenDetailDialog,
-            getRoleBadge
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Assign Dialog */}
-      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Phân công người dùng</DialogTitle>
-            <DialogDescription>
-              Chọn vai trò và campus để phân công cho người dùng.
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...assignForm}>
-            <form onSubmit={assignForm.handleSubmit(onAssignSubmit)} className="space-y-4">
-              <FormField
-                control={assignForm.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vai trò <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn vai trò" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="STAFF">
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            Staff
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="SECURITY">
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            Security
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={assignForm.control}
-                name="campusId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Campus <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn campus" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {sortedCampuses.filter(campus => campus?.campusId).map((campus) => (
-                          <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
-                            {campus.campusName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setAssignDialogOpen(false);
-                    assignForm.reset();
-                  }}
-                  disabled={isAssigning}
-                >
-                  Hủy
-                </Button>
-                <Button type="submit" disabled={isAssigning} className="bg-blue-600 hover:bg-blue-700">
-                  {isAssigning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Phân công
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit User Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Sửa thông tin người dùng</DialogTitle>
-            <DialogDescription>
-              Cập nhật thông tin cho {selectedUserForEdit?.fullName}
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-              <FormField
-                control={editForm.control}
-                name="fullName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Họ và tên <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nguyễn Văn A" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Số điện thoại <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="0912345678" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="campusId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Campus <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn campus" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {sortedCampuses.filter(campus => campus?.campusId).map((campus) => (
-                          <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
-                            {campus.campusName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Trạng thái <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn trạng thái" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Active">Hoạt động</SelectItem>
-                        <SelectItem value="Inactive">Không hoạt động</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEditDialogOpen(false);
-                    editForm.reset();
-                    setSelectedUserForEdit(null);
-                  }}
-                  disabled={isUpdating}
-                >
-                  Hủy
-                </Button>
-                <Button type="submit" disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
-                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Cập nhật
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Ban/Unban User Alert Dialog */}
-      <AlertDialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {selectedUserForBan?.isActive ? 'Khóa người dùng' : 'Mở khóa người dùng'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {selectedUserForBan?.isActive ? (
-                <>
-                  Bạn có chắc chắn muốn khóa <strong>{selectedUserForBan?.fullName}</strong>?
-                  Người dùng sẽ không thể truy cập hệ thống sau khi bị khóa.
-                </>
-              ) : (
-                <>
-                  Bạn có chắc chắn muốn mở khóa <strong>{selectedUserForBan?.fullName}</strong>?
-                  Người dùng sẽ có thể truy cập hệ thống trở lại.
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isBanning}>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBanUser}
-              disabled={isBanning}
-              className={selectedUserForBan?.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
-            >
-              {isBanning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {selectedUserForBan?.isActive ? 'Khóa' : 'Mở khóa'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* User Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
@@ -1296,6 +954,7 @@ const AdminUsersPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </>
   );
 };
@@ -1337,7 +996,7 @@ const renderUsersList = (
   return (
     <div className="space-y-4">
       {users.map((user) => (
-        <Card key={user.id} className="hover:shadow-md transition-shadow">
+        <Card key={user.userId} className="hover:shadow-md transition-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4 flex-1">
@@ -1371,7 +1030,7 @@ const renderUsersList = (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => onDetail(parseInt(user.id))}
+                  onClick={() => onDetail(user.userId)}
                 >
                   <Eye className="h-3 w-3 mr-1" />
                   Chi tiết
@@ -1379,7 +1038,7 @@ const renderUsersList = (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onAssign(user.id)}
+                  onClick={() => onAssign(user.userId.toString())}
                 >
                   <Shield className="h-3 w-3 mr-1" />
                   Phân công
