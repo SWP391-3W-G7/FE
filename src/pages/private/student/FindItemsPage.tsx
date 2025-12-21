@@ -44,8 +44,8 @@ const FindItemsPage = () => {
 
     // --- Client-side Filtering Logic ---
     const filteredItems = useMemo(() => {
-        // Ensure items is an array before filtering - extract from paginated response
-        const itemsArray = Array.isArray(response?.items) ? response.items : [];
+        // Ensure items is an array before filtering - API returns FoundItem[] directly
+        const itemsArray = Array.isArray(response) ? response : [];
         if (itemsArray.length === 0) return [];
 
         return itemsArray.filter((item: FoundItem) => {

@@ -318,8 +318,8 @@ const EditFoundItemPage = () => {
                           </FormControl>
                           <SelectContent>
                             {campuses.map((campus) => (
-                              <SelectItem key={campus.id} value={campus.id.toString()}>
-                                {campus.description}
+                              <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
+                                {campus.campusName}
                               </SelectItem>
                             ))}
                           </SelectContent>

@@ -4,14 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2, Upload, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useCreateClaimMutation } from '@/features/items/itemApi';
+import { useCreateClaimMutation } from '@/features/claims/claimApi';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useAppSelector } from '@/store'; 
+import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
 
 const claimSchema = z.object({
@@ -28,9 +28,9 @@ interface ClaimFormProps {
 export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   // Lấy user để có CampusId
-  const user = useAppSelector(selectCurrentUser); 
+  const user = useAppSelector(selectCurrentUser);
 
   const [createClaim, { isLoading }] = useCreateClaimMutation();
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -61,37 +61,37 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
   const onSubmit = async (data: ClaimFormValues) => {
     // Validate cơ bản
     if (!user?.campusId) {
-        toast({
-            variant: "destructive",
-            title: "Lỗi",
-            description: "Không xác định được Campus của bạn. Vui lòng đăng nhập lại.",
-        });
-        return;
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: "Không xác định được Campus của bạn. Vui lòng đăng nhập lại.",
+      });
+      return;
     }
 
     try {
       const formData = new FormData();
-      
+
       // --- SỬA CÁC KEY CHO KHỚP API ---
-      
+
       // 1. FoundItemId (Backend: int32)
-      formData.append("FoundItemId", foundItemId); 
-      
+      formData.append("FoundItemId", foundItemId);
+
       // 2. EvidenceTitle (Backend: string)
-      formData.append("EvidenceTitle", data.title); 
-      
+      formData.append("EvidenceTitle", data.title);
+
       // 3. EvidenceDescription (Backend: string)
-      formData.append("EvidenceDescription", data.description); 
-      
+      formData.append("EvidenceDescription", data.description);
+
       // 4. CampusId (Backend: int32 - Bắt buộc)
       formData.append("CampusId", user.campusId.toString());
 
       // 5. EvidenceImages (Backend: array file)
       // Lưu ý: Key phải là "EvidenceImages" chứ không phải "images"
       if (selectedImages.length > 0) {
-          selectedImages.forEach((file) => {
-            formData.append("EvidenceImages", file);
-          });
+        selectedImages.forEach((file) => {
+          formData.append("EvidenceImages", file);
+        });
       } else {
         // Nếu backend yêu cầu array nhưng không có file, có thể cần xử lý tùy backend
         // Nhưng thường multipart/form-data bỏ qua cũng được nếu optional
@@ -121,7 +121,7 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
     <Form {...form}>
       {/* ... Phần giao diện giữ nguyên ... */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        
+
         <FormField
           control={form.control}
           name="title"
@@ -143,10 +143,10 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
             <FormItem>
               <FormLabel>Mô tả chi tiết (Quan trọng)</FormLabel>
               <FormControl>
-                <Textarea 
-                  placeholder="Hãy mô tả những đặc điểm..." 
+                <Textarea
+                  placeholder="Hãy mô tả những đặc điểm..."
                   className="h-32 bg-yellow-50/50 border-yellow-200 focus-visible:ring-yellow-400"
-                  {...field} 
+                  {...field}
                 />
               </FormControl>
               <FormMessage />
@@ -177,7 +177,7 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
             ))}
           </div>
           <p className="text-[0.8rem] text-muted-foreground">
-             Nên upload ảnh cũ bạn đã chụp món đồ này, hoặc ảnh hóa đơn mua hàng.
+            Nên upload ảnh cũ bạn đã chụp món đồ này, hoặc ảnh hóa đơn mua hàng.
           </p>
         </div>
 

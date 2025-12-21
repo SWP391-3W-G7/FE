@@ -2,16 +2,16 @@ import { rootApi } from "@/services/rootApi";
 import {
   type Campus,
   type Category,
-  type Claim,
   type FoundItem,
   type LostItem,
   type TemporaryFoundItem,
   type SystemReport,
   type CreateCampusRequest,
+  type UserRole,
   type AdminUser,
   type AssignUserRequest,
   type StaffReport,
-  type PaginatedFoundItemsResponse,
+  type PaginatedResponse,
 } from "@/types";
 
 export const itemApi = rootApi.injectEndpoints({
@@ -61,7 +61,7 @@ export const itemApi = rootApi.injectEndpoints({
 
     // got it
     getFoundItems: build.query<
-      PaginatedFoundItemsResponse,
+      FoundItem[],
       {
         CampusId?: string;
         Status?: string;
@@ -81,17 +81,19 @@ export const itemApi = rootApi.injectEndpoints({
         method: "GET",
       }),
     }),
-
-    createClaim: build.mutation({
-      query: (formData) => ({
-        url: "/claim-requests",
-        method: "POST",
-        data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+    getLostItemById: build.query<LostItem, string | number>({
+      query: (id) => ({
+        url: `/lost-items/${id}`,
+        method: "GET",
       }),
     }),
+    getFoundItemDetails: build.query<any, number>({
+      query: (id) => ({
+        url: `/found-items/${id}/details`,
+        method: "GET",
+      }),
+    }),
+
     //got it
     getMyLostItems: build.query<LostItem[], void>({
       query: () => ({
@@ -153,14 +155,19 @@ export const itemApi = rootApi.injectEndpoints({
       providesTags: ["MyFoundItems"],
     }),
 
-    // got it
-    getMyClaims: build.query<Claim[], void>({
-      query: () => ({
-        url: "/claim-requests/my-claims",
-        method: "GET",
-      }),
-    }),
 
+    // got it
+    getIncomingItems: build.query<
+      PaginatedResponse<FoundItem>,
+      { Status?: string; PageNumber?: number; PageSize?: number; CampusId?: number } | void
+    >({
+      query: (params) => ({
+        url: "/found-items",
+        method: "GET",
+        params: params || { Status: 'Open', PageNumber: 1, PageSize: 20 }
+      }),
+      providesTags: ["IncomingItems"],
+    }),
     // got it
     updateItemStatus: build.mutation<void, { id: number; status: string }>({
       query: ({ id, status }) => ({
@@ -170,56 +177,22 @@ export const itemApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: ["StatusItems", "IncomingItems", "InventoryItems"],
     }),
-    //got it
-    getPendingClaims: build.query<Claim[], void>({
-      query: () => ({
-        url: "claim-requests?status=Pending",
-        method: "GET",
-      }),
-      providesTags: ["Claims"],
-    }),
 
-    // [STAFF] Xử lý duyệt/từ chối
-    verifyClaim: build.mutation<
-      void,
-      { claimId: number; status: "Approved" | "Rejected"; reason?: string }
+
+
+    // got it
+    getInventoryItems: build.query<
+      PaginatedResponse<FoundItem>,
+      { Status?: string; PageNumber?: number; PageSize?: number; CampusId?: number } | void
     >({
-      query: ({ claimId, status, reason }) => ({
-        url: `/staff/claims/${claimId}/verify`,
-        method: "POST",
-        body: { status, reason },
-      }),
-      invalidatesTags: ["Claims"],
-    }),
-    
-    // got it
-    getReadyToReturnItems: build.query<Claim[], void>({
-     query: () => ({
-        url: "claim-requests?status=Approved",
-        method: "GET",
-      }),
-      providesTags: ["Claims"],
-    }),
-
-    // got it
-    getInventoryItems: build.query<FoundItem[], void>({
-       query: () => ({
+      query: (params) => ({
         url: "/found-items",
         method: "GET",
+        params: params || { Status: 'Stored', PageNumber: 1, PageSize: 20 }
       }),
       providesTags: ["InventoryItems"],
     }),
 
-    requestMoreInfo: build.mutation<void, { claimId: number; title: string; description: string; images: string[] }>(
-      {
-        query: ({ claimId, title, description, images }) => ({
-          url: `/claim-requests/${claimId}/evidence`,
-          method: "POST",
-          body: { title, description, images },
-        }),
-        invalidatesTags: ["Claims"],
-      }
-    ),
     // got it
     getAllLostItems: build.query<LostItem[], void>({
       query: () => ({
@@ -282,16 +255,21 @@ export const itemApi = rootApi.injectEndpoints({
       transformResponse: (response: any[]) => {
         // API trả về foundItemId, categoryId, imageUrls
         return response.map((item) => ({
-          foundItemID: item.foundItemId,
+          foundItemId: item.foundItemId,
           title: item.title,
           description: item.description || "",
           foundDate: item.foundDate,
           foundLocation: item.foundLocation,
           status: item.status,
-          campusID: 0,
-          categoryID: item.categoryId || 0,
+          campusId: 0,
+          campusName: item.campusName || "",
+          categoryId: item.categoryId || 0,
           categoryName: item.categoryName || "",
-          imageUrl: item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : null,
+          imageUrls: item.imageUrls || [],
+          createdBy: item.createdBy || 0,
+          storedBy: item.storedBy || null,
+          claimRequests: [],
+          actionLogs: null,
           finderName: "",
           finderContact: "",
           transferredToStaff: false,
@@ -319,15 +297,18 @@ export const itemApi = rootApi.injectEndpoints({
         // Mock data - Lost items that Security can verify
         const mock: LostItem[] = [
           {
-            lostItemID: 1,
+            lostItemId: 1,
             title: "Laptop Macbook Air M1",
             lostDate: "2023-10-20T10:00:00",
             lostLocation: "Thư viện",
             status: "Open",
-            campusID: 1,
+            campusId: 1,
+            campusName: "Campus 1",
             description: "Màu xám, có dán sticker",
-            categoryID: 3,
-            createdBy: 123,
+            categoryId: 3,
+            categoryName: "Laptop",
+            imageUrls: [],
+            actionLogs: null,
           },
         ];
         return { data: mock };
@@ -347,13 +328,21 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
 
-    // Admin: Get system reports (dashboard stats)
-    getSystemReports: build.query<any, { campusId?: number }>({
-      query: ({ campusId }) => ({
+    // Admin: Get system reports
+    getSystemReports: build.query<SystemReport, { campusId?: number } | void>({
+      query: (params) => ({
         url: "/reports/dashboard",
         method: "GET",
-        params: campusId ? { campusId } : undefined,
+        params: params || undefined,
       }),
+      providesTags: ["SystemReports"],
+    }),
+    // Admin: Get all campuses
+    getCampusesForAdmin: build.query<Campus[], void>({
+      query: () => ({
+        url: "/Campus",
+        method: "GET",
+      })
     }),
 
     // Admin: Create new campus
@@ -366,13 +355,13 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Get all users (for assignment)
-    getAdminUsers: build.query<AdminUser[], { role?: string; campusId?: string }>({
-      query: ({ role, campusId }) => {
+    getAdminUsers: build.query<AdminUser[], { role?: string; campusId?: string } | void>({
+      query: (params) => {
         // Map role string to roleId number
         let roleId: number | undefined;
-        if (role === 'STAFF') roleId = 2;
-        else if (role === 'SECURITY') roleId = 3;
-        
+        if (params?.role === 'STAFF') roleId = 2;
+        else if (params?.role === 'SECURITY') roleId = 3;
+
         return {
           url: "/admin/get-users-by-role",
           method: "GET",
@@ -384,7 +373,7 @@ export const itemApi = rootApi.injectEndpoints({
       transformResponse: (response: any[]) => {
         // Transform API response to AdminUser format
         console.log("Raw API response:", response);
-        
+
         const transformed = response.map((user) => {
           // Normalize role name
           let role = 'USER';
@@ -393,22 +382,21 @@ export const itemApi = rootApi.injectEndpoints({
           else if (roleName.includes('security')) role = 'SECURITY';
           else if (roleName.includes('admin')) role = 'ADMIN';
           else if (roleName.includes('user') || roleName.includes('student')) role = 'USER';
-          
-          const transformed = {
-            id: user.userId?.toString() || user.email,
+
+          const transformed: AdminUser = {
             userId: user.userId,
             email: user.email,
             fullName: user.fullName,
-            role: role,
-            campusId: user.campusId?.toString() || '',
+            role: role as UserRole,
+            campusId: Number(user.campusId) || 0,
             campusName: user.campusName || '',
             isActive: user.status === 'Active',
           };
-          
+
           console.log(`User: ${user.fullName}, roleName: ${user.roleName}, normalized role: ${role}`);
           return transformed;
         });
-        
+
         console.log("Transformed users:", transformed);
         return transformed;
       },
@@ -494,21 +482,22 @@ export const {
   useCreateFoundItemMutation,
   useGetFoundItemsQuery,
   useGetFoundItemByIdQuery,
+  useGetFoundItemDetailsQuery,
   useUpdateItemStatusMutation,
-  useCreateClaimMutation,
   useGetMyLostItemsQuery,
   useUpdateLostItemMutation,
   useDeleteLostItemMutation,
   useUpdateFoundItemMutation,
   useDeleteFoundItemMutation,
   useGetMyFoundItemsQuery,
-  useGetMyClaimsQuery,
   useCreateTemporaryFoundItemMutation,
   useGetSecurityTemporaryItemsQuery,
   useUpdateSecurityItemStatusMutation,
   useGetLostItemsForVerificationQuery,
   useVerifyLostItemMutation,
   useGetSystemReportsQuery,
+  useGetLostItemByIdQuery,
+  useGetCampusesForAdminQuery,
   useCreateCampusMutation,
   useUpdateCampusMutation,
   useDeleteCampusMutation,
@@ -517,11 +506,8 @@ export const {
   useCreateUserMutation,
   useUpdateUserMutation,
   useBanUserMutation,
-  useGetPendingClaimsQuery,
-  useVerifyClaimMutation,
-  useGetReadyToReturnItemsQuery,
+  useGetIncomingItemsQuery,
   useGetInventoryItemsQuery,
-  useRequestMoreInfoMutation,
   useGetAllLostItemsQuery,
   useGetStaffStatsQuery,
   useResolveDisputeMutation,

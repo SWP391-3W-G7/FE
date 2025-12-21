@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, FileQuestion, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useGetLostItemsForVerificationQuery, useVerifyLostItemMutation } from '@/features/items/itemApi';
@@ -7,11 +6,10 @@ import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -26,12 +24,11 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const SecurityVerificationPage = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const user = useAppSelector(selectCurrentUser);
 
   const [keyword, setKeyword] = useState<string>("");
-  const [selectedCampus, setSelectedCampus] = useState<string>(user?.campusId || "all");
+  const [selectedCampus, setSelectedCampus] = useState<string>(user?.campusId?.toString() || "all");
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [verified, setVerified] = useState<boolean | null>(null);
@@ -165,7 +162,7 @@ const SecurityVerificationPage = () => {
       ) : items.length > 0 ? (
         <div className="space-y-4">
           {items.map((item) => (
-            <Card key={item.lostItemID} className="hover:shadow-md transition-shadow">
+            <Card key={item.lostItemId} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -206,7 +203,7 @@ const SecurityVerificationPage = () => {
                   <div className="flex flex-col gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => handleOpenVerifyDialog(item.lostItemID.toString())}
+                      onClick={() => handleOpenVerifyDialog(item.lostItemId.toString())}
                       className="whitespace-nowrap"
                     >
                       <AlertCircle className="h-4 w-4 mr-2" />

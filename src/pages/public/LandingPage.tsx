@@ -12,20 +12,30 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useGetFoundItemsQuery } from '@/features/items/itemApi';
+import { useAppSelector } from '@/store';
+import { selectIsAuthenticated } from '@/features/auth/authSlice';
 import type { FoundItem } from '@/types';
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: response, isLoading } = useGetFoundItemsQuery({ Status: "Stored" });
+  // Auth state
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+
+  // Only fetch items if user is authenticated
+  const { data: response, isLoading } = useGetFoundItemsQuery(
+    { Status: "Stored" },
+    { skip: !isAuthenticated }
+  );
 
   const recentItems = useMemo(() => {
-    const itemsArray = Array.isArray(response?.items) ? response.items : [];
+    if (!isAuthenticated) return [];
+    const itemsArray = Array.isArray(response) ? response : [];
     return [...itemsArray]
       .sort((a, b) => new Date(b.foundDate).getTime() - new Date(a.foundDate).getTime())
       .slice(0, 4);
-  }, [response]);
+  }, [response, isAuthenticated]);
 
   const handleSearch = () => {
     if (searchTerm.trim()) {
@@ -102,92 +112,97 @@ const LandingPage = () => {
         </div>
       </section>
 
-      <Separator />
+      {/* Only show this section for authenticated users */}
+      {isAuthenticated && (
+        <>
+          <Separator />
 
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-3xl font-bold text-slate-900">Vừa tìm thấy</h2>
-              <p className="text-slate-500 mt-1">Các món đồ mới được tiếp nhận tại kho Service</p>
-            </div>
-            <Button variant="ghost" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50" onClick={() => navigate('/items')}>
-              Xem tất cả <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="flex flex-col space-y-3">
-                  <Skeleton className="h-[200px] w-full rounded-xl" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                  </div>
+          <section className="py-16 bg-white">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-3xl font-bold text-slate-900">Vừa tìm thấy</h2>
+                  <p className="text-slate-500 mt-1">Các món đồ mới được tiếp nhận tại kho Service</p>
                 </div>
-              ))
-            ) : recentItems.length > 0 ? (
-              recentItems.map((item: FoundItem) => (
-                <Card key={item.foundItemId}
-                  className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-slate-200 overflow-hidden flex flex-col h-full"
-                  onClick={() => navigate(`/items/${item.foundItemId}`)}
-                >
-                  <div className="w-full bg-slate-100 relative border-b border-slate-100">
-                    <AspectRatio ratio={4 / 3}>
-                      {item.imageUrls && item.imageUrls.length > 0 ? (
-                        <img
-                          src={item.imageUrls[0]}
-                          alt={item.title}
-                          className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-slate-50">
-                          <PackageOpen className="h-10 w-10 text-slate-300" />
-                        </div>
-                      )}
-                    </AspectRatio>
-                    <Badge className={`absolute top-2 right-2 shadow-sm ${item.status === 'Returned' ? 'bg-slate-500' : 'bg-green-500 hover:bg-green-600'
-                      }`}>
-                      {item.status}
-                    </Badge>
-                  </div>
-
-                  <CardHeader className="p-4 pb-2">
-                    <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
-                      {item.categoryName}
-                    </div>
-                    <CardTitle className="text-base line-clamp-2 min-h-[3rem] group-hover:text-orange-600 transition-colors">
-                      {item.title}
-                    </CardTitle>
-                  </CardHeader>
-
-                  <CardContent className="p-4 pt-0 space-y-2 text-sm text-slate-600 flex-grow">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-slate-400" />
-                      <span>{format(new Date(item.foundDate), "dd/MM/yyyy")}</span>
-                    </div>
-                  </CardContent>
-
-                  <CardFooter className="p-4 pt-0 mt-auto pb-4">
-                    <Button
-                      variant="secondary"
-                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium"
-                    >
-                      Chi tiết
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-10 text-slate-500">
-                Chưa có đồ thất lạc nào được ghi nhận gần đây.
+                <Button variant="ghost" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50" onClick={() => navigate('/items')}>
+                  Xem tất cả <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
-            )}
-          </div>
-        </div>
-      </section>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+
+                {isLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex flex-col space-y-3">
+                      <Skeleton className="h-[200px] w-full rounded-xl" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[250px]" />
+                        <Skeleton className="h-4 w-[200px]" />
+                      </div>
+                    </div>
+                  ))
+                ) : recentItems.length > 0 ? (
+                  recentItems.map((item: FoundItem) => (
+                    <Card key={item.foundItemId}
+                      className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-slate-200 overflow-hidden flex flex-col h-full"
+                      onClick={() => navigate(`/items/${item.foundItemId}`)}
+                    >
+                      <div className="w-full bg-slate-100 relative border-b border-slate-100">
+                        <AspectRatio ratio={4 / 3}>
+                          {item.imageUrls && item.imageUrls.length > 0 ? (
+                            <img
+                              src={item.imageUrls[0]}
+                              alt={item.title}
+                              className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-slate-50">
+                              <PackageOpen className="h-10 w-10 text-slate-300" />
+                            </div>
+                          )}
+                        </AspectRatio>
+                        <Badge className={`absolute top-2 right-2 shadow-sm ${item.status === 'Returned' ? 'bg-slate-500' : 'bg-green-500 hover:bg-green-600'
+                          }`}>
+                          {item.status}
+                        </Badge>
+                      </div>
+
+                      <CardHeader className="p-4 pb-2">
+                        <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
+                          {item.categoryName}
+                        </div>
+                        <CardTitle className="text-base line-clamp-2 min-h-[3rem] group-hover:text-orange-600 transition-colors">
+                          {item.title}
+                        </CardTitle>
+                      </CardHeader>
+
+                      <CardContent className="p-4 pt-0 space-y-2 text-sm text-slate-600 flex-grow">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-slate-400" />
+                          <span>{format(new Date(item.foundDate), "dd/MM/yyyy")}</span>
+                        </div>
+                      </CardContent>
+
+                      <CardFooter className="p-4 pt-0 mt-auto pb-4">
+                        <Button
+                          variant="secondary"
+                          className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-medium"
+                        >
+                          Chi tiết
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center py-10 text-slate-500">
+                    Chưa có đồ thất lạc nào được ghi nhận gần đây.
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        </>
+      )}
 
       <section className="py-12 bg-slate-900 text-white">
         <div className="container mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">

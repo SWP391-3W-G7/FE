@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { PackageCheck, MapPin, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { PackageCheck, MapPin, Loader2, AlertCircle } from 'lucide-react';
 
 // API
-import { useGetFoundItemsQuery, useUpdateItemStatusMutation } from '@/features/items/itemApi';
+import { useGetIncomingItemsQuery, useUpdateItemStatusMutation } from '@/features/items/itemApi';
 
 // UI Libs
 import { Button } from "@/components/ui/button";
@@ -13,26 +13,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import type { FoundItem } from '@/types';
 
-const ITEMS_PER_PAGE = 5;
-
 export const IncomingItemsTable = () => {
   const { toast } = useToast();
-  
-  // 1. Lấy dữ liệu từ API - API returns { items: FoundItem[], totalCount, ... }
-  const { data: response, isLoading } = useGetFoundItemsQuery({ Status: 'Open' });
-  
-  // Extract items from paginated response - ensure array safety
-  const itemsArray = Array.isArray(response?.items) ? response.items : [];
-  const openItems = itemsArray.filter((item: FoundItem) => item.status === 'Open');
-  
+
+  // 1. Lấy dữ liệu từ API (Chỉ lấy status 'Open' theo yêu cầu)
+  const { data, isLoading } = useGetIncomingItemsQuery({ Status: 'Open', PageNumber: 1, PageSize: 20 });
+
+  // 👇 Lấy danh sách items từ response phân trang
+  const openItems = data?.items || [];
+
   // 2. Mutation update status
   const [updateItemStatus, { isLoading: isUpdating }] = useUpdateItemStatusMutation();
-
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(openItems.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedItems = openItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   // State cho Modal
   const [isOpen, setIsOpen] = useState(false);
@@ -47,11 +38,11 @@ export const IncomingItemsTable = () => {
     if (!selectedItemId) return;
 
     try {
-      await updateItemStatus({ 
-        id: selectedItemId, 
-        status: 'Stored' 
+      await updateItemStatus({
+        id: selectedItemId,
+        status: 'Stored'
       }).unwrap();
-      
+
       toast({
         title: "Nhập kho thành công!",
         description: `Vật phẩm #${selectedItemId} đã được chuyển sang trạng thái Stored.`,
@@ -90,26 +81,28 @@ export const IncomingItemsTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {paginatedItems.length === 0 ? (
+          {/* 👇 SỬA: Kiểm tra độ dài của openItems thay vì items gốc */}
+          {openItems.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="h-24 text-center text-slate-500">
                 Không có vật phẩm nào cần nhập kho (Status: Open).
               </TableCell>
             </TableRow>
           ) : (
-            paginatedItems.map((item: FoundItem) => (
+            // 👇 SỬA: Map qua openItems
+            openItems.map((item: FoundItem) => (
               <TableRow key={item.foundItemId}>
                 {/* Cột 1: Ảnh */}
                 <TableCell>
                   <div className="h-12 w-12 rounded border border-slate-200 overflow-hidden bg-slate-100 flex items-center justify-center">
-                    <img 
-                      src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "https://placehold.co/100?text=No+Img"} 
-                      alt="Thumbnail" 
-                      className="h-full w-full object-cover" 
+                    <img
+                      src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : "https://placehold.co/100?text=No+Img"}
+                      alt="Thumbnail"
+                      className="h-full w-full object-cover"
                     />
                   </div>
                 </TableCell>
-                
+
                 {/* Cột 2: Tên & Danh mục */}
                 <TableCell>
                   <div className="font-semibold text-slate-900 line-clamp-2" title={item.title}>
@@ -142,8 +135,8 @@ export const IncomingItemsTable = () => {
 
                 {/* Cột 5: Nút bấm Action */}
                 <TableCell className="text-right">
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="bg-[#EC6824] hover:bg-[#EC6824]/90 text-white shadow-sm"
                     onClick={() => handleOpenModal(item.foundItemId)}
                   >
@@ -157,33 +150,6 @@ export const IncomingItemsTable = () => {
         </TableBody>
       </Table>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t bg-slate-50">
-          <span className="text-sm text-slate-500">
-            Hiển thị {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, openItems.length)} / {openItems.length} vật phẩm
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => p - 1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => p + 1)}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-
       {/* MODAL CONFIRM */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
@@ -193,13 +159,13 @@ export const IncomingItemsTable = () => {
               Xác nhận nhập kho
             </DialogTitle>
             <DialogDescription className="pt-2">
-              Bạn có chắc chắn muốn chuyển vật phẩm <strong>#{selectedItemId}</strong> sang trạng thái 
+              Bạn có chắc chắn muốn chuyển vật phẩm <strong>#{selectedItemId}</strong> sang trạng thái
               <span className="font-bold text-slate-900"> Đã lưu kho (Stored)</span>?
-              <br/><br/>
+              <br /><br />
               Hành động này xác nhận rằng bạn đã nhận được vật phẩm và cất giữ an toàn.
             </DialogDescription>
           </DialogHeader>
-          
+
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setIsOpen(false)}>Hủy bỏ</Button>
             <Button onClick={handleConfirm} disabled={isUpdating} className="bg-orange-600 hover:bg-orange-700">
