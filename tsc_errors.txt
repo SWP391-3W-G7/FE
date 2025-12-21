@@ -1,0 +1,8 @@
+﻿src/features/claims/components/ClaimsManagement.tsx(193,121): error TS2552: Cannot find name 'categories'. Did you mean '_categories'?
+src/features/claims/components/ClaimsManagement.tsx(678,166): error TS2552: Cannot find name 'campuses'. Did you mean '__campuses'?
+src/features/claims/components/ClaimsManagement.tsx(684,170): error TS2552: Cannot find name 'campuses'. Did you mean '__campuses'?
+src/features/claims/components/ClaimsManagement.tsx(791,89): error TS2532: Object is possibly 'undefined'.
+src/features/claims/components/ClaimsManagement.tsx(793,42): error TS2532: Object is possibly 'undefined'.
+src/features/items/components/DisputeResolver.tsx(173,34): error TS18048: 'evidence.imageUrls' is possibly 'undefined'.
+src/features/items/components/DisputeResolver.tsx(176,44): error TS18048: 'evidence.imageUrls' is possibly 'undefined'.
+src/features/items/components/DisputeResolver.tsx(179,66): error TS18048: 'evidence.imageUrls' is possibly 'undefined'.

@@ -3,6 +3,7 @@ import { ROLES } from '@/config/roles';
 import MainLayout from '@/layouts/MainLayout';
 import AuthPage from '@/pages/public/AuthPage';
 import LandingPage from '@/pages/public/LandingPage';
+import GoogleCallbackPage from '@/pages/public/GoogleCallbackPage';
 import ReportItemPage from '@/pages/private/student/ReportItemPage';
 import ProtectedRoute from './ProtectedRoute';
 import ReportFoundPage from '@/pages/private/student/ReportFoundPage';
@@ -24,6 +25,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<AuthPage />} />
+      <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
       <Route
         path="/unauthorized"
         element={<div className="p-10 text-red-500 text-center text-xl">403 - Bạn không có quyền truy cập!</div>}

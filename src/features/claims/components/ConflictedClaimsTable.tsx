@@ -1,6 +1,5 @@
 import { format } from 'date-fns';
-import { Eye, AlertTriangle, User, Calendar, MapPin } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Eye, User, Calendar } from 'lucide-react';
 
 // API
 import { useGetConflictedClaimsQuery } from '@/features/claims/claimApi';
@@ -20,8 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const ConflictedClaimsTable = () => {
-    const { data: claims, isLoading, error } = useGetConflictedClaimsQuery();
-    const navigate = useNavigate();
+    const { data: claimsData, isLoading, error } = useGetConflictedClaimsQuery();
 
     if (isLoading) {
         return (
@@ -41,7 +39,10 @@ export const ConflictedClaimsTable = () => {
         );
     }
 
-    if (!claims || claims.length === 0) {
+    // Extract items from PaginatedResponse
+    const claims = claimsData?.items || [];
+
+    if (claims.length === 0) {
         return (
             <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-lg border border-dashed">
                 Hiện không có tranh chấp nào cần xử lý.

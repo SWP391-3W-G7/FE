@@ -38,11 +38,21 @@ const MainLayout = () => {
     navigate('/login');
   };
 
-  const navLinks = [
+  // Base nav links - shown to everyone
+  const baseNavLinks = [
     { name: 'Trang chủ', path: '/' },
-    { name: 'Tìm đồ thất lạc', path: '/items' },
     { name: 'Về chúng tôi', path: '/about' },
   ];
+
+  // Student-only nav links
+  const studentNavLinks = [
+    { name: 'Tìm đồ thất lạc', path: '/items' },
+  ];
+
+  // Combine navLinks based on role
+  const navLinks = user?.role === ROLES.STUDENT 
+    ? [baseNavLinks[0], ...studentNavLinks, baseNavLinks[1]] 
+    : baseNavLinks;
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -110,21 +120,47 @@ const MainLayout = () => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/my-claims')}>
-                      <History className="mr-2 h-4 w-4" />
-                      Lịch sử báo mất
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      Hồ sơ cá nhân
-                    </DropdownMenuItem>
 
-                    {(user.role === ROLES.STAFF || user.role === ROLES.ADMIN || user.role === ROLES.SECURITY) && (
+                    {/* STUDENT specific menu items */}
+                    {user.role === ROLES.STUDENT && (
                       <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                        <DropdownMenuItem onClick={() => navigate('/my-claims')}>
+                          <History className="mr-2 h-4 w-4" />
+                          Lịch sử của tôi
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/profile')}>
+                          <UserIcon className="mr-2 h-4 w-4" />
+                          Hồ sơ cá nhân
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {/* STAFF specific menu items */}
+                    {user.role === ROLES.STAFF && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/staff/dashboard')}>
                           <PackagePlus className="mr-2 h-4 w-4" />
-                          Trang Quản Trị
+                          Quản lý kho đồ
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {/* SECURITY specific menu items */}
+                    {user.role === ROLES.SECURITY && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>
+                          <PackagePlus className="mr-2 h-4 w-4" />
+                          Trang Security
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {/* ADMIN specific menu items */}
+                    {user.role === ROLES.ADMIN && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
+                          <PackagePlus className="mr-2 h-4 w-4" />
+                          Quản Trị Hệ Thống
                         </DropdownMenuItem>
                       </>
                     )}

@@ -63,8 +63,8 @@ export const itemApi = rootApi.injectEndpoints({
     getFoundItems: build.query<
       FoundItem[],
       {
-        campusId?: string;
-        status?: string;
+        CampusId?: string;
+        Status?: string;
       }
     >({
       query: (params) => ({
