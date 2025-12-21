@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Search, UserPlus, Shield, Users, MapPin, Loader2, Edit, Ban, UserX } from 'lucide-react';
-import { useGetAdminUsersQuery, useGetCampusesQuery, useAssignUserMutation, useCreateUserMutation, useUpdateUserMutation, useBanUserMutation } from '@/features/items/itemApi';
+import { Search, UserPlus, Shield, Users, MapPin, Loader2, Edit, Ban, UserX, Eye } from 'lucide-react';
+import { useGetAdminUsersQuery, useGetCampusesQuery, useAssignUserMutation, useCreateUserMutation, useUpdateUserMutation, useBanUserMutation, useGetUserDetailQuery } from '@/features/items/itemApi';
 import { Button } from "@/components/ui/button";
 import AdminNav from '@/components/AdminNav';
 import { Input } from "@/components/ui/input";
@@ -69,9 +69,11 @@ const AdminUsersPage = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [banDialogOpen, setBanDialogOpen] = useState(false);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedUserForAssign, setSelectedUserForAssign] = useState<string | null>(null);
   const [selectedUserForEdit, setSelectedUserForEdit] = useState<any>(null);
   const [selectedUserForBan, setSelectedUserForBan] = useState<any>(null);
+  const [selectedUserIdForDetail, setSelectedUserIdForDetail] = useState<number | null>(null);
 
   const { data: users = [], isLoading, refetch } = useGetAdminUsersQuery({
     role: selectedRole === "all" ? undefined : selectedRole,
@@ -82,6 +84,11 @@ const AdminUsersPage = () => {
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [banUser, { isLoading: isBanning }] = useBanUserMutation();
+  
+  const { data: userDetail, isLoading: isLoadingDetail } = useGetUserDetailQuery(
+    selectedUserIdForDetail!, 
+    { skip: selectedUserIdForDetail === null }
+  );
 
   const assignForm = useForm<AssignUserFormValues>({
     resolver: zodResolver(assignUserSchema),
@@ -117,6 +124,21 @@ const AdminUsersPage = () => {
   // Filter users by keyword and campus - ensure array safety
   const usersArray = Array.isArray(users) ? users : [];
   let filteredUsers = usersArray;
+
+  // Filter out pending users (users who haven't been approved yet)
+  // Pending users are identified by having isActive = false AND role = USER/STUDENT
+  // (meaning they registered but haven't been assigned a role like STAFF/SECURITY)
+  filteredUsers = filteredUsers.filter(user => {
+    // If status field exists and is "Pending", filter out
+    if (user.status === "Pending" || user.status === "Chờ duyệt") {
+      return false;
+    }
+    // Also filter out inactive regular users (they should be in pending page)
+    if (!user.isActive && (user.role === 'USER' || user.role === 'STUDENT')) {
+      return false;
+    }
+    return true;
+  });
 
   // Filter by keyword
   if (keyword.trim()) {
@@ -176,6 +198,9 @@ const AdminUsersPage = () => {
 
   const onAssignSubmit = async (data: AssignUserFormValues) => {
     try {
+      console.log("=== ASSIGN USER DEBUG ===");
+      console.log("1. Form data:", JSON.stringify(data, null, 2));
+      
       // Transform to API format
       const payload = {
         userId: parseInt(data.userId),
@@ -183,8 +208,9 @@ const AdminUsersPage = () => {
         roleId: data.role === 'STAFF' ? 2 : 3, // STAFF=2, SECURITY=3
       };
       
-      console.log("Assigning user with payload:", payload);
-      await assignUser(payload as any).unwrap();
+      console.log("2. Final payload:", JSON.stringify(payload, null, 2));
+      const response = await assignUser(payload as any).unwrap();
+      console.log("3. API response:", response);
 
       toast({
         title: "Phân công thành công!",
@@ -196,7 +222,7 @@ const AdminUsersPage = () => {
       setSelectedUserForAssign(null);
       refetch();
     } catch (error: any) {
-      console.error("Assign user error:", error);
+      console.error("=== ASSIGN ERROR ===", error);
       toast({
         variant: "destructive",
         title: "Lỗi",
@@ -257,16 +283,25 @@ const AdminUsersPage = () => {
     if (!selectedUserForEdit) return;
 
     try {
+      console.log("=== UPDATE USER DEBUG ===");
+      console.log("1. Form data:", JSON.stringify(data, null, 2));
+      console.log("2. Selected user:", JSON.stringify(selectedUserForEdit, null, 2));
+      
+      // Map role to roleId: STUDENT=1, STAFF=2, SECURITY=3
+      const roleId = selectedUserForEdit.role === 'STAFF' ? 2 : selectedUserForEdit.role === 'SECURITY' ? 3 : 1;
+      
       const payload = {
         id: parseInt(selectedUserForEdit.id),
         fullName: data.fullName,
         phoneNumber: data.phoneNumber,
+        roleId: roleId,
         campusId: parseInt(data.campusId),
-        status: data.status,
+        isActive: data.status === 'Active',
       };
 
-      console.log("Updating user with payload:", payload);
-      await updateUser(payload).unwrap();
+      console.log("3. Final payload (với isActive):", JSON.stringify(payload, null, 2));
+      const response = await updateUser(payload).unwrap();
+      console.log("4. API response:", response);
 
       toast({
         title: "Cập nhật thành công!",
@@ -290,6 +325,11 @@ const AdminUsersPage = () => {
   const handleOpenBanDialog = (user: any) => {
     setSelectedUserForBan(user);
     setBanDialogOpen(true);
+  };
+
+  const handleOpenDetailDialog = (userId: number) => {
+    setSelectedUserIdForDetail(userId);
+    setDetailDialogOpen(true);
   };
 
   const handleBanUser = async () => {
@@ -552,7 +592,7 @@ const AdminUsersPage = () => {
         </TabsList>
 
         <TabsContent value="all">
-          {renderUsersList(sortedUsers, isLoading, handleOpenAssignDialog, handleOpenEditDialog, handleOpenBanDialog, getRoleBadge)}
+          {renderUsersList(sortedUsers, isLoading, handleOpenAssignDialog, handleOpenEditDialog, handleOpenBanDialog, handleOpenDetailDialog, getRoleBadge)}
         </TabsContent>
 
         <TabsContent value="SECURITY">
@@ -562,6 +602,7 @@ const AdminUsersPage = () => {
             handleOpenAssignDialog,
             handleOpenEditDialog,
             handleOpenBanDialog,
+            handleOpenDetailDialog,
             getRoleBadge
           )}
         </TabsContent>
@@ -573,6 +614,7 @@ const AdminUsersPage = () => {
             handleOpenAssignDialog,
             handleOpenEditDialog,
             handleOpenBanDialog,
+            handleOpenDetailDialog,
             getRoleBadge
           )}
         </TabsContent>
@@ -584,6 +626,7 @@ const AdminUsersPage = () => {
             handleOpenAssignDialog,
             handleOpenEditDialog,
             handleOpenBanDialog,
+            handleOpenDetailDialog,
             getRoleBadge
           )}
         </TabsContent>
@@ -816,6 +859,98 @@ const AdminUsersPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* User Detail Dialog */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Thông tin chi tiết người dùng</DialogTitle>
+            <DialogDescription>
+              Xem đầy đủ thông tin của người dùng trong hệ thống
+            </DialogDescription>
+          </DialogHeader>
+          
+          {isLoadingDetail ? (
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ) : userDetail ? (
+            <div className="space-y-4">
+              {userDetail.studentIdCardUrl && (
+                <div>
+                  <label className="text-sm font-medium text-slate-700 block mb-2">
+                    Hình thẻ sinh viên
+                  </label>
+                  <img
+                    src={userDetail.studentIdCardUrl}
+                    alt="Student ID Card"
+                    className="w-full max-h-96 object-contain rounded-lg border"
+                  />
+                </div>
+              )}
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">ID</label>
+                  <p className="text-slate-900 mt-1">{userDetail.userId}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Username</label>
+                  <p className="text-slate-900 mt-1">{userDetail.username || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Họ và tên</label>
+                  <p className="text-slate-900 mt-1">{userDetail.fullName}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Email</label>
+                  <p className="text-slate-900 mt-1">{userDetail.email}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
+                  <p className="text-slate-900 mt-1">{userDetail.phoneNumber || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Vai trò</label>
+                  <div className="mt-1">{userDetail.roleName}</div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Campus</label>
+                  <p className="text-slate-900 mt-1">{userDetail.campusName}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Trạng thái</label>
+                  <div className="mt-1">
+                    {userDetail.status === 'Active' ? (
+                      <Badge variant="outline" className="text-green-600 border-green-300">
+                        Hoạt động
+                      </Badge>
+                    ) : userDetail.status === 'Pending' ? (
+                      <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                        Chờ duyệt
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-gray-600">
+                        Không hoạt động
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-slate-500">Không thể tải thông tin người dùng</p>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
+              Đóng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </>
   );
@@ -828,6 +963,7 @@ const renderUsersList = (
   onAssign: (userId: string) => void,
   onEdit: (user: any) => void,
   onBan: (user: any) => void,
+  onDetail: (userId: number) => void,
   getRoleBadge: (role: string) => JSX.Element
 ) => {
   if (isLoading) {
@@ -888,6 +1024,14 @@ const renderUsersList = (
                 </div>
               </div>
               <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDetail(parseInt(user.id))}
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  Chi tiết
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"

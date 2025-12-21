@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Users, MapPin } from 'lucide-react';
+import { LayoutDashboard, Users, MapPin, UserCheck } from 'lucide-react';
 
 const AdminNav = () => {
   const location = useLocation();
@@ -16,6 +16,11 @@ const AdminNav = () => {
       path: '/admin/users',
       label: 'Quản lý người dùng',
       icon: Users,
+    },
+    {
+      path: '/admin/pending-users',
+      label: 'Users chờ duyệt',
+      icon: UserCheck,
     },
     {
       path: '/admin/campus',

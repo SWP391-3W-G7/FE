@@ -118,17 +118,6 @@ const MainLayout = () => {
                       Hồ sơ cá nhân
                     </DropdownMenuItem>
 
-                    {user.role === 'ADMIN' && (
-                       <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
-                          <PackagePlus className="mr-2 h-4 w-4" />
-                          Quản lý Lost & Found
-                        </DropdownMenuItem>
-                      </>
-                    )}
-
-
                     {user.role === 'SECURITY' && (
                       <>
                         <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>
