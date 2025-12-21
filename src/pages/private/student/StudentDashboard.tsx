@@ -10,10 +10,10 @@ import {
 import {
   useGetMyLostItemsQuery,
   useGetMyFoundItemsQuery,
-  useGetMyClaimsQuery,
   useDeleteLostItemMutation,
   useDeleteFoundItemMutation
 } from '@/features/items/itemApi';
+import { useGetMyClaimsQuery } from '@/features/claims/claimApi';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

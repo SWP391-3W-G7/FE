@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
 import { useRegisterMutation } from '../authApi';
+import { useGetCampusesQuery } from '@/features/items/itemApi';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -11,13 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 
 const registerSchema = z.object({
+  username: z.string().min(3, { message: "Username phải có ít nhất 3 ký tự" }),
   fullName: z.string().min(2, { message: "Tên phải có ít nhất 2 ký tự" }),
   email: z.string().email({ message: "Email không hợp lệ (@fpt.edu.vn)" })
     .refine(email => email.endsWith("@fpt.edu.vn"), {
       message: "Vui lòng sử dụng email FPT (@fpt.edu.vn)"
     }),
-  phone: z.string().regex(/(84|0[3|5|7|8|9])+([0-9]{8})\b/, { message: "Số điện thoại không hợp lệ" }),
-  campusId: z.string().nonempty("Vui lòng chọn cơ sở"),
+  phoneNumber: z.string().regex(/(84|0[3|5|7|8|9])+([0-9]{8})\b/, { message: "Số điện thoại không hợp lệ" }),
+  campusId: z.string().min(1, "Vui lòng chọn cơ sở"),
   password: z.string().min(6, { message: "Mật khẩu tối thiểu 6 ký tự" }),
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
@@ -32,13 +34,16 @@ export const RegisterForm = () => {
   const { toast } = useToast();
   
   const [register, { isLoading }] = useRegisterMutation();
+  const { data: campuses = [], isLoading: loadingCampuses } = useGetCampusesQuery();
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      username: "",
       fullName: "",
       email: "",
-      phone: "",
+      phoneNumber: "",
+      campusId: "",
       password: "",
       confirmPassword: "",
     },
@@ -46,13 +51,14 @@ export const RegisterForm = () => {
 
   const onSubmit = async (values: RegisterFormValues) => {
     try {
+      // Gửi đúng format API yêu cầu
       await register({
-        fullName: values.fullName,
+        username: values.username,
         email: values.email,
-        phone: values.phone,
         password: values.password,
+        fullName: values.fullName,
         campusId: values.campusId,
-        role: "STUDENT"
+        phoneNumber: values.phoneNumber,
       }).unwrap();
 
       toast({
@@ -86,6 +92,20 @@ export const RegisterForm = () => {
           
           <FormField
             control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username</FormLabel>
+                <FormControl>
+                  <Input placeholder="nguyenvana" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="fullName"
             render={({ field }) => (
               <FormItem>
@@ -111,8 +131,15 @@ export const RegisterForm = () => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="hcm-nvh">HCM - NVH Sinh Viên</SelectItem>
-                    <SelectItem value="hcm-shtp">HCM - SHTP (Q9)</SelectItem>
+                    {loadingCampuses ? (
+                      <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                    ) : (
+                      campuses.map((campus) => (
+                        <SelectItem key={campus.campusId} value={String(campus.campusId)}>
+                          {campus.campusName}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -136,7 +163,7 @@ export const RegisterForm = () => {
 
           <FormField
             control={form.control}
-            name="phone"
+            name="phoneNumber"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Số điện thoại</FormLabel>

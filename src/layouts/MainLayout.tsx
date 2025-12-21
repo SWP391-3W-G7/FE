@@ -1,24 +1,25 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  PackagePlus, 
-  Menu, 
-  LogOut, 
-  User as UserIcon, 
-  History, 
-  Bell 
+import {
+  PackagePlus,
+  Menu,
+  LogOut,
+  User as UserIcon,
+  History,
+  Bell
 } from 'lucide-react';
 
 import { useAppDispatch, useAppSelector } from '@/store';
 import { logout, selectCurrentUser, selectIsAuthenticated } from '@/features/auth/authSlice';
+import { ROLES } from '@/config/roles';
 
 import { Button } from '@/components/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -28,30 +29,40 @@ const MainLayout = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const user = useAppSelector(selectCurrentUser);
-  
+
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
   };
 
-  const navLinks = [
+  // Base nav links - shown to everyone
+  const baseNavLinks = [
     { name: 'Trang chủ', path: '/' },
-    { name: 'Tìm đồ thất lạc', path: '/items' },
     { name: 'Về chúng tôi', path: '/about' },
   ];
+
+  // Student-only nav links
+  const studentNavLinks = [
+    { name: 'Tìm đồ thất lạc', path: '/items' },
+  ];
+
+  // Combine navLinks based on role
+  const navLinks = user?.role === ROLES.STUDENT 
+    ? [baseNavLinks[0], ...studentNavLinks, baseNavLinks[1]] 
+    : baseNavLinks;
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      
+
       {/* ================= HEADER ================= */}
       <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          
+
           {/* 1. Logo & Desktop Nav */}
           <div className="flex items-center gap-8">
             <Link to="/" className="flex items-center gap-2 font-bold text-xl text-orange-600 hover:opacity-90 transition-opacity">
@@ -65,9 +76,8 @@ const MainLayout = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-sm font-medium transition-colors hover:text-orange-600 ${
-                    isActive(link.path) ? "text-orange-600 font-bold" : "text-slate-600"
-                  }`}
+                  className={`text-sm font-medium transition-colors hover:text-orange-600 ${isActive(link.path) ? "text-orange-600 font-bold" : "text-slate-600"
+                    }`}
                 >
                   {link.name}
                 </Link>
@@ -77,19 +87,20 @@ const MainLayout = () => {
 
           {/* 2. Right Actions (Auth only) */}
           <div className="flex items-center gap-4">
-            
+
             {/* Auth Section */}
             {isAuthenticated && user ? (
               // --- LOGGED IN VIEW ---
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="text-slate-500 hover:text-orange-600">
-                   <Bell className="h-5 w-5" />
+                  <Bell className="h-5 w-5" />
                 </Button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                       <Avatar className="h-9 w-9 border border-slate-200">
+                        <AvatarImage src={user.avatarUrl || ""} alt={user.fullName} />
                         <AvatarFallback className="bg-orange-100 text-orange-700 font-bold">
                           {user.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
                         </AvatarFallback>
@@ -109,42 +120,49 @@ const MainLayout = () => {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/my-claims')}>
-                      <History className="mr-2 h-4 w-4" />
-                      Lịch sử báo mất
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      Hồ sơ cá nhân
-                    </DropdownMenuItem>
 
-                    {user.role === 'SECURITY' && (
+                    {/* STUDENT specific menu items */}
+                    {user.role === ROLES.STUDENT && (
                       <>
-                        <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>
-                          <PackagePlus className="mr-2 h-4 w-4" />
-                          Ghi nhận đồ nhặt
+                        <DropdownMenuItem onClick={() => navigate('/my-claims')}>
+                          <History className="mr-2 h-4 w-4" />
+                          Lịch sử của tôi
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/profile')}>
+                          <UserIcon className="mr-2 h-4 w-4" />
+                          Hồ sơ cá nhân
                         </DropdownMenuItem>
                       </>
                     )}
 
-                    {/* Admin Menu Items */}
-                    {user.role === 'ADMIN' && (
+                    {/* STAFF specific menu items */}
+                    {user.role === ROLES.STAFF && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/staff/dashboard')}>
+                          <PackagePlus className="mr-2 h-4 w-4" />
+                          Quản lý kho đồ
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {/* SECURITY specific menu items */}
+                    {user.role === ROLES.SECURITY && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>
+                          <PackagePlus className="mr-2 h-4 w-4" />
+                          Trang Security
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {/* ADMIN specific menu items */}
+                    {user.role === ROLES.ADMIN && (
                       <>
                         <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
                           <PackagePlus className="mr-2 h-4 w-4" />
-                          Trang Quản Trị
+                          Quản Trị Hệ Thống
                         </DropdownMenuItem>
                       </>
-                    )}
-
-                    {user.role === 'STAFF' && (
-                       <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate('/security/dashboard')}>
-                          <PackagePlus className="mr-2 h-4 w-4" />
-                          Trang Quản Trị
-                        </DropdownMenuItem>
-                       </>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleLogout}>
@@ -157,7 +175,7 @@ const MainLayout = () => {
             ) : (
               // --- GUEST VIEW ---
               <div className="flex items-center gap-2">
-                 <Link to="/login">
+                <Link to="/login">
                   <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white font-medium px-6">
                     Đăng nhập
                   </Button>
@@ -174,26 +192,26 @@ const MainLayout = () => {
               </SheetTrigger>
               <SheetContent side="left">
                 <div className="flex flex-col gap-6 mt-10">
-                   <Link to="/" className="text-lg font-bold flex items-center gap-2 mb-4">
-                      <PackagePlus className="h-6 w-6 text-orange-600" />
-                      FPTU Lost & Found
-                   </Link>
-                   <nav className="flex flex-col gap-4">
-                      {navLinks.map((link) => (
-                        <Link 
-                          key={link.path} 
-                          to={link.path} 
-                          className="text-lg font-medium text-slate-700 hover:text-orange-600"
-                        >
-                          {link.name}
-                        </Link>
-                      ))}
-                      {!isAuthenticated && (
-                        <Link to="/login" className="text-lg font-medium text-blue-600">
-                          Đăng nhập
-                        </Link>
-                      )}
-                   </nav>
+                  <Link to="/" className="text-lg font-bold flex items-center gap-2 mb-4">
+                    <PackagePlus className="h-6 w-6 text-orange-600" />
+                    FPTU Lost & Found
+                  </Link>
+                  <nav className="flex flex-col gap-4">
+                    {navLinks.map((link) => (
+                      <Link
+                        key={link.path}
+                        to={link.path}
+                        className="text-lg font-medium text-slate-700 hover:text-orange-600"
+                      >
+                        {link.name}
+                      </Link>
+                    ))}
+                    {!isAuthenticated && (
+                      <Link to="/login" className="text-lg font-medium text-blue-600">
+                        Đăng nhập
+                      </Link>
+                    )}
+                  </nav>
                 </div>
               </SheetContent>
             </Sheet>
@@ -213,11 +231,11 @@ const MainLayout = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
               <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                 <PackagePlus className="h-5 w-5 text-orange-600" /> 
-                 FPTU Lost & Found
+                <PackagePlus className="h-5 w-5 text-orange-600" />
+                FPTU Lost & Found
               </h3>
               <p className="text-slate-500 text-sm leading-relaxed">
-                Hệ thống hỗ trợ tìm kiếm và trao trả đồ thất lạc cho sinh viên, 
+                Hệ thống hỗ trợ tìm kiếm và trao trả đồ thất lạc cho sinh viên,
                 giảng viên và cán bộ nhân viên Đại học FPT TP.HCM.
               </p>
             </div>

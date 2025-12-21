@@ -38,14 +38,14 @@ const FindItemsPage = () => {
     });
 
     // Lấy toàn bộ items theo Campus (API chỉ hỗ trợ filter Campus)
-    const { data: items = [], isLoading, isFetching } = useGetFoundItemsQuery({
-        campusId: selectedCampus === "all" ? undefined : selectedCampus, status: "Stored"
+    const { data: response, isLoading, isFetching } = useGetFoundItemsQuery({
+        CampusId: selectedCampus === "all" ? undefined : selectedCampus, Status: "Stored"
     });
 
     // --- Client-side Filtering Logic ---
     const filteredItems = useMemo(() => {
-        // Ensure items is an array before filtering
-        const itemsArray = Array.isArray(items) ? items : [];
+        // Ensure items is an array before filtering - API returns FoundItem[] directly
+        const itemsArray = Array.isArray(response) ? response : [];
         if (itemsArray.length === 0) return [];
 
         return itemsArray.filter((item: FoundItem) => {
@@ -60,7 +60,7 @@ const FindItemsPage = () => {
 
             return matchesKeyword && matchesCategory;
         });
-    }, [items, keyword, selectedCategory]);
+    }, [response, keyword, selectedCategory]);
 
     return (
         <div className="container mx-auto px-4 py-8 min-h-screen">

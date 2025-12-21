@@ -23,8 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 const foundReportSchema = z.object({
     title: z.string().min(5, "Vui lòng nhập tên đồ vật rõ ràng"),
     description: z.string().min(2, "Mô tả ngắn gọn về tình trạng đồ"),
-    categoryId: z.string("Chọn loại tài sản"),
-    foundDate: z.date("Chọn thời gian nhặt"),
+    categoryId: z.string({ message: "Chọn loại tài sản" }),
+    campusId: z.string({ message: "Chọn campus" }),
+    foundDate: z.date({ message: "Chọn thời gian nhặt" }),
     foundLocation: z.string().min(2, "Nhập vị trí nhặt được"),
 });
 
@@ -45,7 +46,7 @@ export const ReportFoundForm = () => {
     const form = useForm<FoundReportFormValues>({
         resolver: zodResolver(foundReportSchema),
         defaultValues: {
-            campusId: user?.campusId,
+            campusId: user?.campusId?.toString(),
         },
     });
 
@@ -128,8 +129,8 @@ export const ReportFoundForm = () => {
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        {categories.filter(cat => cat?.categoryID).map((cat) => (
-                                            <SelectItem key={cat.categoryID} value={cat.categoryID.toString()}>
+                                        {categories.filter(cat => cat?.categoryId).map((cat) => (
+                                            <SelectItem key={cat.categoryId} value={cat.categoryId.toString()}>
 
                                                 {cat.categoryName}
                                             </SelectItem>
@@ -248,8 +249,8 @@ export const ReportFoundForm = () => {
                                     </FormControl>
                                     <SelectContent>
                                         {campuses.map((campus) => (
-                                            <SelectItem key={campus.id} value={campus.id.toString()}>
-                                                {campus.description}
+                                            <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
+                                                {campus.campusName}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

@@ -7,7 +7,7 @@ import { useGetCampusesQuery, useCreateCampusMutation, useUpdateCampusMutation, 
 import { Button } from "@/components/ui/button";
 import AdminNav from '@/components/AdminNav';
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -32,7 +32,6 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const campusSchema = z.object({
   campusName: z.string().min(3, "Tên campus phải có ít nhất 3 ký tự"),
