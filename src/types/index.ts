@@ -131,6 +131,10 @@ export interface AdminUser extends User {
   status?: string;
   id?: string;
   phone?: string;
+  phoneNumber?: string;
+  username?: string;
+  roleName?: string;
+  studentIdCardUrl?: string;
 }
 
 // Create Campus Request

@@ -406,6 +406,11 @@ export const itemApi = rootApi.injectEndpoints({
             campusName: (user.campusName as string) || '',
             isActive: user.status === 'Active',
             phone: user.phoneNumber as string | undefined,
+            phoneNumber: user.phoneNumber as string | undefined,
+            username: user.username as string | undefined,
+            roleName: user.roleName as string | undefined,
+            studentIdCardUrl: user.studentIdCardUrl as string | undefined,
+            status: user.status as string | undefined,
           };
 
           return transformed;
