@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { 
+import {
   useGetUnreturnedItemsCountQuery,
   useGetFoundItemsMonthlyQuery,
   useGetTopContributorQuery,
@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Package, FileQuestion, CheckCircle2, MapPin, Users, TrendingUp, Trophy, AlertCircle, Eye } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
-import AdminNav from '@/components/AdminNav';
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
@@ -28,7 +28,7 @@ import {
 const AdminDashboard = () => {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedUserIdForDetail, setSelectedUserIdForDetail] = useState<number | null>(null);
-  
+
   const { data: unreturnedCount, isLoading: loadingUnreturned } = useGetUnreturnedItemsCountQuery();
   const { data: monthlyData, isLoading: loadingMonthly } = useGetFoundItemsMonthlyQuery();
   const { data: topContributors, isLoading: loadingContributors } = useGetTopContributorQuery();
@@ -37,9 +37,9 @@ const AdminDashboard = () => {
   const { data: lostItemsStats, isLoading: loadingLostStats } = useGetLostItemsStatusStatsQuery();
   const { data: foundItemsStats, isLoading: loadingFoundStats } = useGetFoundItemsStatusStatsQuery();
   const { data: claimStats, isLoading: loadingClaimStats } = useGetClaimStatusStatsQuery();
-  
+
   const { data: userDetail, isLoading: isLoadingDetail } = useGetUserDetailQuery(
-    selectedUserIdForDetail!, 
+    selectedUserIdForDetail!,
     { skip: selectedUserIdForDetail === null }
   );
 
@@ -48,14 +48,14 @@ const AdminDashboard = () => {
     setDetailDialogOpen(true);
   };
 
-  const isLoading = loadingUnreturned || loadingMonthly || loadingContributors || 
-                   loadingCampusLost || loadingUserLost || loadingLostStats || 
-                   loadingFoundStats || loadingClaimStats;
+  const isLoading = loadingUnreturned || loadingMonthly || loadingContributors ||
+    loadingCampusLost || loadingUserLost || loadingLostStats ||
+    loadingFoundStats || loadingClaimStats;
 
   if (isLoading) {
     return (
       <>
-        <AdminNav />
+
         <div className="container mx-auto px-4 py-8">
           <Skeleton className="h-16 w-full mb-6" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -75,7 +75,7 @@ const AdminDashboard = () => {
 
   return (
     <>
-      <AdminNav />
+
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Admin Dashboard</h1>
@@ -153,14 +153,14 @@ const AdminDashboard = () => {
                     const countValue = typeof stat.count === 'object' ? stat.count?.count || 0 : stat.count || 0;
                     const maxCount = 50;
                     const widthPercent = Math.min((countValue / maxCount) * 100, 100);
-                    
+
                     const getColor = (status: string) => {
                       if (status?.toLowerCase().includes('open') || status?.toLowerCase().includes('lost')) return 'bg-orange-500';
                       if (status?.toLowerCase().includes('closed')) return 'bg-gray-400';
                       if (status?.toLowerCase().includes('found') || status?.toLowerCase().includes('match')) return 'bg-green-500';
                       return 'bg-blue-500';
                     };
-                    
+
                     return (
                       <div key={statusValue} className="space-y-1">
                         <div className="flex items-center justify-between text-sm">
@@ -168,7 +168,7 @@ const AdminDashboard = () => {
                           <span className="font-semibold text-slate-900">{countValue}</span>
                         </div>
                         <div className="h-8 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className={`h-full ${getColor(statusValue)} transition-all duration-500`}
                             style={{ width: `${widthPercent}%` }}
                           />
@@ -197,7 +197,7 @@ const AdminDashboard = () => {
                     const countValue = typeof stat.count === 'object' ? stat.count?.count || 0 : stat.count || 0;
                     const maxCount = 50;
                     const widthPercent = Math.min((countValue / maxCount) * 100, 100);
-                    
+
                     const getColor = (status: string) => {
                       if (status?.toLowerCase().includes('open')) return 'bg-orange-500';
                       if (status?.toLowerCase().includes('stored')) return 'bg-blue-500';
@@ -205,7 +205,7 @@ const AdminDashboard = () => {
                       if (status?.toLowerCase().includes('claimed')) return 'bg-yellow-500';
                       return 'bg-gray-400';
                     };
-                    
+
                     return (
                       <div key={statusValue} className="space-y-1">
                         <div className="flex items-center justify-between text-sm">
@@ -213,7 +213,7 @@ const AdminDashboard = () => {
                           <span className="font-semibold text-slate-900">{countValue}</span>
                         </div>
                         <div className="h-8 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
+                          <div
                             className={`h-full ${getColor(statusValue)} transition-all duration-500`}
                             style={{ width: `${widthPercent}%` }}
                           />
@@ -246,16 +246,16 @@ const AdminDashboard = () => {
                         const countValue = typeof stat.count === 'object' ? stat.count?.count || 0 : stat.count || 0;
                         return sum + countValue;
                       }, 0);
-                      
+
                       if (total === 0) return null;
-                      
+
                       let currentAngle = 0;
-                      
+
                       return claimStats.map((stat: any, _index: number) => {
                         const statusValue = stat.status || stat.statusName || stat.scope;
                         const countValue = typeof stat.count === 'object' ? stat.count?.count || 0 : stat.count || 0;
                         const angle = (countValue / total) * 360;
-                        
+
                         const getColor = (status: string) => {
                           if (status?.toLowerCase().includes('pending')) return '#f97316';
                           if (status?.toLowerCase().includes('approved')) return '#22c55e';
@@ -264,11 +264,11 @@ const AdminDashboard = () => {
                           if (status?.toLowerCase().includes('conflicted')) return '#a855f7';
                           return '#9ca3af';
                         };
-                        
+
                         const startAngle = currentAngle;
                         const endAngle = currentAngle + angle;
                         currentAngle = endAngle;
-                        
+
                         // Calculate path for pie slice
                         const startRad = (startAngle - 90) * (Math.PI / 180);
                         const endRad = (endAngle - 90) * (Math.PI / 180);
@@ -277,9 +277,9 @@ const AdminDashboard = () => {
                         const x2 = 100 + 80 * Math.cos(endRad);
                         const y2 = 100 + 80 * Math.sin(endRad);
                         const largeArc = angle > 180 ? 1 : 0;
-                        
+
                         const path = `M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArc} 1 ${x2} ${y2} Z`;
-                        
+
                         return (
                           <g key={statusValue}>
                             <path
@@ -295,7 +295,7 @@ const AdminDashboard = () => {
                     })()}
                   </svg>
                 </div>
-                
+
                 {/* Legend */}
                 <div className="space-y-3">
                   {claimStats.map((stat: any) => {
@@ -306,7 +306,7 @@ const AdminDashboard = () => {
                       return sum + c;
                     }, 0);
                     const percentage = total > 0 ? ((countValue / total) * 100).toFixed(1) : 0;
-                    
+
                     const getColor = (status: string) => {
                       if (status?.toLowerCase().includes('pending')) return 'bg-orange-500';
                       if (status?.toLowerCase().includes('approved')) return 'bg-green-500';
@@ -315,7 +315,7 @@ const AdminDashboard = () => {
                       if (status?.toLowerCase().includes('conflicted')) return 'bg-purple-500';
                       return 'bg-gray-400';
                     };
-                    
+
                     return (
                       <div key={statusValue} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -375,7 +375,7 @@ const AdminDashboard = () => {
                         </text>
                       </g>
                     ))}
-                    
+
                     {/* Line and area */}
                     {(() => {
                       const maxValue = Math.max(...monthlyData.map((item: any) => {
@@ -385,20 +385,20 @@ const AdminDashboard = () => {
                       const chartHeight = 175;
                       const chartWidth = 520;
                       const xStep = chartWidth / (monthlyData.length - 1 || 1);
-                      
+
                       const points = monthlyData.map((item: any, index: number) => {
                         const countValue = typeof item.count === 'object' ? item.count?.count || 0 : item.count || 0;
                         const x = 60 + index * xStep;
                         const y = 215 - (countValue / maxValue) * chartHeight;
                         return { x, y, count: countValue };
                       });
-                      
-                      const linePathD = points.map((p, i) => 
+
+                      const linePathD = points.map((p, i) =>
                         `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
                       ).join(' ');
-                      
+
                       const areaPathD = `M 60 215 ${linePathD} L ${points[points.length - 1].x} 215 Z`;
-                      
+
                       return (
                         <>
                           {/* Area fill */}
@@ -407,7 +407,7 @@ const AdminDashboard = () => {
                             fill="url(#gradient)"
                             opacity="0.3"
                           />
-                          
+
                           {/* Line */}
                           <path
                             d={linePathD}
@@ -417,7 +417,7 @@ const AdminDashboard = () => {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                           />
-                          
+
                           {/* Points */}
                           {points.map((p, i) => (
                             <g key={i}>
@@ -435,7 +435,7 @@ const AdminDashboard = () => {
                         </>
                       );
                     })()}
-                    
+
                     {/* X-axis labels */}
                     {monthlyData.map((item: any, index: number) => {
                       const xStep = 520 / (monthlyData.length - 1 || 1);
@@ -452,16 +452,16 @@ const AdminDashboard = () => {
                         </text>
                       );
                     })}
-                    
+
                     {/* Gradient definition */}
                     <defs>
                       <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8"/>
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.1"/>
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.1" />
                       </linearGradient>
                     </defs>
                   </svg>
-                  
+
                   {/* Legend */}
                   <div className="flex justify-center gap-4 text-sm text-slate-600">
                     <div className="flex items-center gap-2">
@@ -489,16 +489,15 @@ const AdminDashboard = () => {
               <div className="space-y-3">
                 {Array.isArray(topContributors) && topContributors.length > 0 ? topContributors.slice(0, 5).map((user: any, index: number) => {
                   const countValue = typeof user.count === 'object' ? user.count?.count || 0 : user.count || user.itemCount || 0;
-                  
+
                   return (
                     <div key={user.userId || index} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                          index === 1 ? 'bg-slate-100 text-slate-700' :
-                          index === 2 ? 'bg-orange-100 text-orange-700' :
-                          'bg-blue-100 text-blue-700'
-                        }`}>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                            index === 1 ? 'bg-slate-100 text-slate-700' :
+                              index === 2 ? 'bg-orange-100 text-orange-700' :
+                                'bg-blue-100 text-blue-700'
+                          }`}>
                           {index + 1}
                         </div>
                         <div>
@@ -508,8 +507,8 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge className="bg-blue-100 text-blue-700">{countValue} đồ</Badge>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="ghost"
                           onClick={() => handleOpenDetailDialog(user.userId)}
                         >
@@ -548,7 +547,7 @@ const AdminDashboard = () => {
                 <TableBody>
                   {Array.isArray(campusLostItems) && campusLostItems.length > 0 ? campusLostItems.map((campus: any) => {
                     const countValue = typeof campus.count === 'object' ? campus.count?.count || 0 : campus.count || campus.lostItemCount || 0;
-                    
+
                     return (
                       <TableRow key={campus.campusId || campus.campusName}>
                         <TableCell className="font-medium">{campus.campusName}</TableCell>
@@ -588,7 +587,7 @@ const AdminDashboard = () => {
                 <TableBody>
                   {Array.isArray(userLostItems) && userLostItems.length > 0 ? userLostItems.slice(0, 5).map((user: any) => {
                     const countValue = typeof user.count === 'object' ? user.count?.count || 0 : user.count || user.lostItemCount || 0;
-                    
+
                     return (
                       <TableRow key={user.userId || user.userName}>
                         <TableCell>
@@ -601,8 +600,8 @@ const AdminDashboard = () => {
                           <Badge variant="outline" className="text-purple-600">{countValue}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="ghost"
                             onClick={() => handleOpenDetailDialog(user.userId)}
                           >
@@ -638,14 +637,14 @@ const AdminDashboard = () => {
             <div className="space-y-4">
               {userDetail.studentIdCardUrl && (
                 <div className="flex justify-center">
-                  <img 
-                    src={userDetail.studentIdCardUrl} 
-                    alt="Hình thẻ sinh viên" 
+                  <img
+                    src={userDetail.studentIdCardUrl}
+                    alt="Hình thẻ sinh viên"
                     className="max-h-64 rounded-lg border"
                   />
                 </div>
               )}
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-slate-500">ID</p>
@@ -698,7 +697,7 @@ const AdminDashboard = () => {
           ) : (
             <p className="text-slate-500">Không thể tải thông tin người dùng</p>
           )}
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
               Đóng

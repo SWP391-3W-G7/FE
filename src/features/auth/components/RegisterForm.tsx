@@ -14,10 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 const registerSchema = z.object({
   username: z.string().min(3, { message: "Username phải có ít nhất 3 ký tự" }),
   fullName: z.string().min(2, { message: "Tên phải có ít nhất 2 ký tự" }),
-  email: z.string().email({ message: "Email không hợp lệ (@fpt.edu.vn)" })
-    .refine(email => email.endsWith("@fpt.edu.vn"), {
-      message: "Vui lòng sử dụng email FPT (@fpt.edu.vn)"
-    }),
+  email: z.string().email({ message: "Email không hợp lệ" }),
   phoneNumber: z.string().regex(/(84|0[3|5|7|8|9])+([0-9]{8})\b/, { message: "Số điện thoại không hợp lệ" }),
   campusId: z.string().min(1, "Vui lòng chọn cơ sở"),
   password: z.string().min(6, { message: "Mật khẩu tối thiểu 6 ký tự" }),
@@ -36,7 +33,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export const RegisterForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const [register, { isLoading }] = useRegisterMutation();
   const { data: campuses = [], isLoading: loadingCampuses } = useGetCampusesQuery();
 
@@ -64,7 +61,7 @@ export const RegisterForm = () => {
       formData.append('FullName', values.fullName);
       formData.append('CampusId', values.campusId);
       formData.append('PhoneNumber', values.phoneNumber);
-      
+
       // Thêm file ảnh thẻ sinh viên nếu có
       if (values.studentIdCard && values.studentIdCard.length > 0) {
         formData.append('studentIdCard', values.studentIdCard[0]);
@@ -100,7 +97,7 @@ export const RegisterForm = () => {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          
+
           <FormField
             control={form.control}
             name="username"
@@ -135,22 +132,18 @@ export const RegisterForm = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Cơ sở (Campus)</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn nơi bạn đang học" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {loadingCampuses ? (
-                      <SelectItem value="loading" disabled>Đang tải...</SelectItem>
-                    ) : (
-                      campuses.map((campus) => (
-                        <SelectItem key={campus.campusId} value={String(campus.campusId)}>
-                          {campus.campusName}
-                        </SelectItem>
-                      ))
-                    )}
+                    {campuses.map((campus) => (
+                      <SelectItem key={campus.campusId} value={String(campus.campusId)}>
+                        {campus.campusName}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -163,9 +156,9 @@ export const RegisterForm = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email FPT</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="student@fpt.edu.vn" {...field} />
+                  <Input placeholder="example@email.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -193,8 +186,8 @@ export const RegisterForm = () => {
               <FormItem>
                 <FormLabel>Ảnh thẻ sinh viên (tùy chọn)</FormLabel>
                 <FormControl>
-                  <Input 
-                    type="file" 
+                  <Input
+                    type="file"
                     accept="image/*"
                     onChange={(e) => onChange(e.target.files)}
                     ref={ref}

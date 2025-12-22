@@ -4,8 +4,7 @@ import {
   Menu,
   LogOut,
   User as UserIcon,
-  History,
-  Bell
+  History
 } from 'lucide-react';
 
 import { useAppDispatch, useAppSelector } from '@/store';
@@ -25,6 +24,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 
+import { NotificationBell } from '@/features/notifications/components/NotificationBell';
+import { signalRService } from '@/services/signalRService';
+import { useEffect } from 'react';
+
 const MainLayout = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -32,6 +35,14 @@ const MainLayout = () => {
 
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const user = useAppSelector(selectCurrentUser);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      signalRService.startConnection();
+    } else {
+      signalRService.stopConnection();
+    }
+  }, [isAuthenticated]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -50,8 +61,8 @@ const MainLayout = () => {
   ];
 
   // Combine navLinks based on role
-  const navLinks = user?.role === ROLES.STUDENT 
-    ? [baseNavLinks[0], ...studentNavLinks, baseNavLinks[1]] 
+  const navLinks = user?.role === ROLES.STUDENT
+    ? [baseNavLinks[0], ...studentNavLinks, baseNavLinks[1]]
     : baseNavLinks;
 
   const isActive = (path: string) => location.pathname === path;
@@ -92,9 +103,7 @@ const MainLayout = () => {
             {isAuthenticated && user ? (
               // --- LOGGED IN VIEW ---
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="text-slate-500 hover:text-orange-600">
-                  <Bell className="h-5 w-5" />
-                </Button>
+                <NotificationBell />
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -124,9 +133,9 @@ const MainLayout = () => {
                     {/* STUDENT specific menu items */}
                     {user.role === ROLES.STUDENT && (
                       <>
-                        <DropdownMenuItem onClick={() => navigate('/my-claims')}>
+                        <DropdownMenuItem onClick={() => navigate('/my-items')}>
                           <History className="mr-2 h-4 w-4" />
-                          Lịch sử của tôi
+                          Mục cá nhân
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate('/profile')}>
                           <UserIcon className="mr-2 h-4 w-4" />

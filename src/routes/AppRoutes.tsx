@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ROLES } from '@/config/roles';
 import MainLayout from '@/layouts/MainLayout';
@@ -9,17 +10,35 @@ import ProtectedRoute from './ProtectedRoute';
 import ReportFoundPage from '@/pages/private/student/ReportFoundPage';
 import FindItemsPage from '@/pages/private/student/FindItemsPage';
 import ClaimItemPage from '@/pages/private/student/ClaimItemPage';
-import StudentDashboard from '@/pages/private/student/StudentDashboard';
 import ProfilePage from '@/pages/private/student/ProfilePage';
+import MyItemsPage from '@/pages/private/student/MyItemsPage';
 import EditLostItemPage from '@/pages/private/student/EditLostItemPage';
 import EditFoundItemPage from '@/pages/private/student/EditFoundItemPage';
 import SecurityLogPage from '@/pages/private/security/SecurityLogPage';
-import AdminDashboard from '@/pages/private/admin/AdminDashboard';
-import AdminCampusPage from '@/pages/private/admin/AdminCampusPage';
-import AdminUsersPage from '@/pages/private/admin/AdminUsersPage';
-import PendingUsersPage from '@/pages/private/admin/PendingUsersPage';
-import SecurityDashboard from '@/pages/private/security/SecurityDashboard';
-import { StaffDashboard } from '@/pages/private/staff/StaffDashboard';
+import StaffLayout from '@/layouts/staff/StaffLayout';
+import AdminLayout from '@/layouts/admin/AdminLayout';
+
+// Lazy load Staff Pages
+const StaffDashboard = lazy(() => import('@/pages/private/staff/StaffDashboard').then(module => ({ default: module.StaffDashboard })));
+const StaffIncomingPage = lazy(() => import('@/pages/private/staff/StaffIncomingPage'));
+const StaffInventoryPage = lazy(() => import('@/pages/private/staff/StaffInventoryPage'));
+const StaffVerifyPage = lazy(() => import('@/pages/private/staff/StaffVerifyPage'));
+const StaffReturnPage = lazy(() => import('@/pages/private/staff/StaffReturnPage'));
+
+// Lazy load Admin Pages
+const AdminDashboard = lazy(() => import('@/pages/private/admin/AdminDashboard'));
+const AdminCampusPage = lazy(() => import('@/pages/private/admin/AdminCampusPage'));
+const AdminUsersPage = lazy(() => import('@/pages/private/admin/AdminUsersPage'));
+const PendingUsersPage = lazy(() => import('@/pages/private/admin/PendingUsersPage'));
+
+const SecurityDashboard = lazy(() => import('@/pages/private/security/SecurityDashboard'));
+
+// Fallback loading component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+  </div>
+);
 
 const AppRoutes = () => {
   return (
@@ -43,32 +62,53 @@ const AppRoutes = () => {
           <Route path="/report-found" element={<ReportFoundPage />} />
           <Route path="/items" element={<FindItemsPage />} />
           <Route path="/items/:id" element={<ClaimItemPage />} />
-          <Route path="/my-claims" element={<StudentDashboard />} />
+          <Route path="/my-items" element={<MyItemsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/edit-lost/:id" element={<EditLostItemPage />} />
           <Route path="/edit-found/:id" element={<EditFoundItemPage />} />
         </Route>
       </Route>
 
-      {/* Staff */}
-      <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF]} />}>
-        <Route element={<MainLayout />}>
-          <Route path="/staff/dashboard" element={<StaffDashboard />} />
+      {/* Staff Workspace */}
+      <Route element={<ProtectedRoute allowedRoles={[ROLES.STAFF, ROLES.ADMIN]} />}>
+        <Route element={<StaffLayout />}>
+          <Route index path="/staff/dashboard" element={
+            <Suspense fallback={<PageLoader />}>
+              <StaffDashboard />
+            </Suspense>
+          } />
+          <Route path="/staff/incoming" element={
+            <Suspense fallback={<PageLoader />}>
+              <StaffIncomingPage />
+            </Suspense>
+          } />
+          <Route path="/staff/inventory" element={
+            <Suspense fallback={<PageLoader />}>
+              <StaffInventoryPage />
+            </Suspense>
+          } />
+          <Route path="/staff/verify" element={
+            <Suspense fallback={<PageLoader />}>
+              <StaffVerifyPage />
+            </Suspense>
+          } />
+          <Route path="/staff/return" element={
+            <Suspense fallback={<PageLoader />}>
+              <StaffReturnPage />
+            </Suspense>
+          } />
         </Route>
       </Route>
 
       {/* Security */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.SECURITY]} />}>
         <Route element={<MainLayout />}>
-          <Route path="/security/dashboard" element={<SecurityDashboard />} />
+          <Route path="/security/dashboard" element={
+            <Suspense fallback={<PageLoader />}>
+              <SecurityDashboard />
+            </Suspense>
+          } />
           <Route path="/security/log-item" element={<SecurityLogPage />} />
-        </Route>
-      </Route>
-
-      {/* Staff Routes */}
-      <Route element={<ProtectedRoute allowedRoles={['STAFF', 'ADMIN']} />}>
-        <Route element={<MainLayout />}>
-          <Route path="/staff/dashboard" element={<StaffDashboard />} />
         </Route>
       </Route>
 
@@ -78,14 +118,30 @@ const AppRoutes = () => {
         </Route>
       </Route>
 
-      {/* Admin */}
+      {/* Admin Workspace */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
-        <Route element={<MainLayout />}>
+        <Route element={<AdminLayout />}>
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/campus" element={<AdminCampusPage />} />
-          <Route path="/admin/users" element={<AdminUsersPage />} />
-          <Route path="/admin/pending-users" element={<PendingUsersPage />} />
+          <Route path="/admin/dashboard" element={
+            <Suspense fallback={<PageLoader />}>
+              <AdminDashboard />
+            </Suspense>
+          } />
+          <Route path="/admin/campus" element={
+            <Suspense fallback={<PageLoader />}>
+              <AdminCampusPage />
+            </Suspense>
+          } />
+          <Route path="/admin/users" element={
+            <Suspense fallback={<PageLoader />}>
+              <AdminUsersPage />
+            </Suspense>
+          } />
+          <Route path="/admin/pending-users" element={
+            <Suspense fallback={<PageLoader />}>
+              <PendingUsersPage />
+            </Suspense>
+          } />
         </Route>
       </Route>
 

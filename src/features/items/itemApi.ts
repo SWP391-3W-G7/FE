@@ -35,6 +35,20 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/Campus",
         method: "GET",
       }),
+      transformResponse: (response: any[]) => {
+        return response.map((campus: any) => {
+          // Identify the best field for campusId (enum string preferred for register)
+          const campusId = campus.id || campus.campusId || campus.campusID;
+          const campusName = campus.name || campus.campusName;
+
+          return {
+            campusId: campusId,
+            campusName: campusName || campusId, // Fallback to ID if name is missing
+            address: campus.address || "",
+            storageLocation: campus.storageLocation || "",
+          };
+        });
+      },
     }),
     //got it 
     createLostItem: build.mutation<LostItem, FormData>({
@@ -398,19 +412,17 @@ export const itemApi = rootApi.injectEndpoints({
 
           const transformed: AdminUser = {
             userId: user.userId as number,
-            id: (user.userId as number)?.toString(),
             email: user.email as string,
             fullName: user.fullName as string,
             role: role as UserRole,
             campusId: Number(user.campusId) || 0,
             campusName: (user.campusName as string) || '',
             isActive: user.status === 'Active',
-            phone: user.phoneNumber as string | undefined,
             phoneNumber: user.phoneNumber as string | undefined,
             username: user.username as string | undefined,
-            roleName: user.roleName as string | undefined,
             studentIdCardUrl: user.studentIdCardUrl as string | undefined,
             status: user.status as string | undefined,
+            avatarUrl: user.avatarUrl as string | undefined,
           };
 
           return transformed;
@@ -447,22 +459,23 @@ export const itemApi = rootApi.injectEndpoints({
 
     // Admin: Update user
     updateUser: build.mutation<void, {
-      id: number;
+      userId?: string | number;
+      id?: string | number;
       fullName: string;
       phoneNumber: string;
       roleId: number;
-      campusId: number;
+      campusId: string | number;
       isActive: boolean;
     }>({
-      query: ({ id, ...data }) => ({
-        url: `/admin/users/${id}`,
+      query: ({ userId, id, ...data }) => ({
+        url: `/admin/users/${userId || id}`,
         method: "PUT",
         data,
       }),
     }),
 
     // Admin: Ban/Unban user
-    banUser: build.mutation<void, { id: number; isBan: boolean }>({
+    banUser: build.mutation<void, { id: string | number; isBan: boolean }>({
       query: ({ id, isBan }) => ({
         url: `/admin/users/${id}/ban-status`,
         method: "PATCH",
@@ -471,7 +484,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Get user detail
-    getUserDetail: build.query<AdminUser, number>({
+    getUserDetail: build.query<AdminUser, string | number>({
       query: (id) => ({
         url: `/admin/users/${id}`,
         method: "GET",
@@ -480,7 +493,7 @@ export const itemApi = rootApi.injectEndpoints({
 
     // Admin: Update campus
     updateCampus: build.mutation<Campus, {
-      id: number;
+      id: string | number;
       campusName: string;
       address: string;
       storageLocation: string;
@@ -493,7 +506,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Delete campus
-    deleteCampus: build.mutation<void, number>({
+    deleteCampus: build.mutation<void, string | number>({
       query: (id) => ({
         url: `/Campus/${id}`,
         method: "DELETE",
@@ -561,7 +574,7 @@ export const itemApi = rootApi.injectEndpoints({
       transformResponse: (response: { data?: number[] }) => {
         const data = response?.data;
         if (!Array.isArray(data)) return [];
-        
+
         const months = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
         return data.map((count: number, index: number) => ({
           month: months[index],
@@ -579,7 +592,7 @@ export const itemApi = rootApi.injectEndpoints({
       transformResponse: (response: { data?: { userId: number; fullName: string; email: string; totalFoundItems: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         // API trả về single object, wrap vào array
         return [{
           userId: data.userId,
@@ -600,7 +613,7 @@ export const itemApi = rootApi.injectEndpoints({
       transformResponse: (response: { data?: { campusId: number; campusName: string; totalLostItems: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         // API trả về single object, wrap vào array
         return [{
           campusId: data.campusId,
@@ -619,7 +632,7 @@ export const itemApi = rootApi.injectEndpoints({
       transformResponse: (response: { data?: { userId: number; fullName: string; email: string; totalLostItems: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         // API trả về single object, wrap vào array
         return [{
           userId: data.userId,
@@ -640,7 +653,7 @@ export const itemApi = rootApi.injectEndpoints({
       transformResponse: (response: { data?: { totalLost: number; totalMatched: number; totalReturned: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         return [
           { status: 'Lost', count: data.totalLost || 0 },
           { status: 'Matched', count: data.totalMatched || 0 },
@@ -657,7 +670,7 @@ export const itemApi = rootApi.injectEndpoints({
       transformResponse: (response: { data?: { totalOpen: number; totalStored: number; totalClaimed: number; totalReturned: number; totalClosed: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         return [
           { status: 'Open', count: data.totalOpen || 0 },
           { status: 'Stored', count: data.totalStored || 0 },
@@ -676,7 +689,7 @@ export const itemApi = rootApi.injectEndpoints({
       transformResponse: (response: { data?: { totalPending: number; totalApproved: number; totalRejected: number; totalReturned: number; totalConflicted: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         return [
           { status: 'Pending', count: data.totalPending || 0 },
           { status: 'Approved', count: data.totalApproved || 0 },

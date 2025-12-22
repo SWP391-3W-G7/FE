@@ -278,7 +278,14 @@ export const ClaimsManagement = () => {
                                                 ) : (
                                                     <Badge variant="outline" className="text-[9px] h-4 text-slate-400 italic">No evidence</Badge>
                                                 )}
-                                                {claim.priority === 'High' && <Badge className="bg-orange-500 text-[9px] h-4 border-none">Ưu tiên thấp</Badge>}
+
+                                                {/* Priority logic based on evidence count */}
+                                                {(!claim.evidences || claim.evidences.length === 0) && (
+                                                    <Badge className="bg-slate-500 text-[9px] h-4 border-none">Ưu tiên thấp</Badge>
+                                                )}
+                                                {claim.evidences && claim.evidences.length > 1 && (
+                                                    <Badge className="bg-orange-500 text-[9px] h-4 border-none">Ưu tiên cao</Badge>
+                                                )}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -456,7 +463,14 @@ export const ClaimsManagement = () => {
                             <Badge variant={selectedClaim?.status === 'Conflicted' ? 'destructive' : 'secondary'} className="text-[10px] h-5">
                                 {selectedClaim?.status === 'Conflicted' ? 'Tranh chấp' : selectedClaim?.status}
                             </Badge>
-                            {selectedClaim?.priority === 'High' && (
+
+                            {/* Priority logic based on evidence count */}
+                            {(!selectedClaim?.evidences || selectedClaim?.evidences.length === 0) && (
+                                <Badge className="bg-slate-500 text-[10px] h-5 border-none">
+                                    Ưu tiên thấp
+                                </Badge>
+                            )}
+                            {selectedClaim?.evidences && selectedClaim?.evidences.length > 1 && (
                                 <Badge className="bg-orange-500 hover:bg-orange-600 text-[10px] h-5 border-none">
                                     Ưu tiên cao
                                 </Badge>
@@ -494,35 +508,35 @@ export const ClaimsManagement = () => {
                                 {(() => {
                                     const evidences = fullClaim?.evidences || selectedClaim?.evidences || [];
                                     return evidences.length > 0 ? (
-                                    <div className="space-y-6">
-                                        {evidences.map((ev: Evidence, index: number) => (
-                                            <div key={ev.evidenceId || index} className="border-b border-blue-50 pb-4 last:border-0 last:pb-0">
-                                                <div className="font-semibold text-sm text-blue-900 mb-1">
-                                                    #{index + 1}: {ev.title}
-                                                </div>
-                                                {ev.imageUrls && ev.imageUrls.length > 0 && (
-                                                    <div className="grid grid-cols-2 gap-2 mb-2">
-                                                        {ev.imageUrls.map((url: string, imgIdx: number) => (
-                                                            <div key={imgIdx} className="aspect-square rounded overflow-hidden border bg-white shadow-sm">
-                                                                <img src={url} alt={`Evidence ${imgIdx}`} className="w-full h-full object-cover hover:scale-105 transition-transform" />
-                                                            </div>
-                                                        ))}
+                                        <div className="space-y-6">
+                                            {evidences.map((ev: Evidence, index: number) => (
+                                                <div key={ev.evidenceId || index} className="border-b border-blue-50 pb-4 last:border-0 last:pb-0">
+                                                    <div className="font-semibold text-sm text-blue-900 mb-1">
+                                                        #{index + 1}: {ev.title}
                                                     </div>
-                                                )}
-                                                <div className="bg-slate-50 p-3 rounded text-xs text-slate-700 border border-slate-100 italic">
-                                                    "{ev.description}"
+                                                    {ev.imageUrls && ev.imageUrls.length > 0 && (
+                                                        <div className="grid grid-cols-2 gap-2 mb-2">
+                                                            {ev.imageUrls.map((url: string, imgIdx: number) => (
+                                                                <div key={imgIdx} className="aspect-square rounded overflow-hidden border bg-white shadow-sm">
+                                                                    <img src={url} alt={`Evidence ${imgIdx}`} className="w-full h-full object-cover hover:scale-105 transition-transform" />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                    <div className="bg-slate-50 p-3 rounded text-xs text-slate-700 border border-slate-100 italic">
+                                                        "{ev.description}"
+                                                    </div>
+                                                    <div className="text-[9px] text-slate-400 mt-1 text-right italic font-mono">
+                                                        {formatVN(ev.createdAt)}
+                                                    </div>
                                                 </div>
-                                                <div className="text-[9px] text-slate-400 mt-1 text-right italic font-mono">
-                                                    {formatVN(ev.createdAt)}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="text-center py-10 text-slate-400 italic text-xs">
-                                        Sinh viên chưa gửi bằng chứng nào.
-                                    </div>
-                                );
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-10 text-slate-400 italic text-xs">
+                                            Sinh viên chưa gửi bằng chứng nào.
+                                        </div>
+                                    );
                                 })()}
                             </ScrollArea>
                         </Card>

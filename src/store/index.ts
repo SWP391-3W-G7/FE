@@ -1,12 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { rootApi } from '../services/rootApi';
-import authReducer from '@/features/auth/authSlice'; 
+import authReducer from '@/features/auth/authSlice';
+import notificationReducer from '@/features/notifications/notificationSlice';
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux';
 
 export const store = configureStore({
   reducer: {
     [rootApi.reducerPath]: rootApi.reducer,
     auth: authReducer,
+    notifications: notificationReducer,
   },
 
   middleware: (getDefaultMiddleware) =>

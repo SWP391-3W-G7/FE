@@ -96,12 +96,17 @@ export interface DisputedClaim extends Claim {
 
 
 export interface User {
+  userId?: number;
+  username?: string;
   email: string;
   fullName: string;
   role: UserRole;
   campusName: string;
   campusId: number;
+  phoneNumber?: string;
+  status?: string;
   avatarUrl?: string;
+  studentIdCardUrl?: string;
 }
 
 // System Reports for Admin
@@ -128,13 +133,6 @@ export interface CampusStat {
 export interface AdminUser extends User {
   userId: number;
   isActive: boolean;
-  status?: string;
-  id?: string;
-  phone?: string;
-  phoneNumber?: string;
-  username?: string;
-  roleName?: string;
-  studentIdCardUrl?: string;
 }
 
 // Create Campus Request
@@ -174,7 +172,7 @@ export interface ActionLog {
 }
 
 export interface Campus {
-  campusId: number;
+  campusId: number | string;
   campusName: string;
   address: string;
   storageLocation: string;

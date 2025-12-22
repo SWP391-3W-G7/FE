@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { UserCheck, UserX, Loader2, Eye, Users } from 'lucide-react';
 import { useGetPendingUsersQuery, useApproveUserMutation, useRejectUserMutation } from '@/features/items/itemApi';
 import { Button } from "@/components/ui/button";
-import AdminNav from '@/components/AdminNav';
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -110,8 +110,8 @@ const PendingUsersPage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <AdminNav />
-      
+
+
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-2">
@@ -171,7 +171,7 @@ const PendingUsersPage = () => {
                             {user.status}
                           </Badge>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div>
                             <span className="text-slate-500">Email:</span>{' '}
@@ -311,7 +311,7 @@ const PendingUsersPage = () => {
               Thông tin chi tiết về user đang chờ duyệt
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedUser && (
             <div className="space-y-4">
               {selectedUser.studentIdCardUrl && (
@@ -326,7 +326,7 @@ const PendingUsersPage = () => {
                   />
                 </div>
               )}
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-slate-700">Họ và tên</label>

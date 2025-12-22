@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { Search, UserPlus, Shield, Users, MapPin, Loader2, Edit, Ban, UserX, Eye } from 'lucide-react';
 import { useGetAdminUsersQuery, useGetCampusesQuery, useAssignUserMutation, useCreateUserMutation, useUpdateUserMutation, useBanUserMutation, useGetUserDetailQuery } from '@/features/items/itemApi';
 import { Button } from "@/components/ui/button";
-import AdminNav from '@/components/AdminNav';
+
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -94,9 +94,9 @@ const AdminUsersPage = () => {
   const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const [banUser, { isLoading: isBanning }] = useBanUserMutation();
-  
+
   const { data: userDetail, isLoading: isLoadingDetail } = useGetUserDetailQuery(
-    selectedUserIdForDetail!, 
+    selectedUserIdForDetail!,
     { skip: selectedUserIdForDetail === null }
   );
 
@@ -204,14 +204,14 @@ const AdminUsersPage = () => {
     try {
       console.log("=== ASSIGN USER DEBUG ===");
       console.log("1. Form data:", JSON.stringify(data, null, 2));
-      
+
       // Transform to API format
       const payload = {
-        userId: parseInt(data.userId),
-        campusId: parseInt(data.campusId),
+        userId: data.userId,
+        campusId: data.campusId,
         roleId: data.role === 'STAFF' ? 2 : 3, // STAFF=2, SECURITY=3
       };
-      
+
       console.log("2. Final payload:", JSON.stringify(payload, null, 2));
       const response = await assignUser(payload as any).unwrap();
       console.log("3. API response:", response);
@@ -247,7 +247,7 @@ const AdminUsersPage = () => {
         fullName: data.fullName,
         phoneNumber: data.phone,
         roleId: data.role === 'STAFF' ? 2 : 3, // STAFF=2, SECURITY=3 (adjust based on API)
-        campusId: parseInt(data.campusId),
+        campusId: data.campusId,
       };
 
       console.log("Sending payload:", payload);
@@ -290,16 +290,16 @@ const AdminUsersPage = () => {
       console.log("=== UPDATE USER DEBUG ===");
       console.log("1. Form data:", JSON.stringify(data, null, 2));
       console.log("2. Selected user:", JSON.stringify(selectedUserForEdit, null, 2));
-      
+
       // Map role to roleId: STUDENT=1, STAFF=2, SECURITY=3
       const roleId = selectedUserForEdit.role === 'STAFF' ? 2 : selectedUserForEdit.role === 'SECURITY' ? 3 : 1;
-      
+
       const payload = {
         id: parseInt(selectedUserForEdit.id),
         fullName: data.fullName,
         phoneNumber: data.phoneNumber,
         roleId: roleId,
-        campusId: parseInt(data.campusId),
+        campusId: data.campusId,
         isActive: data.status === 'Active',
       };
 
@@ -385,7 +385,7 @@ const AdminUsersPage = () => {
 
   return (
     <>
-      <AdminNav />
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
@@ -863,97 +863,97 @@ const AdminUsersPage = () => {
           </AlertDialogContent>
         </AlertDialog>
 
-      {/* User Detail Dialog */}
-      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Thông tin chi tiết người dùng</DialogTitle>
-            <DialogDescription>
-              Xem đầy đủ thông tin của người dùng trong hệ thống
-            </DialogDescription>
-          </DialogHeader>
-          
-          {isLoadingDetail ? (
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </div>
-          ) : userDetail ? (
-            <div className="space-y-4">
-              {userDetail.studentIdCardUrl && (
-                <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-2">
-                    Hình thẻ sinh viên
-                  </label>
-                  <img
-                    src={userDetail.studentIdCardUrl}
-                    alt="Student ID Card"
-                    className="w-full max-h-96 object-contain rounded-lg border"
-                  />
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700">ID</label>
-                  <p className="text-slate-900 mt-1">{userDetail.userId}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Username</label>
-                  <p className="text-slate-900 mt-1">{userDetail.username || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Họ và tên</label>
-                  <p className="text-slate-900 mt-1">{userDetail.fullName}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Email</label>
-                  <p className="text-slate-900 mt-1">{userDetail.email}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
-                  <p className="text-slate-900 mt-1">{userDetail.phoneNumber || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Vai trò</label>
-                  <div className="mt-1">{userDetail.roleName}</div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Campus</label>
-                  <p className="text-slate-900 mt-1">{userDetail.campusName}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Trạng thái</label>
-                  <div className="mt-1">
-                    {userDetail.status === 'Active' ? (
-                      <Badge variant="outline" className="text-green-600 border-green-300">
-                        Hoạt động
-                      </Badge>
-                    ) : userDetail.status === 'Pending' ? (
-                      <Badge variant="outline" className="text-yellow-600 border-yellow-300">
-                        Chờ duyệt
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-gray-600">
-                        Không hoạt động
-                      </Badge>
-                    )}
+        {/* User Detail Dialog */}
+        <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Thông tin chi tiết người dùng</DialogTitle>
+              <DialogDescription>
+                Xem đầy đủ thông tin của người dùng trong hệ thống
+              </DialogDescription>
+            </DialogHeader>
+
+            {isLoadingDetail ? (
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ) : userDetail ? (
+              <div className="space-y-4">
+                {userDetail.studentIdCardUrl && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 block mb-2">
+                      Hình thẻ sinh viên
+                    </label>
+                    <img
+                      src={userDetail.studentIdCardUrl}
+                      alt="Student ID Card"
+                      className="w-full max-h-96 object-contain rounded-lg border"
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">ID</label>
+                    <p className="text-slate-900 mt-1">{userDetail.userId}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Username</label>
+                    <p className="text-slate-900 mt-1">{userDetail.username || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Họ và tên</label>
+                    <p className="text-slate-900 mt-1">{userDetail.fullName}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Email</label>
+                    <p className="text-slate-900 mt-1">{userDetail.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
+                    <p className="text-slate-900 mt-1">{userDetail.phoneNumber || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Vai trò</label>
+                    <div className="mt-1">{userDetail.roleName}</div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Campus</label>
+                    <p className="text-slate-900 mt-1">{userDetail.campusName}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Trạng thái</label>
+                    <div className="mt-1">
+                      {userDetail.status === 'Active' ? (
+                        <Badge variant="outline" className="text-green-600 border-green-300">
+                          Hoạt động
+                        </Badge>
+                      ) : userDetail.status === 'Pending' ? (
+                        <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                          Chờ duyệt
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-gray-600">
+                          Không hoạt động
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <p className="text-slate-500">Không thể tải thông tin người dùng</p>
-          )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
-              Đóng
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            ) : (
+              <p className="text-slate-500">Không thể tải thông tin người dùng</p>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
+                Đóng
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );
