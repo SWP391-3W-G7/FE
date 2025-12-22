@@ -49,8 +49,8 @@ export const ClaimsManagement = () => {
     const { data: matchingData, isLoading: isLoadingMatches } = useGetMatchingItemsQuery({ pageNumber: matchesPage + 1, pageSize });
 
     // Extract items safely
-    const pendingClaims = (pendingData as any)?.items || pendingData?.items || [];
-    const conflictedClaims = (conflictedData as any)?.items || conflictedData?.items || [];
+    const pendingClaims = pendingData?.items || [];
+    const conflictedClaims = conflictedData?.items || [];
     const matches = matchingData?.items || [];
 
     const isLoading = activeTab === "pending" ? isLoadingPending : activeTab === "conflicted" ? isLoadingConflicted : isLoadingMatches;
@@ -98,8 +98,7 @@ export const ClaimsManagement = () => {
             await updateClaimStatus({ claimId: targetId, status: 'Approved' }).unwrap();
             toast({ title: "Đã duyệt yêu cầu!", description: "Sinh viên sẽ nhận được thông báo đến nhận đồ." });
             setIsOpen(false);
-        } catch (e) {
-            console.error(e);
+        } catch {
             toast({ variant: "destructive", title: "Lỗi", description: "Không thể duyệt yêu cầu." });
         }
     };
@@ -116,8 +115,7 @@ export const ClaimsManagement = () => {
             }
             toast({ variant: "destructive", title: "Đã từ chối", description: "Yêu cầu đã bị hủy bỏ." });
             setIsOpen(false);
-        } catch (e) {
-            console.error(e);
+        } catch {
             toast({ variant: "destructive", title: "Lỗi", description: "Không thể từ chối yêu cầu." });
         }
     };
@@ -233,7 +231,7 @@ export const ClaimsManagement = () => {
 
         return (
             <div className="space-y-6">
-                {Object.entries(groups).map(([itemId, group]: [string, any]) => (
+                {Object.entries(groups).map(([itemId, group]: [string, { title: string; items: Claim[] }]) => (
                     <div key={itemId} className="bg-white rounded border border-red-100 shadow-sm overflow-hidden">
                         <div className="bg-red-50/50 px-4 py-2 border-b border-red-100 flex justify-between items-center">
                             <div className="flex items-center gap-2">
@@ -280,7 +278,7 @@ export const ClaimsManagement = () => {
                                                 ) : (
                                                     <Badge variant="outline" className="text-[9px] h-4 text-slate-400 italic">No evidence</Badge>
                                                 )}
-                                                {claim.priority === 'High' && <Badge className="bg-orange-500 text-[9px] h-4 border-none">Ưu tiên</Badge>}
+                                                {claim.priority === 'High' && <Badge className="bg-orange-500 text-[9px] h-4 border-none">Ưu tiên thấp</Badge>}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -375,7 +373,7 @@ export const ClaimsManagement = () => {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                matches.map((match: any) => (
+                                matches.map((match: { matchId: number; lostItem?: unknown; foundItem?: unknown; createdAt: string }) => (
                                     <TableRow key={match.matchId} className="hover:bg-slate-50/30">
                                         <TableCell>
                                             <div className="font-medium text-slate-900 text-sm">{getItemTitle(getProp(match, ['lostItem', 'LostItem']))}</div>

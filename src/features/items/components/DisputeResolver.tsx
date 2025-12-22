@@ -50,14 +50,47 @@ export const DisputeResolver = () => {
   // 1. Lấy dữ liệu
   const { data, isLoading } = useGetDisputedItemsQuery();
   const [resolveDispute, { isLoading: isResolving }] = useResolveDisputeMutation();
+  
+  // Extract items from paginated response
+  type ApiClaim = { claimId: number; foundItemId: number; foundItemTitle: string | null; claimDate: string; evidences: unknown[]; studentName: string | null; studentId: number };
+  const allClaims: ApiClaim[] = data?.items || [];
 
-  // Robust data extraction (handles flat array or paginated response)
-  const allItems = (data as any)?.items || (Array.isArray(data) ? data : []);
+  // 2. Nhóm claims theo foundItemId
+  const groupedByItem = allClaims.reduce((acc: Record<number, FoundItem>, claim: ApiClaim) => {
+    const itemId = claim.foundItemId;
+    if (!itemId) return acc;
+    
+    if (!acc[itemId]) {
+      acc[itemId] = {
+        foundItemId: itemId,
+        title: claim.foundItemTitle || "Unknown Item",
+        foundDate: claim.claimDate,
+        foundLocation: "N/A",
+        imageUrls: [],
+        claimRequests: [] as Claim[]
+      };
+    }
+    // Cast API claim to local Claim type
+    const localClaim: Claim = {
+      claimId: claim.claimId,
+      claimDate: claim.claimDate,
+      status: 'Pending',
+      foundItemId: claim.foundItemId,
+      lostItemId: null,
+      foundItemTitle: claim.foundItemTitle,
+      studentId: claim.studentId,
+      studentName: claim.studentName,
+      evidences: (claim.evidences || []) as Evidence[],
+      actionLogs: ''
+    };
+    if (acc[itemId].claimRequests) {
+      acc[itemId].claimRequests!.push(localClaim);
+    }
+    return acc;
+  }, {});
 
-  // 2. Filter: Chỉ lấy item có >= 2 claimRequests
-  const disputedItems = allItems.filter((item: FoundItem) =>
-    item.claimRequests && item.claimRequests.length >= 2
-  );
+  // Convert to array with proper type
+  const disputedItems = Object.values(groupedByItem);
 
   const handlePickWinner = async (itemId: number, winnerClaimId: number, winnerName: string) => {
     try {
@@ -67,8 +100,7 @@ export const DisputeResolver = () => {
         description: `Xác nhận sinh viên ${winnerName} là chủ sở hữu.`,
         className: "bg-green-50 border-green-200 text-green-800"
       });
-    } catch (e) {
-      console.error(e);
+    } catch {
       toast({
         title: "Lỗi hệ thống",
         description: "Không thể xử lý tranh chấp lúc này.",
@@ -110,7 +142,7 @@ export const DisputeResolver = () => {
                 <div>
                   <div className="flex items-center gap-2 text-orange-800 font-bold text-lg">
                     <ShieldAlert className="w-5 h-5" />
-                    TRANH CHẤP: {item.title}
+                    TRANH CHẤP: {item.title || "Unknown Item"}
                   </div>
                   <div className="text-sm text-slate-600 mt-1">
                     <span className="font-semibold">Nơi nhặt:</span> {item.foundLocation}
@@ -129,7 +161,7 @@ export const DisputeResolver = () => {
           {/* Content: Danh sách người nhận (Claims) */}
           <CardContent className="pt-6 bg-slate-50/50">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {item.claimRequests?.map((claim: Claim) => (
+              {item.claimRequests && item.claimRequests.map((claim: Claim) => (
                 <div
                   key={claim.claimId}
                   className="flex flex-col border rounded-xl bg-white shadow-sm hover:border-blue-400 transition-all duration-200"

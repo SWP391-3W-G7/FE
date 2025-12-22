@@ -39,13 +39,13 @@ const FindItemsPage = () => {
 
     // Lấy toàn bộ items theo Campus (API chỉ hỗ trợ filter Campus)
     const { data: response, isLoading, isFetching } = useGetFoundItemsQuery({
-        CampusId: selectedCampus === "all" ? undefined : selectedCampus, Status: "Stored"
+        CampusId: selectedCampus === "all" ? undefined : parseInt(selectedCampus), Status: "Stored"
     });
 
     // --- Client-side Filtering Logic ---
     const filteredItems = useMemo(() => {
-        // Ensure items is an array before filtering - API returns FoundItem[] directly
-        const itemsArray = Array.isArray(response) ? response : [];
+        // API trả về paginated response với items array
+        const itemsArray = response?.items || [];
         if (itemsArray.length === 0) return [];
 
         return itemsArray.filter((item: FoundItem) => {

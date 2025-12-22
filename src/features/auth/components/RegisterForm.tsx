@@ -21,7 +21,11 @@ const registerSchema = z.object({
   phoneNumber: z.string().regex(/(84|0[3|5|7|8|9])+([0-9]{8})\b/, { message: "Số điện thoại không hợp lệ" }),
   campusId: z.string().min(1, "Vui lòng chọn cơ sở"),
   password: z.string().min(6, { message: "Mật khẩu tối thiểu 6 ký tự" }),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  studentIdCard: z.instanceof(FileList).optional().refine(
+    (files) => !files || files.length === 0 || files[0].size <= 5000000,
+    { message: "Ảnh thẻ sinh viên không được vượt quá 5MB" }
+  ),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Mật khẩu xác nhận không khớp",
   path: ["confirmPassword"],
@@ -46,20 +50,27 @@ export const RegisterForm = () => {
       campusId: "",
       password: "",
       confirmPassword: "",
+      studentIdCard: undefined,
     },
   });
 
   const onSubmit = async (values: RegisterFormValues) => {
     try {
-      // Gửi đúng format API yêu cầu
-      await register({
-        username: values.username,
-        email: values.email,
-        password: values.password,
-        fullName: values.fullName,
-        campusId: values.campusId,
-        phoneNumber: values.phoneNumber,
-      }).unwrap();
+      // Tạo FormData để gửi multipart/form-data
+      const formData = new FormData();
+      formData.append('Username', values.username);
+      formData.append('Email', values.email);
+      formData.append('Password', values.password);
+      formData.append('FullName', values.fullName);
+      formData.append('CampusId', values.campusId);
+      formData.append('PhoneNumber', values.phoneNumber);
+      
+      // Thêm file ảnh thẻ sinh viên nếu có
+      if (values.studentIdCard && values.studentIdCard.length > 0) {
+        formData.append('studentIdCard', values.studentIdCard[0]);
+      }
+
+      await register(formData).unwrap();
 
       toast({
         title: "Đăng ký thành công!",
@@ -68,12 +79,12 @@ export const RegisterForm = () => {
 
       navigate('/login');
 
-    } catch (error: any) {
-      console.error("Register Error:", error);
+    } catch (error: unknown) {
+      const errorMessage = (error as { data?: { message?: string } })?.data?.message || "Email này có thể đã tồn tại.";
       toast({
         variant: "destructive",
         title: "Đăng ký thất bại",
-        description: error?.data?.message || "Email này có thể đã tồn tại.",
+        description: errorMessage,
       });
     }
   };
@@ -169,6 +180,26 @@ export const RegisterForm = () => {
                 <FormLabel>Số điện thoại</FormLabel>
                 <FormControl>
                   <Input placeholder="0909xxxxxx" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="studentIdCard"
+            render={({ field: { onChange, ref } }) => (
+              <FormItem>
+                <FormLabel>Ảnh thẻ sinh viên (tùy chọn)</FormLabel>
+                <FormControl>
+                  <Input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => onChange(e.target.files)}
+                    ref={ref}
+                    value={undefined}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

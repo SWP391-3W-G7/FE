@@ -28,7 +28,7 @@ export const claimApi = rootApi.injectEndpoints({
         }),
         getConflictedClaims: build.query<PaginatedResponse<Claim>, { pageNumber?: number; pageSize?: number } | void>({
             query: (params) => ({
-                url: "/claim-requests/staff/by-status",
+                url: "/claim-requests",
                 method: "GET",
                 params: { ...params, status: "Conflicted" },
             }),
@@ -40,9 +40,7 @@ export const claimApi = rootApi.injectEndpoints({
                 url: "/claim-requests",
                 method: "POST",
                 data: formData,
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
+                // Don't set Content-Type - let axios set it with boundary
             }),
             invalidatesTags: ["Claims"],
         }),

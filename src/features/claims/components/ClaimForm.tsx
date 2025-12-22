@@ -72,30 +72,23 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
     try {
       const formData = new FormData();
 
-      // --- SỬA CÁC KEY CHO KHỚP API ---
-
-      // 1. FoundItemId (Backend: int32)
+      // Append theo đúng Swagger API spec
       formData.append("FoundItemId", foundItemId);
-
-      // 2. EvidenceTitle (Backend: string)
-      formData.append("EvidenceTitle", data.title);
-
-      // 3. EvidenceDescription (Backend: string)
-      formData.append("EvidenceDescription", data.description);
-
-      // 4. CampusId (Backend: int32 - Bắt buộc)
       formData.append("CampusId", user.campusId.toString());
+      
+      if (data.title) {
+        formData.append("EvidenceTitle", data.title);
+      }
+      
+      if (data.description) {
+        formData.append("EvidenceDescription", data.description);
+      }
 
-      // 5. EvidenceImages (Backend: array file)
-      // Lưu ý: Key phải là "EvidenceImages" chứ không phải "images"
+      // Thêm ảnh nếu có
       if (selectedImages.length > 0) {
         selectedImages.forEach((file) => {
           formData.append("EvidenceImages", file);
         });
-      } else {
-        // Nếu backend yêu cầu array nhưng không có file, có thể cần xử lý tùy backend
-        // Nhưng thường multipart/form-data bỏ qua cũng được nếu optional
-        // Nếu bắt buộc array rỗng thì backend thường tự handle
       }
 
       await createClaim(formData).unwrap();
@@ -107,8 +100,7 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
 
       navigate('/my-claims');
 
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast({
         variant: "destructive",
         title: "Lỗi",

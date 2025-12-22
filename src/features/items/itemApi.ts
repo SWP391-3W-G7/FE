@@ -22,10 +22,10 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/categories",
         method: "GET",
       }),
-      transformResponse: (response: any[]) => {
+      transformResponse: (response: Array<{ id?: number; categoryId?: number; categoryID?: number; name?: string; categoryName?: string }>) => {
         return response.map((category) => ({
-          categoryId: category.id || category.categoryId || category.categoryID,
-          categoryName: category.name || category.categoryName,
+          categoryId: (category.id || category.categoryId || category.categoryID) as number,
+          categoryName: (category.name || category.categoryName) as string,
         }));
       },
     }),
@@ -61,9 +61,9 @@ export const itemApi = rootApi.injectEndpoints({
 
     // got it
     getFoundItems: build.query<
-      FoundItem[],
+      PaginatedResponse<FoundItem>,
       {
-        CampusId?: string;
+        CampusId?: number;
         Status?: string;
       }
     >({
@@ -72,6 +72,10 @@ export const itemApi = rootApi.injectEndpoints({
         method: "GET",
         params: params,
       }),
+      transformResponse: (response: PaginatedResponse<FoundItem>) => {
+        // API trả về paginated response
+        return response;
+      },
     }),
 
     /// got it
@@ -87,7 +91,7 @@ export const itemApi = rootApi.injectEndpoints({
         method: "GET",
       }),
     }),
-    getFoundItemDetails: build.query<any, number>({
+    getFoundItemDetails: build.query<FoundItem, number>({
       query: (id) => ({
         url: `/found-items/${id}/details`,
         method: "GET",
@@ -231,11 +235,12 @@ export const itemApi = rootApi.injectEndpoints({
       invalidatesTags: ["Disputes", "Claims", "ReadyItems"],
     }),
 
-    // got it
-    getDisputedItems: build.query<FoundItem[], void>({
-      query: () => ({
-        url: `/found-items`,
+    // Get disputed/conflicted items - redirects to claim-requests API
+    getDisputedItems: build.query<PaginatedResponse<{ claimId: number; foundItemId: number; foundItemTitle: string | null; claimDate: string; evidences: unknown[]; studentName: string | null; studentId: number }>, { pageNumber?: number; pageSize?: number } | void>({
+      query: (params) => ({
+        url: `/claim-requests`,
         method: "GET",
+        params: { ...params, status: "Conflicted" },
       }),
       providesTags: ["Disputes"],
     }),
@@ -262,22 +267,22 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/security/my-open-found-items",
         method: "GET",
       }),
-      transformResponse: (response: any[]) => {
+      transformResponse: (response: Array<Record<string, unknown>>) => {
         // API trả về foundItemId, categoryId, imageUrls
         return response.map((item) => ({
-          foundItemId: item.foundItemId,
-          title: item.title,
-          description: item.description || "",
-          foundDate: item.foundDate,
-          foundLocation: item.foundLocation,
-          status: item.status,
+          foundItemId: item.foundItemId as number,
+          title: item.title as string,
+          description: (item.description || "") as string,
+          foundDate: item.foundDate as string,
+          foundLocation: item.foundLocation as string,
+          status: item.status as "Open",
           campusId: 0,
-          campusName: item.campusName || "",
-          categoryId: item.categoryId || 0,
-          categoryName: item.categoryName || "",
-          imageUrls: item.imageUrls || [],
-          createdBy: item.createdBy || 0,
-          storedBy: item.storedBy || null,
+          campusName: (item.campusName || "") as string,
+          categoryId: (item.categoryId || 0) as number,
+          categoryName: (item.categoryName || "") as string,
+          imageUrls: (item.imageUrls || []) as string[],
+          createdBy: (item.createdBy || 0) as number,
+          storedBy: (item.storedBy || null) as number | null,
           claimRequests: [],
           actionLogs: null,
           finderName: "",
@@ -380,36 +385,32 @@ export const itemApi = rootApi.injectEndpoints({
           },
         };
       },
-      transformResponse: (response: any[]) => {
+      transformResponse: (response: Array<Record<string, unknown>>) => {
         // Transform API response to AdminUser format
-        console.log("Raw API response:", response);
-
         const transformed = response.map((user) => {
           // Normalize role name
           let role = 'USER';
-          const roleName = user.roleName?.toLowerCase() || '';
+          const roleName = (user.roleName as string | undefined)?.toLowerCase() || '';
           if (roleName.includes('staff')) role = 'STAFF';
           else if (roleName.includes('security')) role = 'SECURITY';
           else if (roleName.includes('admin')) role = 'ADMIN';
           else if (roleName.includes('user') || roleName.includes('student')) role = 'USER';
 
           const transformed: AdminUser = {
-            userId: user.userId,
-            id: user.userId?.toString(),
-            email: user.email,
-            fullName: user.fullName,
+            userId: user.userId as number,
+            id: (user.userId as number)?.toString(),
+            email: user.email as string,
+            fullName: user.fullName as string,
             role: role as UserRole,
             campusId: Number(user.campusId) || 0,
-            campusName: user.campusName || '',
+            campusName: (user.campusName as string) || '',
             isActive: user.status === 'Active',
-            phone: user.phoneNumber,
+            phone: user.phoneNumber as string | undefined,
           };
 
-          console.log(`User: ${user.fullName}, roleName: ${user.roleName}, normalized role: ${role}`);
           return transformed;
         });
 
-        console.log("Transformed users:", transformed);
         return transformed;
       },
     }),
@@ -424,7 +425,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Create new user (STAFF or SECURITY)
-    createUser: build.mutation<any, {
+    createUser: build.mutation<void, {
       email: string;
       fullName: string;
       phone: string;
@@ -440,7 +441,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Update user
-    updateUser: build.mutation<any, {
+    updateUser: build.mutation<void, {
       id: number;
       fullName: string;
       phoneNumber: string;
@@ -456,7 +457,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Ban/Unban user
-    banUser: build.mutation<any, { id: number; isBan: boolean }>({
+    banUser: build.mutation<void, { id: number; isBan: boolean }>({
       query: ({ id, isBan }) => ({
         url: `/admin/users/${id}/ban-status`,
         method: "PATCH",
@@ -465,7 +466,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Get user detail
-    getUserDetail: build.query<any, number>({
+    getUserDetail: build.query<AdminUser, number>({
       query: (id) => ({
         url: `/admin/users/${id}`,
         method: "GET",
@@ -473,7 +474,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Update campus
-    updateCampus: build.mutation<any, {
+    updateCampus: build.mutation<Campus, {
       id: number;
       campusName: string;
       address: string;
@@ -487,7 +488,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Delete campus
-    deleteCampus: build.mutation<any, number>({
+    deleteCampus: build.mutation<void, number>({
       query: (id) => ({
         url: `/Campus/${id}`,
         method: "DELETE",
@@ -495,24 +496,24 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Get pending users
-    getPendingUsers: build.query<any[], void>({
+    getPendingUsers: build.query<Array<{ userId: number; username: string; email: string; fullName: string; roleId: number; status: string; campusId: number; phoneNumber: string; roleName: string; campusName: string; studentIdCardUrl: string }>, void>({
       query: () => ({
         url: "/admin/users/pending",
         method: "GET",
       }),
-      transformResponse: (response: any[]) => {
+      transformResponse: (response: Array<Record<string, unknown>>) => {
         return response.map((user) => ({
-          userId: user.userID || user.userId,
-          username: user.username,
-          email: user.email,
-          fullName: user.fullName,
-          roleId: user.roleId || user.roleID,
-          status: user.status,
-          campusId: user.campusId || user.campusID,
-          phoneNumber: user.phoneNumber,
-          roleName: user.roleName,
-          campusName: user.campusName,
-          studentIdCardUrl: user.studentIdCardUrl,
+          userId: (user.userID || user.userId) as number,
+          username: user.username as string,
+          email: user.email as string,
+          fullName: user.fullName as string,
+          roleId: (user.roleId || user.roleID) as number,
+          status: user.status as string,
+          campusId: (user.campusId || user.campusID) as number,
+          phoneNumber: user.phoneNumber as string,
+          roleName: user.roleName as string,
+          campusName: user.campusName as string,
+          studentIdCardUrl: user.studentIdCardUrl as string,
         }));
       },
       providesTags: ["PendingUsers"],
@@ -542,17 +543,17 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/admin/dashboard/unreturned-items-count",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { count?: number }) => {
         return response?.count || 0;
       },
     }),
 
-    getFoundItemsMonthly: build.query<any[], void>({
+    getFoundItemsMonthly: build.query<Array<{ month: string; name: string; count: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/found-items-monthly",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: number[] }) => {
         const data = response?.data;
         if (!Array.isArray(data)) return [];
         
@@ -565,12 +566,12 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getTopContributor: build.query<any[], void>({
+    getTopContributor: build.query<Array<{ userId: number; userName: string; fullName: string; email: string; count: number; itemCount: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/top-contributor",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { userId: number; fullName: string; email: string; totalFoundItems: number } }) => {
         const data = response?.data;
         if (!data) return [];
         
@@ -586,12 +587,12 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getCampusMostLostItems: build.query<any[], void>({
+    getCampusMostLostItems: build.query<Array<{ campusId: number; campusName: string; count: number; lostItemCount: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/campus-most-lost-items",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { campusId: number; campusName: string; totalLostItems: number } }) => {
         const data = response?.data;
         if (!data) return [];
         
@@ -605,12 +606,12 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getUserMostLostItems: build.query<any[], void>({
+    getUserMostLostItems: build.query<Array<{ userId: number; userName: string; fullName: string; email: string; count: number; lostItemCount: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/user-most-lost-items",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { userId: number; fullName: string; email: string; totalLostItems: number } }) => {
         const data = response?.data;
         if (!data) return [];
         
@@ -626,12 +627,12 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getLostItemsStatusStats: build.query<any[], void>({
+    getLostItemsStatusStats: build.query<Array<{ status: string; count: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/lost-items-status-stats",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { totalLost: number; totalMatched: number; totalReturned: number } }) => {
         const data = response?.data;
         if (!data) return [];
         
@@ -643,12 +644,12 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getFoundItemsStatusStats: build.query<any[], void>({
+    getFoundItemsStatusStats: build.query<Array<{ status: string; count: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/found-items-status-stats",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { totalOpen: number; totalStored: number; totalClaimed: number; totalReturned: number; totalClosed: number } }) => {
         const data = response?.data;
         if (!data) return [];
         
@@ -662,12 +663,12 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getClaimStatusStats: build.query<any[], void>({
+    getClaimStatusStats: build.query<Array<{ status: string; count: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/claim-status-stats",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { totalPending: number; totalApproved: number; totalRejected: number; totalReturned: number; totalConflicted: number } }) => {
         const data = response?.data;
         if (!data) return [];
         
