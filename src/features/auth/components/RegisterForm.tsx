@@ -35,7 +35,7 @@ export const RegisterForm = () => {
   const { toast } = useToast();
 
   const [register, { isLoading }] = useRegisterMutation();
-  const { data: campuses = [], isLoading: loadingCampuses } = useGetCampusesQuery();
+  const { data: campuses = [] } = useGetCampusesQuery();
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),

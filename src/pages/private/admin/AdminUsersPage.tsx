@@ -917,7 +917,7 @@ const AdminUsersPage = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700">Vai trò</label>
-                    <div className="mt-1">{userDetail.roleName}</div>
+                    <div className="mt-1">{userDetail.role}</div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700">Campus</label>

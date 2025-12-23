@@ -668,7 +668,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500">Vai trò</p>
-                  <p className="font-medium">{userDetail.roleName || userDetail.role}</p>
+                  <p className="font-medium">{userDetail.role}</p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500">Campus</p>
