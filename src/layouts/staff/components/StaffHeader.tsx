@@ -1,4 +1,4 @@
-import { Bell, Menu, Search, LogOut, User as UserIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bell, Menu, Search, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { logout, selectCurrentUser } from '@/features/auth/authSlice';
 import { useNavigate } from 'react-router-dom';
@@ -89,11 +89,6 @@ const StaffHeader = ({ onMenuClick, onToggleSidebar, isCollapsed }: StaffHeaderP
                                 </Badge>
                             </div>
                         </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate('/profile')}>
-                            <UserIcon className="mr-2 h-4 w-4" />
-                            Hồ sơ cá nhân
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={handleLogout}>
                             <LogOut className="mr-2 h-4 w-4" />

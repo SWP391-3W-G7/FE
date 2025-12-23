@@ -1,8 +1,7 @@
-import { Building2, Plus } from 'lucide-react';
+import { Building2 } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { CampusCard } from './CampusCard';
-import { CampusListProps } from '../types/campus';
+import type { CampusListProps } from '../types/campus';
 
 export const CampusList = ({ campuses, isLoading, onEdit, onDelete }: CampusListProps) => {
     if (isLoading) {

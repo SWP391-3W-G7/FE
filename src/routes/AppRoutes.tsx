@@ -7,6 +7,7 @@ import LandingPage from '@/pages/public/LandingPage';
 import GoogleCallbackPage from '@/pages/public/GoogleCallbackPage';
 import ReportItemPage from '@/pages/private/student/ReportItemPage';
 import ProtectedRoute from './ProtectedRoute';
+import RoleBasedRedirect from './RoleBasedRedirect';
 import ReportFoundPage from '@/pages/private/student/ReportFoundPage';
 import FindItemsPage from '@/pages/private/student/FindItemsPage';
 import ClaimItemPage from '@/pages/private/student/ClaimItemPage';
@@ -24,6 +25,7 @@ const StaffIncomingPage = lazy(() => import('@/pages/private/staff/StaffIncoming
 const StaffInventoryPage = lazy(() => import('@/pages/private/staff/StaffInventoryPage'));
 const StaffVerifyPage = lazy(() => import('@/pages/private/staff/StaffVerifyPage'));
 const StaffReturnPage = lazy(() => import('@/pages/private/staff/StaffReturnPage'));
+const StaffLostReportsPage = lazy(() => import('@/pages/private/staff/StaffLostReportsPage'));
 
 // Lazy load Admin Pages
 const AdminDashboard = lazy(() => import('@/pages/private/admin/AdminDashboard'));
@@ -50,9 +52,13 @@ const AppRoutes = () => {
         element={<div className="p-10 text-red-500 text-center text-xl">403 - Bạn không có quyền truy cập!</div>}
       />
 
-      {/* Public */}
+      {/* Public - Homepage with role-based redirect */}
       <Route element={<MainLayout />}>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={
+          <RoleBasedRedirect>
+            <LandingPage />
+          </RoleBasedRedirect>
+        } />
       </Route>
 
       {/* Student */}
@@ -95,6 +101,11 @@ const AppRoutes = () => {
           <Route path="/staff/return" element={
             <Suspense fallback={<PageLoader />}>
               <StaffReturnPage />
+            </Suspense>
+          } />
+          <Route path="/staff/lost-reports" element={
+            <Suspense fallback={<PageLoader />}>
+              <StaffLostReportsPage />
             </Suspense>
           } />
         </Route>

@@ -3,7 +3,8 @@ import {
     Package,
     ClipboardCheck,
     Undo2,
-    LayoutDashboard
+    LayoutDashboard,
+    FileSearch
 } from 'lucide-react';
 
 export interface NavItem {
@@ -37,5 +38,10 @@ export const staffNavItems: NavItem[] = [
         title: 'Trả đồ',
         path: '/staff/return',
         icon: Undo2,
+    },
+    {
+        title: 'Tin báo mất',
+        path: '/staff/lost-reports',
+        icon: FileSearch,
     },
 ];
