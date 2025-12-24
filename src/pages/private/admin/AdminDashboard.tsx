@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
+import {
   useGetUnreturnedItemsCountQuery,
   useGetFoundItemsMonthlyQuery,
   useGetTopContributorQuery,
@@ -17,6 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Package, FileQuestion, CheckCircle2, MapPin, Users, TrendingUp, Trophy, AlertCircle, Eye, Calendar, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Package, FileQuestion, CheckCircle2, MapPin, Users, TrendingUp, Trophy, AlertCircle, Eye } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Dialog,
@@ -32,7 +34,7 @@ const AdminDashboard = () => {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('30d');
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedUserIdForDetail, setSelectedUserIdForDetail] = useState<number | null>(null);
-  
+
   const { data: unreturnedCount, isLoading: loadingUnreturned } = useGetUnreturnedItemsCountQuery();
   const { data: monthlyData, isLoading: loadingMonthly } = useGetFoundItemsMonthlyQuery();
   const { data: topContributors, isLoading: loadingContributors } = useGetTopContributorQuery();
@@ -41,9 +43,9 @@ const AdminDashboard = () => {
   const { data: lostItemsStats, isLoading: loadingLostStats } = useGetLostItemsStatusStatsQuery();
   const { data: foundItemsStats, isLoading: loadingFoundStats } = useGetFoundItemsStatusStatsQuery();
   const { data: claimStats, isLoading: loadingClaimStats } = useGetClaimStatusStatsQuery();
-  
+
   const { data: userDetail, isLoading: isLoadingDetail } = useGetUserDetailQuery(
-    selectedUserIdForDetail!, 
+    selectedUserIdForDetail!,
     { skip: selectedUserIdForDetail === null }
   );
 
@@ -496,7 +498,7 @@ const AdminDashboard = () => {
                       const chartHeight = 160;
                       const chartWidth = 520;
                       const xStep = chartWidth / (monthlyData.length - 1 || 1);
-                      
+
                       const points = monthlyData.map((item: any, index: number) => {
                         const countValue = getCountValue(item);
                         const x = 60 + index * xStep;
@@ -537,7 +539,7 @@ const AdminDashboard = () => {
                         </>
                       );
                     })()}
-                    
+
                     {/* X-axis labels */}
                     {monthlyData.map((item: any, index: number) => {
                       const xStep = 520 / (monthlyData.length - 1 || 1);

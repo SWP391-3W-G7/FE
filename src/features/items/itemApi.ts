@@ -2,15 +2,16 @@ import { rootApi } from "@/services/rootApi";
 import {
   type Campus,
   type Category,
-  type Claim,
   type FoundItem,
   type LostItem,
   type TemporaryFoundItem,
   type SystemReport,
   type CreateCampusRequest,
+  type UserRole,
   type AdminUser,
   type AssignUserRequest,
   type StaffReport,
+  type PaginatedResponse,
 } from "@/types";
 
 export const itemApi = rootApi.injectEndpoints({
@@ -21,10 +22,10 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/categories",
         method: "GET",
       }),
-      transformResponse: (response: any[]) => {
+      transformResponse: (response: Array<{ id?: number; categoryId?: number; categoryID?: number; name?: string; categoryName?: string }>) => {
         return response.map((category) => ({
-          categoryId: category.id || category.categoryId || category.categoryID,
-          categoryName: category.name || category.categoryName,
+          categoryId: (category.id || category.categoryId || category.categoryID) as number,
+          categoryName: (category.name || category.categoryName) as string,
         }));
       },
     }),
@@ -34,6 +35,20 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/Campus",
         method: "GET",
       }),
+      transformResponse: (response: any[]) => {
+        return response.map((campus: any) => {
+          // Identify the best field for campusId (enum string preferred for register)
+          const campusId = campus.id || campus.campusId || campus.campusID;
+          const campusName = campus.name || campus.campusName;
+
+          return {
+            campusId: campusId,
+            campusName: campusName || campusId, // Fallback to ID if name is missing
+            address: campus.address || "",
+            storageLocation: campus.storageLocation || "",
+          };
+        });
+      },
     }),
     //got it 
     createLostItem: build.mutation<LostItem, FormData>({
@@ -60,10 +75,10 @@ export const itemApi = rootApi.injectEndpoints({
 
     // got it
     getFoundItems: build.query<
-      FoundItem[],
+      PaginatedResponse<FoundItem>,
       {
-        campusId?: string;
-        status?: string;
+        CampusId?: number;
+        Status?: string;
       }
     >({
       query: (params) => ({
@@ -71,6 +86,10 @@ export const itemApi = rootApi.injectEndpoints({
         method: "GET",
         params: params,
       }),
+      transformResponse: (response: PaginatedResponse<FoundItem>) => {
+        // API trả về paginated response
+        return response;
+      },
     }),
 
     /// got it
@@ -80,17 +99,19 @@ export const itemApi = rootApi.injectEndpoints({
         method: "GET",
       }),
     }),
-
-    createClaim: build.mutation({
-      query: (formData) => ({
-        url: "/claim-requests",
-        method: "POST",
-        data: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+    getLostItemById: build.query<LostItem, string | number>({
+      query: (id) => ({
+        url: `/lost-items/${id}`,
+        method: "GET",
       }),
     }),
+    getFoundItemDetails: build.query<FoundItem, number>({
+      query: (id) => ({
+        url: `/found-items/${id}/details`,
+        method: "GET",
+      }),
+    }),
+
     //got it
     getMyLostItems: build.query<LostItem[], void>({
       query: () => ({
@@ -152,19 +173,16 @@ export const itemApi = rootApi.injectEndpoints({
       providesTags: ["MyFoundItems"],
     }),
 
-    // got it
-    getMyClaims: build.query<Claim[], void>({
-      query: () => ({
-        url: "/claim-requests/my-claims",
-        method: "GET",
-      }),
-    }),
 
     // got it
-    getIncomingItems: build.query<FoundItem[], void>({
-      query: () => ({
+    getIncomingItems: build.query<
+      PaginatedResponse<FoundItem>,
+      { Status?: string; PageNumber?: number; PageSize?: number; CampusId?: number } | void
+    >({
+      query: (params) => ({
         url: "/found-items",
         method: "GET",
+        params: params || { Status: 'Open', PageNumber: 1, PageSize: 20 }
       }),
       providesTags: ["IncomingItems"],
     }),
@@ -177,56 +195,31 @@ export const itemApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: ["StatusItems", "IncomingItems", "InventoryItems"],
     }),
-    //got it
-    getPendingClaims: build.query<Claim[], void>({
-      query: () => ({
-        url: "claim-requests?status=Pending",
-        method: "GET",
-      }),
-      providesTags: ["Claims"],
-    }),
 
-    // [STAFF] Xử lý duyệt/từ chối
-    verifyClaim: build.mutation<
-      void,
-      { claimId: number; status: "Approved" | "Rejected"; reason?: string }
-    >({
-      query: ({ claimId, status, reason }) => ({
-        url: `/staff/claims/${claimId}/verify`,
+    // Staff: Request dropoff notification
+    requestDropoff: build.mutation<void, { id: number; note: string }>({
+      query: ({ id, note }) => ({
+        url: `/staff/found-items/${id}/request-dropoff`,
         method: "POST",
-        body: { status, reason },
+        data: { note },
       }),
-      invalidatesTags: ["Claims"],
-    }),
-    
-    // got it
-    getReadyToReturnItems: build.query<Claim[], void>({
-     query: () => ({
-        url: "claim-requests?status=Approved",
-        method: "GET",
-      }),
-      providesTags: ["Claims"],
     }),
 
+
+
     // got it
-    getInventoryItems: build.query<FoundItem[], void>({
-       query: () => ({
+    getInventoryItems: build.query<
+      PaginatedResponse<FoundItem>,
+      { Status?: string; PageNumber?: number; PageSize?: number; CampusId?: number } | void
+    >({
+      query: (params) => ({
         url: "/found-items",
         method: "GET",
+        params: params || { Status: 'Stored', PageNumber: 1, PageSize: 20 }
       }),
       providesTags: ["InventoryItems"],
     }),
 
-    requestMoreInfo: build.mutation<void, { claimId: number; title: string; description: string; images: string[] }>(
-      {
-        query: ({ claimId, title, description, images }) => ({
-          url: `/claim-requests/${claimId}/evidence`,
-          method: "POST",
-          body: { title, description, images },
-        }),
-        invalidatesTags: ["Claims"],
-      }
-    ),
     // got it
     getAllLostItems: build.query<LostItem[], void>({
       query: () => ({
@@ -236,10 +229,11 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // got it
-    getStaffStats: build.query<StaffReport, void>({
-      query: () => ({
-        url: "reports/dashboard",
+    getStaffStats: build.query<StaffReport, { campusId?: number } | void>({
+      query: (params) => ({
+        url: "/reports/dashboard",
         method: "GET",
+        params: params || undefined,
       }),
     }),
 
@@ -255,11 +249,12 @@ export const itemApi = rootApi.injectEndpoints({
       invalidatesTags: ["Disputes", "Claims", "ReadyItems"],
     }),
 
-    // got it
-    getDisputedItems: build.query<FoundItem[], void>({
-      query: () => ({
-        url: `/found-items`,
+    // Get disputed/conflicted items - redirects to claim-requests API
+    getDisputedItems: build.query<PaginatedResponse<{ claimId: number; foundItemId: number; foundItemTitle: string | null; claimDate: string; evidences: unknown[]; studentName: string | null; studentId: number }>, { pageNumber?: number; pageSize?: number } | void>({
+      query: (params) => ({
+        url: `/claim-requests`,
         method: "GET",
+        params: { ...params, status: "Conflicted" },
       }),
       providesTags: ["Disputes"],
     }),
@@ -286,19 +281,24 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/security/my-open-found-items",
         method: "GET",
       }),
-      transformResponse: (response: any[]) => {
+      transformResponse: (response: Array<Record<string, unknown>>) => {
         // API trả về foundItemId, categoryId, imageUrls
         return response.map((item) => ({
-          foundItemID: item.foundItemId,
-          title: item.title,
-          description: item.description || "",
-          foundDate: item.foundDate,
-          foundLocation: item.foundLocation,
-          status: item.status,
-          campusID: 0,
-          categoryID: item.categoryId || 0,
-          categoryName: item.categoryName || "",
-          imageUrl: item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[0] : null,
+          foundItemId: item.foundItemId as number,
+          title: item.title as string,
+          description: (item.description || "") as string,
+          foundDate: item.foundDate as string,
+          foundLocation: item.foundLocation as string,
+          status: item.status as "Open",
+          campusId: 0,
+          campusName: (item.campusName || "") as string,
+          categoryId: (item.categoryId || 0) as number,
+          categoryName: (item.categoryName || "") as string,
+          imageUrls: (item.imageUrls || []) as string[],
+          createdBy: (item.createdBy || 0) as number,
+          storedBy: (item.storedBy || null) as number | null,
+          claimRequests: [],
+          actionLogs: null,
           finderName: "",
           finderContact: "",
           transferredToStaff: false,
@@ -326,15 +326,18 @@ export const itemApi = rootApi.injectEndpoints({
         // Mock data - Lost items that Security can verify
         const mock: LostItem[] = [
           {
-            lostItemID: 1,
+            lostItemId: 1,
             title: "Laptop Macbook Air M1",
             lostDate: "2023-10-20T10:00:00",
             lostLocation: "Thư viện",
             status: "Open",
-            campusID: 1,
+            campusId: 1,
+            campusName: "Campus 1",
             description: "Màu xám, có dán sticker",
-            categoryID: 3,
-            createdBy: 123,
+            categoryId: 3,
+            categoryName: "Laptop",
+            imageUrls: [],
+            actionLogs: null,
           },
         ];
         return { data: mock };
@@ -354,13 +357,21 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
 
-    // Admin: Get system reports (dashboard stats)
-    getSystemReports: build.query<any, { campusId?: number }>({
-      query: ({ campusId }) => ({
+    // Admin: Get system reports
+    getSystemReports: build.query<SystemReport, { campusId?: number } | void>({
+      query: (params) => ({
         url: "/reports/dashboard",
         method: "GET",
-        params: campusId ? { campusId } : undefined,
+        params: params || undefined,
       }),
+      providesTags: ["SystemReports"],
+    }),
+    // Admin: Get all campuses
+    getCampusesForAdmin: build.query<Campus[], void>({
+      query: () => ({
+        url: "/Campus",
+        method: "GET",
+      })
     }),
 
     // Admin: Create new campus
@@ -373,13 +384,13 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Get all users (for assignment)
-    getAdminUsers: build.query<AdminUser[], { role?: string; campusId?: string }>({
-      query: ({ role, campusId }) => {
+    getAdminUsers: build.query<AdminUser[], { role?: string; campusId?: string } | void>({
+      query: (params) => {
         // Map role string to roleId number
         let roleId: number | undefined;
-        if (role === 'STAFF') roleId = 2;
-        else if (role === 'SECURITY') roleId = 3;
-        
+        if (params?.role === 'STAFF') roleId = 2;
+        else if (params?.role === 'SECURITY') roleId = 3;
+
         return {
           url: "/admin/get-users-by-role",
           method: "GET",
@@ -388,35 +399,35 @@ export const itemApi = rootApi.injectEndpoints({
           },
         };
       },
-      transformResponse: (response: any[]) => {
+      transformResponse: (response: Array<Record<string, unknown>>) => {
         // Transform API response to AdminUser format
-        console.log("Raw API response:", response);
-        
         const transformed = response.map((user) => {
           // Normalize role name
           let role = 'USER';
-          const roleName = user.roleName?.toLowerCase() || '';
+          const roleName = (user.roleName as string | undefined)?.toLowerCase() || '';
           if (roleName.includes('staff')) role = 'STAFF';
           else if (roleName.includes('security')) role = 'SECURITY';
           else if (roleName.includes('admin')) role = 'ADMIN';
           else if (roleName.includes('user') || roleName.includes('student')) role = 'USER';
-          
-          const transformed = {
-            id: user.userId?.toString() || user.email,
-            userId: user.userId,
-            email: user.email,
-            fullName: user.fullName,
-            role: role,
-            campusId: user.campusId?.toString() || '',
-            campusName: user.campusName || '',
+
+          const transformed: AdminUser = {
+            userId: user.userId as number,
+            email: user.email as string,
+            fullName: user.fullName as string,
+            role: role as UserRole,
+            campusId: Number(user.campusId) || 0,
+            campusName: (user.campusName as string) || '',
             isActive: user.status === 'Active',
+            phoneNumber: user.phoneNumber as string | undefined,
+            username: user.username as string | undefined,
+            studentIdCardUrl: user.studentIdCardUrl as string | undefined,
+            status: user.status as string | undefined,
+            avatarUrl: user.avatarUrl as string | undefined,
           };
-          
-          console.log(`User: ${user.fullName}, roleName: ${user.roleName}, normalized role: ${role}`);
+
           return transformed;
         });
-        
-        console.log("Transformed users:", transformed);
+
         return transformed;
       },
     }),
@@ -431,7 +442,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Create new user (STAFF or SECURITY)
-    createUser: build.mutation<any, {
+    createUser: build.mutation<void, {
       email: string;
       fullName: string;
       phone: string;
@@ -447,23 +458,24 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Update user
-    updateUser: build.mutation<any, {
-      id: number;
+    updateUser: build.mutation<void, {
+      userId?: string | number;
+      id?: string | number;
       fullName: string;
       phoneNumber: string;
       roleId: number;
-      campusId: number;
+      campusId: string | number;
       isActive: boolean;
     }>({
-      query: ({ id, ...data }) => ({
-        url: `/admin/users/${id}`,
+      query: ({ userId, id, ...data }) => ({
+        url: `/admin/users/${userId || id}`,
         method: "PUT",
         data,
       }),
     }),
 
     // Admin: Ban/Unban user
-    banUser: build.mutation<any, { id: number; isBan: boolean }>({
+    banUser: build.mutation<void, { id: string | number; isBan: boolean }>({
       query: ({ id, isBan }) => ({
         url: `/admin/users/${id}/ban-status`,
         method: "PATCH",
@@ -472,7 +484,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Get user detail
-    getUserDetail: build.query<any, number>({
+    getUserDetail: build.query<AdminUser, string | number>({
       query: (id) => ({
         url: `/admin/users/${id}`,
         method: "GET",
@@ -480,8 +492,8 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Update campus
-    updateCampus: build.mutation<any, {
-      id: number;
+    updateCampus: build.mutation<Campus, {
+      id: string | number;
       campusName: string;
       address: string;
       storageLocation: string;
@@ -494,7 +506,7 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Delete campus
-    deleteCampus: build.mutation<any, number>({
+    deleteCampus: build.mutation<void, string | number>({
       query: (id) => ({
         url: `/Campus/${id}`,
         method: "DELETE",
@@ -502,24 +514,24 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin: Get pending users
-    getPendingUsers: build.query<any[], void>({
+    getPendingUsers: build.query<Array<{ userId: number; username: string; email: string; fullName: string; roleId: number; status: string; campusId: number; phoneNumber: string; roleName: string; campusName: string; studentIdCardUrl: string }>, void>({
       query: () => ({
         url: "/admin/users/pending",
         method: "GET",
       }),
-      transformResponse: (response: any[]) => {
+      transformResponse: (response: Array<Record<string, unknown>>) => {
         return response.map((user) => ({
-          userId: user.userID || user.userId,
-          username: user.username,
-          email: user.email,
-          fullName: user.fullName,
-          roleId: user.roleId || user.roleID,
-          status: user.status,
-          campusId: user.campusId || user.campusID,
-          phoneNumber: user.phoneNumber,
-          roleName: user.roleName,
-          campusName: user.campusName,
-          studentIdCardUrl: user.studentIdCardUrl,
+          userId: (user.userID || user.userId) as number,
+          username: user.username as string,
+          email: user.email as string,
+          fullName: user.fullName as string,
+          roleId: (user.roleId || user.roleID) as number,
+          status: user.status as string,
+          campusId: (user.campusId || user.campusID) as number,
+          phoneNumber: user.phoneNumber as string,
+          roleName: user.roleName as string,
+          campusName: user.campusName as string,
+          studentIdCardUrl: user.studentIdCardUrl as string,
         }));
       },
       providesTags: ["PendingUsers"],
@@ -549,20 +561,20 @@ export const itemApi = rootApi.injectEndpoints({
         url: "/admin/dashboard/unreturned-items-count",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { count?: number }) => {
         return response?.count || 0;
       },
     }),
 
-    getFoundItemsMonthly: build.query<any[], void>({
+    getFoundItemsMonthly: build.query<Array<{ month: string; name: string; count: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/found-items-monthly",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: number[] }) => {
         const data = response?.data;
         if (!Array.isArray(data)) return [];
-        
+
         const months = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
         return data.map((count: number, index: number) => ({
           month: months[index],
@@ -572,15 +584,15 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getTopContributor: build.query<any[], void>({
+    getTopContributor: build.query<Array<{ userId: number; userName: string; fullName: string; email: string; count: number; itemCount: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/top-contributor",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { userId: number; fullName: string; email: string; totalFoundItems: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         // API trả về single object, wrap vào array
         return [{
           userId: data.userId,
@@ -593,15 +605,15 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getCampusMostLostItems: build.query<any[], void>({
+    getCampusMostLostItems: build.query<Array<{ campusId: number; campusName: string; count: number; lostItemCount: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/campus-most-lost-items",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { campusId: number; campusName: string; totalLostItems: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         // API trả về single object, wrap vào array
         return [{
           campusId: data.campusId,
@@ -612,15 +624,15 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getUserMostLostItems: build.query<any[], void>({
+    getUserMostLostItems: build.query<Array<{ userId: number; userName: string; fullName: string; email: string; count: number; lostItemCount: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/user-most-lost-items",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { userId: number; fullName: string; email: string; totalLostItems: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         // API trả về single object, wrap vào array
         return [{
           userId: data.userId,
@@ -633,15 +645,15 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getLostItemsStatusStats: build.query<any[], void>({
+    getLostItemsStatusStats: build.query<Array<{ status: string; count: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/lost-items-status-stats",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { totalLost: number; totalMatched: number; totalReturned: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         return [
           { status: 'Lost', count: data.totalLost || 0 },
           { status: 'Matched', count: data.totalMatched || 0 },
@@ -650,15 +662,15 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getFoundItemsStatusStats: build.query<any[], void>({
+    getFoundItemsStatusStats: build.query<Array<{ status: string; count: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/found-items-status-stats",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { totalOpen: number; totalStored: number; totalClaimed: number; totalReturned: number; totalClosed: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         return [
           { status: 'Open', count: data.totalOpen || 0 },
           { status: 'Stored', count: data.totalStored || 0 },
@@ -669,15 +681,15 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getClaimStatusStats: build.query<any[], void>({
+    getClaimStatusStats: build.query<Array<{ status: string; count: number }>, void>({
       query: () => ({
         url: "/admin/dashboard/claim-status-stats",
         method: "GET",
       }),
-      transformResponse: (response: any) => {
+      transformResponse: (response: { data?: { totalPending: number; totalApproved: number; totalRejected: number; totalReturned: number; totalConflicted: number } }) => {
         const data = response?.data;
         if (!data) return [];
-        
+
         return [
           { status: 'Pending', count: data.totalPending || 0 },
           { status: 'Approved', count: data.totalApproved || 0 },
@@ -697,21 +709,23 @@ export const {
   useCreateFoundItemMutation,
   useGetFoundItemsQuery,
   useGetFoundItemByIdQuery,
+  useGetFoundItemDetailsQuery,
   useUpdateItemStatusMutation,
-  useCreateClaimMutation,
+  useRequestDropoffMutation,
   useGetMyLostItemsQuery,
   useUpdateLostItemMutation,
   useDeleteLostItemMutation,
   useUpdateFoundItemMutation,
   useDeleteFoundItemMutation,
   useGetMyFoundItemsQuery,
-  useGetMyClaimsQuery,
   useCreateTemporaryFoundItemMutation,
   useGetSecurityTemporaryItemsQuery,
   useUpdateSecurityItemStatusMutation,
   useGetLostItemsForVerificationQuery,
   useVerifyLostItemMutation,
   useGetSystemReportsQuery,
+  useGetLostItemByIdQuery,
+  useGetCampusesForAdminQuery,
   useCreateCampusMutation,
   useUpdateCampusMutation,
   useDeleteCampusMutation,
@@ -722,11 +736,7 @@ export const {
   useBanUserMutation,
   useGetUserDetailQuery,
   useGetIncomingItemsQuery,
-  useGetPendingClaimsQuery,
-  useVerifyClaimMutation,
-  useGetReadyToReturnItemsQuery,
   useGetInventoryItemsQuery,
-  useRequestMoreInfoMutation,
   useGetAllLostItemsQuery,
   useGetStaffStatsQuery,
   useResolveDisputeMutation,

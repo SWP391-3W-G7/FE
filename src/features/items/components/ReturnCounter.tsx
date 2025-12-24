@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Search, UserCheck, PackageCheck, Loader2 } from 'lucide-react';
+import { Search, UserCheck, PackageCheck, Loader2, MapPin, Calendar } from 'lucide-react';
+import { formatDateVN } from '@/utils/dateUtils';
 
 // API
-import { useGetReadyToReturnItemsQuery, useUpdateItemStatusMutation } from '@/features/items/itemApi';
+import { useGetApprovedMatchesQuery, useReturnMatchMutation } from '@/features/claims/claimApi';
 
 // UI
 import { Input } from "@/components/ui/input";
@@ -12,51 +13,48 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
-// Import Interface của bạn (hoặc định nghĩa lại nếu chung file)
-import type { Claim } from '@/types'; // Giả sử bạn để interface ở đây
+// Types
+import type { MatchedItem } from '@/types';
 
 export const ReturnCounter = () => {
   const { toast } = useToast();
-  
-  // 1. Lấy danh sách Claim đã Approved
-  const { data: claims, isLoading } = useGetReadyToReturnItemsQuery();
-  
-  // 2. Hook update status Item
-  const [updateItemStatus, { isLoading: isProcessing }] = useUpdateItemStatusMutation();
+
+  // 1. Lấy danh sách Matches đã Approved (sẵn sàng trả đồ)
+  const { data: approvedMatches, isLoading } = useGetApprovedMatchesQuery();
+  // 2. Hook xác nhận trả đồ qua Matching API
+  const [returnMatch, { isLoading: isProcessing }] = useReturnMatchMutation();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedClaim, setSelectedClaim] = useState<Claim | undefined>(undefined);
+  const [selectedMatch, setSelectedMatch] = useState<MatchedItem | undefined>(undefined);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Filter: Tìm theo tên SV hoặc MSSV - ensure array safety
-  const claimsArray = Array.isArray(claims) ? claims : [];
-  const filteredClaims = claimsArray.filter(claim => 
-    (claim.studentName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (String(claim.studentId).toLowerCase()).includes(searchTerm.toLowerCase())
+  // Defensive data extraction - API trả về PaginatedResponse
+  const allMatches: MatchedItem[] = approvedMatches?.items || [];
+
+  // Filter: Tìm theo tên item hoặc location
+  const filteredMatches = allMatches.filter(match =>
+    (match.lostItem?.title?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (match.lostItem?.lostLocation?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
   const handleConfirmReturn = async () => {
-    // Check null
-    if (!selectedClaim || !selectedClaim.foundItemId) {
-        toast({ variant: "destructive", title: "Lỗi", description: "Không tìm thấy ID vật phẩm." });
-        return;
+    if (!selectedMatch || !selectedMatch.matchId) {
+      toast({ variant: "destructive", title: "Lỗi", description: "Không tìm thấy Match ID để xác nhận trả đồ." });
+      return;
     }
 
     try {
-      // --- LOGIC CHÍNH: Gọi API update Found Item sang 'Returned' ---
-      await updateItemStatus({ 
-          id: selectedClaim.foundItemId, 
-          status: 'Returned' 
-      }).unwrap();
+      // Gọi API Matching/{matchId}/return để đổi status sang 'Returned'
+      await returnMatch(selectedMatch.matchId).unwrap();
 
       toast({
         title: "Hoàn tất trả đồ!",
-        description: `Vật phẩm #${selectedClaim.foundItemId} đã được cập nhật trạng thái Returned.`,
+        description: `Vật phẩm "${selectedMatch.lostItem?.title}" đã được cập nhật trạng thái Returned.`,
         className: "bg-green-50 border-green-200 text-green-800"
       });
 
       setIsDialogOpen(false);
-      setSelectedClaim(undefined); 
+      setSelectedMatch(undefined);
 
     } catch (error) {
       console.error(error);
@@ -76,92 +74,102 @@ export const ReturnCounter = () => {
       <div className="flex gap-4 items-center bg-white p-4 rounded-lg border shadow-sm">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
-          <Input 
-            className="pl-10 h-11 text-lg" 
-            placeholder="Nhập tên hoặc MSSV người nhận..." 
+          <Input
+            className="pl-10 h-11 text-lg"
+            placeholder="Tìm theo tên vật phẩm hoặc địa điểm..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      {/* LIST CLAIM APPROVED */}
+      {/* LIST APPROVED MATCHES */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredClaims?.length === 0 ? (
+        {filteredMatches?.length === 0 ? (
           <div className="col-span-full text-center py-10 text-slate-500 bg-slate-50 rounded border border-dashed">
-            Không tìm thấy yêu cầu nào khớp với từ khóa.
+            Không có vật phẩm nào đang chờ trả.
           </div>
         ) : (
-          filteredClaims?.map((claim) => (
-            <Card key={claim.claimId} className="flex flex-col border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow">
+          filteredMatches?.map((match) => (
+            <Card key={match.matchId} className="flex flex-col border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                     Ready to Return
                   </Badge>
-                  <span className="text-xs font-mono text-slate-400">Claim #{claim.claimId}</span>
+                  <span className="text-xs font-mono text-slate-400">Match #{match.matchId}</span>
                 </div>
-                {/* Sử dụng foundItemTitle từ Claim interface */}
+                {/* Hiển thị thông tin từ lostItem */}
                 <CardTitle className="text-lg mt-2 leading-tight min-h-[3rem] line-clamp-2">
-                    {claim.foundItemTitle || "Vật phẩm không tên"}
+                  {match.lostItem?.title || "Vật phẩm không tên"}
                 </CardTitle>
               </CardHeader>
-              
-              <CardContent className="flex-1 space-y-4">
-                {/* Thông tin người nhận */}
-                <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-md border border-slate-100">
-                   <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold shrink-0">
-                     {claim.studentName?.charAt(0) || "U"}
-                   </div>
-                   <div className="overflow-hidden">
-                     <p className="font-bold text-slate-900 truncate">{claim.studentName || "Không tên"}</p>
-                     <p className="text-sm text-slate-500">{claim.studentId}</p>
-                   </div>
-                </div>
 
-                {/* NOTE: Interface Claim không có location, nên mình ẩn đi hoặc hiển thị ID để tra cứu */}
-                <div className="flex items-center gap-2 text-sm text-slate-500 bg-white border p-2 rounded">
-                    <PackageCheck className="w-4 h-4 text-orange-500" />
-                    <span>ID Vật phẩm: <span className="font-mono font-bold text-slate-700">{claim.foundItemId}</span></span>
+              <CardContent className="flex-1 space-y-3">
+                {/* Ảnh vật phẩm */}
+                {match.lostItem?.imageUrls && match.lostItem.imageUrls.length > 0 && (
+                  <div className="aspect-video rounded-md overflow-hidden border bg-slate-100">
+                    <img 
+                      src={match.lostItem.imageUrls[0]} 
+                      alt={match.lostItem.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* Thông tin chi tiết */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <MapPin className="w-4 h-4 text-orange-500" />
+                    <span>{match.lostItem?.lostLocation || "Không rõ"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-600">
+                    <Calendar className="w-4 h-4 text-blue-500" />
+                    <span>{match.lostItem?.lostDate ? formatDateVN(match.lostItem.lostDate) : "N/A"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-500 bg-white border p-2 rounded">
+                    <PackageCheck className="w-4 h-4 text-green-500" />
+                    <span>Danh mục: <span className="font-medium text-slate-700">{match.lostItem?.categoryName || "N/A"}</span></span>
+                  </div>
                 </div>
               </CardContent>
 
               <CardFooter className="pt-2">
-                <Dialog open={isDialogOpen && selectedClaim?.claimId === claim.claimId} onOpenChange={(open) => {
-                    setIsDialogOpen(open);
-                    if(open) setSelectedClaim(claim);
+                <Dialog open={isDialogOpen && selectedMatch?.matchId === match.matchId} onOpenChange={(open) => {
+                  setIsDialogOpen(open);
+                  if (open) setSelectedMatch(match);
                 }}>
                   <DialogTrigger asChild>
                     <Button className="w-full bg-slate-900 hover:bg-slate-800 transition-colors">
                       <UserCheck className="mr-2 h-4 w-4" /> Xác nhận trả đồ
                     </Button>
                   </DialogTrigger>
-                  
+
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Xác nhận bàn giao</DialogTitle>
                       <DialogDescription>
-                        Thao tác này sẽ đổi trạng thái vật phẩm <strong>#{claim.foundItemId} - {claim.foundItemTitle}</strong> thành <strong>Returned</strong>.
+                        Thao tác này sẽ đổi trạng thái vật phẩm <strong>"{match.lostItem?.title}"</strong> thành <strong>Returned</strong>.
                       </DialogDescription>
                     </DialogHeader>
-                    
+
                     <div className="space-y-4 py-4 bg-slate-50 p-4 rounded text-sm border border-slate-100">
-                        <div className="flex items-center gap-2 text-slate-700">
-                           <input type="checkbox" id="check1" className="w-4 h-4 accent-green-600 cursor-pointer" />
-                           <label htmlFor="check1" className="cursor-pointer select-none">Đã kiểm tra thẻ sinh viên ({claim.studentId})</label>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-700">
-                           <input type="checkbox" id="check2" className="w-4 h-4 accent-green-600 cursor-pointer" />
-                           <label htmlFor="check2" className="cursor-pointer select-none">Sinh viên đã xác nhận tình trạng đồ</label>
-                        </div>
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <input type="checkbox" id={`check1-${match.matchId}`} className="w-4 h-4 accent-green-600 cursor-pointer" />
+                        <label htmlFor={`check1-${match.matchId}`} className="cursor-pointer select-none">Đã xác minh người nhận</label>
+                      </div>
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <input type="checkbox" id={`check2-${match.matchId}`} className="w-4 h-4 accent-green-600 cursor-pointer" />
+                        <label htmlFor={`check2-${match.matchId}`} className="cursor-pointer select-none">Người nhận đã xác nhận tình trạng đồ</label>
+                      </div>
                     </div>
 
                     <DialogFooter>
-                        <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
-                        <Button onClick={handleConfirmReturn} disabled={isProcessing} className="bg-green-600 hover:bg-green-700">
-                            {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Hoàn tất & Đổi trạng thái
-                        </Button>
+                      <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
+                      <Button onClick={handleConfirmReturn} disabled={isProcessing} className="bg-green-600 hover:bg-green-700">
+                        {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Hoàn tất & Đổi trạng thái
+                      </Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>

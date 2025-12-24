@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, MapPin, Calendar, ArrowUpRight, PackageOpen } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatVN } from '@/utils/dateUtils';
 import { useGetFoundItemsQuery, useGetCategoriesQuery, useGetCampusesQuery } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
@@ -38,14 +38,14 @@ const FindItemsPage = () => {
     });
 
     // Lấy toàn bộ items theo Campus (API chỉ hỗ trợ filter Campus)
-    const { data: items = [], isLoading, isFetching } = useGetFoundItemsQuery({
-        campusId: selectedCampus === "all" ? undefined : selectedCampus, status: "Stored"
+    const { data: response, isLoading, isFetching } = useGetFoundItemsQuery({
+        CampusId: selectedCampus === "all" ? undefined : parseInt(selectedCampus), Status: "Stored"
     });
 
     // --- Client-side Filtering Logic ---
     const filteredItems = useMemo(() => {
-        // Ensure items is an array before filtering
-        const itemsArray = Array.isArray(items) ? items : [];
+        // API trả về paginated response với items array
+        const itemsArray = response?.items || [];
         if (itemsArray.length === 0) return [];
 
         return itemsArray.filter((item: FoundItem) => {
@@ -60,7 +60,7 @@ const FindItemsPage = () => {
 
             return matchesKeyword && matchesCategory;
         });
-    }, [items, keyword, selectedCategory]);
+    }, [response, keyword, selectedCategory]);
 
     return (
         <div className="container mx-auto px-4 py-8 min-h-screen">
@@ -209,7 +209,7 @@ const FindItemsPage = () => {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-slate-400">
                                     <Calendar className="h-3 w-3 shrink-0" />
-                                    <span>{format(new Date(item.foundDate), "dd/MM/yyyy HH:mm")}</span>
+                                    <span>{formatVN(item.foundDate)}</span>
                                 </div>
                                 <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded mt-2 line-clamp-2 border border-slate-100">
                                     {item.campusName}

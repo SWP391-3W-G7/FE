@@ -27,7 +27,7 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   if (allowedRoles && user.role) {
     const hasAccess = allowedRoles.includes(user.role as RoleType);
     console.log("  - Checking access:", user.role, "in", allowedRoles, "=", hasAccess);
-    
+
     if (!hasAccess) {
       console.log("❌ Access denied - User role:", user.role, "Allowed roles:", allowedRoles);
       return <Navigate to="/unauthorized" replace />;

@@ -18,6 +18,7 @@ export const rootApi = createApi({
     "Disputes",
     "MyLostItems",
     "MyFoundItems",
+    "SystemReports",
     "PendingUsers"
   ],
   endpoints: () => ({}),

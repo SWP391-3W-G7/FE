@@ -1,202 +1,97 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Plus, MapPin, Building2, Loader2, Edit, Trash2, ArrowUpDown } from 'lucide-react';
-import { useGetCampusesQuery, useCreateCampusMutation, useUpdateCampusMutation, useDeleteCampusMutation } from '@/features/items/itemApi';
+import { Plus, ArrowUpDown } from 'lucide-react';
+import {
+  useGetCampusesQuery,
+  useCreateCampusMutation,
+  useUpdateCampusMutation,
+  useDeleteCampusMutation
+} from '@/features/items/itemApi';
 import { Button } from "@/components/ui/button";
-import AdminNav from '@/components/AdminNav';
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
-const campusSchema = z.object({
-  campusName: z.string().min(3, "Tên campus phải có ít nhất 3 ký tự"),
-  address: z.string().min(5, "Địa chỉ phải có ít nhất 5 ký tự"),
-  storageLocation: z.string().min(2, "Vị trí lưu trữ phải có ít nhất 2 ký tự"),
-});
-
-type CampusFormValues = z.infer<typeof campusSchema>;
-type SortField = 'name' | 'id' | 'storage';
-type SortOrder = 'asc' | 'desc';
+// Modular Components
+import { CampusList } from '@/features/admin/campus/components/CampusList';
+import { CampusFormModal } from '@/features/admin/campus/components/CampusFormModal';
+import type { CampusFormValues } from '@/features/admin/campus/components/CampusFormModal';
+import { CampusDeleteModal } from '@/features/admin/campus/components/CampusDeleteModal';
+import type { SortField, SortOrder } from '@/features/admin/campus/types/campus';
+import type { Campus } from '@/types';
 
 const AdminCampusPage = () => {
   const { toast } = useToast();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedCampus, setSelectedCampus] = useState<any>(null);
+
+  // Modal States
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedCampus, setSelectedCampus] = useState<Campus | null>(null);
+
+  // Sort States
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
+  // API Queries & Mutations
   const { data: campuses = [], isLoading, refetch } = useGetCampusesQuery();
   const [createCampus, { isLoading: isCreating }] = useCreateCampusMutation();
   const [updateCampus, { isLoading: isUpdating }] = useUpdateCampusMutation();
   const [deleteCampus, { isLoading: isDeleting }] = useDeleteCampusMutation();
 
-  const form = useForm<CampusFormValues>({
-    resolver: zodResolver(campusSchema),
-    defaultValues: {
-      campusName: "",
-      address: "",
-      storageLocation: "",
-    },
-  });
-
-  const editForm = useForm<CampusFormValues>({
-    resolver: zodResolver(campusSchema),
-    defaultValues: {
-      campusName: "",
-      address: "",
-      storageLocation: "",
-    },
-  });
-
-  const onSubmit = async (data: CampusFormValues) => {
-    try {
-      await createCampus(data).unwrap();
-
-      toast({
-        title: "Tạo campus thành công!",
-        description: `Campus "${data.campusName}" đã được thêm vào hệ thống.`,
-      });
-
-      form.reset();
-      setDialogOpen(false);
-      refetch();
-    } catch (error) {
-      console.error(error);
-      toast({
-        variant: "destructive",
-        title: "Lỗi",
-        description: "Không thể tạo campus lúc này.",
-      });
-    }
+  // Handlers
+  const handleOpenCreate = () => {
+    setSelectedCampus(null);
+    setFormOpen(true);
   };
 
-  const handleOpenEditDialog = (campus: any) => {
+  const handleOpenEdit = (campus: Campus) => {
     setSelectedCampus(campus);
-    editForm.reset({
-      campusName: campus.campusName,
-      address: campus.address,
-      storageLocation: campus.storageLocation,
-    });
-    setEditDialogOpen(true);
+    setFormOpen(true);
   };
 
-  const onEditSubmit = async (data: CampusFormValues) => {
-    if (!selectedCampus) return;
+  const handleOpenDelete = (campus: Campus) => {
+    setSelectedCampus(campus);
+    setDeleteOpen(true);
+  };
 
+  const handleFormSubmit = async (values: CampusFormValues) => {
     try {
-      await updateCampus({
-        id: selectedCampus.campusId,
-        ...data,
-      }).unwrap();
-
-      toast({
-        title: "Cập nhật thành công!",
-        description: `Campus "${data.campusName}" đã được cập nhật.`,
-      });
-
-      editForm.reset();
-      setEditDialogOpen(false);
-      setSelectedCampus(null);
+      if (selectedCampus) {
+        await updateCampus({
+          id: selectedCampus.campusId,
+          ...values,
+        }).unwrap();
+        toast({ title: "Cập nhật thành công!", description: `Cơ sở "${values.campusName}" đã được cập nhật.` });
+      } else {
+        await createCampus(values).unwrap();
+        toast({ title: "Tạo thành công!", description: `Cơ sở "${values.campusName}" đã được thêm.` });
+      }
+      setFormOpen(false);
       refetch();
     } catch (error: any) {
-      console.error(error);
       toast({
         variant: "destructive",
         title: "Lỗi",
-        description: error?.data?.message || "Không thể cập nhật campus lúc này.",
+        description: error?.data?.message || "Không thể thực hiện tác vụ lúc này."
       });
     }
   };
 
-  const handleOpenDeleteDialog = (campus: any) => {
-    setSelectedCampus(campus);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteCampus = async () => {
+  const handleDeleteConfirm = async () => {
     if (!selectedCampus) return;
-
     try {
       await deleteCampus(selectedCampus.campusId).unwrap();
-
-      toast({
-        title: "Đã xóa campus",
-        description: `Campus "${selectedCampus.campusName}" đã bị xóa khỏi hệ thống.`,
-      });
-
-      setDeleteDialogOpen(false);
-      setSelectedCampus(null);
+      toast({ title: "Đã xóa", description: `Cơ sở "${selectedCampus.campusName}" đã bị loại bỏ.` });
+      setDeleteOpen(false);
       refetch();
     } catch (error: any) {
-      console.error(error);
       toast({
         variant: "destructive",
         title: "Lỗi",
-        description: error?.data?.message || "Không thể xóa campus lúc này.",
+        description: error?.data?.message || "Không thể xóa cơ sở này."
       });
     }
   };
 
-  // Sort campuses
-  console.log("Sort state:", { sortField, sortOrder });
-  const sortedCampuses = [...campuses]
-    .filter(c => c && c.campusId) // Filter out undefined/null items
-    .sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortField) {
-        case 'name': {
-          const nameA = a.campusName || '';
-          const nameB = b.campusName || '';
-          comparison = nameA.localeCompare(nameB);
-          break;
-        }
-        case 'id':
-          comparison = a.campusId - b.campusId;
-          break;
-        case 'storage': {
-          const storageA = a.storageLocation || '';
-          const storageB = b.storageLocation || '';
-          comparison = storageA.localeCompare(storageB);
-          break;
-        }
-      }
-      
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-  
-  console.log("Sorted campuses:", sortedCampuses.map(c => ({ id: c.campusId, name: c.campusName })));
-
   const toggleSort = (field: SortField) => {
-    console.log("Toggle sort clicked:", field);
     if (sortField === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -205,319 +100,98 @@ const AdminCampusPage = () => {
     }
   };
 
+  // Logic Sắp xếp
+  const sortedCampuses = [...campuses]
+    .filter(Boolean)
+    .sort((a, b) => {
+      let comparison = 0;
+      switch (sortField) {
+        case 'name':
+          comparison = (a.campusName || '').localeCompare(b.campusName || '');
+          break;
+        case 'id':
+          comparison = Number(a.campusId) - Number(b.campusId);
+          break;
+        case 'storage':
+          comparison = (a.storageLocation || '').localeCompare(b.storageLocation || '');
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
   return (
-    <>
-      <AdminNav />
-      <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Quản lý Campus</h1>
-          <p className="text-slate-500 mt-1">
-            Thêm mới và quản lý các cơ sở trong hệ thống.
+    <div className="space-y-8">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Quản lý Campus</h1>
+          <p className="text-slate-500 font-medium">
+            Quản lý và điều phối các cơ sở lưu trữ vật phẩm trong hệ thống.
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" /> Thêm Campus mới
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Thêm Campus mới</DialogTitle>
-              <DialogDescription>
-                Điền thông tin để thêm một cơ sở mới vào hệ thống.
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="campusName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tên Campus <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Input placeholder="VD: HCM - NVH Sinh Viên" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Địa chỉ <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="VD: 123 Đường ABC, Quận 1, TP.HCM"
-                          className="resize-none"
-                          rows={3}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="storageLocation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Vị trí lưu trữ <span className="text-red-500">*</span></FormLabel>
-                      <FormControl>
-                        <Input placeholder="VD: Phòng P.102" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setDialogOpen(false);
-                      form.reset();
-                    }}
-                    disabled={isCreating}
-                  >
-                    Hủy
-                  </Button>
-                  <Button type="submit" disabled={isCreating} className="bg-blue-600 hover:bg-blue-700">
-                    {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Tạo Campus
-                  </Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={handleOpenCreate} className="bg-indigo-600 hover:bg-indigo-700 h-11 px-6 shadow-lg shadow-indigo-900/10 transition-all hover:-translate-y-0.5">
+          <Plus className="mr-2 h-5 w-5" /> Thêm Campus mới
+        </Button>
       </div>
 
-      {/* Sort Controls */}
-      {campuses.length > 0 && (
-        <div className="flex items-center gap-4 mb-6 bg-slate-50 p-4 rounded-lg border">
-          <span className="text-sm font-medium text-slate-700">Sắp xếp theo:</span>
+      {/* Toolbar Section */}
+      {!isLoading && campuses.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+          <span className="text-[11px] font-bold text-slate-400 uppercase ml-2">Sắp xếp:</span>
           <div className="flex gap-2">
-            <Button
-              variant={sortField === 'name' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => toggleSort('name')}
-              className="gap-2"
-            >
-              Tên Campus
-              <ArrowUpDown className="h-3 w-3" />
-              {sortField === 'name' && (
-                <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-              )}
-            </Button>
-            <Button
-              variant={sortField === 'id' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => toggleSort('id')}
-              className="gap-2"
-            >
-              ID
-              <ArrowUpDown className="h-3 w-3" />
-              {sortField === 'id' && (
-                <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-              )}
-            </Button>
-            <Button
-              variant={sortField === 'storage' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => toggleSort('storage')}
-              className="gap-2"
-            >
-              Vị trí lưu trữ
-              <ArrowUpDown className="h-3 w-3" />
-              {sortField === 'storage' && (
-                <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
-              )}
-            </Button>
+            {[
+              { id: 'name', label: 'Tên cơ sở' },
+              { id: 'id', label: 'Mã số ID' },
+              { id: 'storage', label: 'Vị trí kho' }
+            ].map((f) => (
+              <Button
+                key={f.id}
+                variant={sortField === f.id ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => toggleSort(f.id as SortField)}
+                className={`h-8 text-xs gap-2 ${sortField === f.id ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' : 'text-slate-600'}`}
+              >
+                {f.label}
+                <ArrowUpDown className={`h-3 w-3 ${sortField === f.id ? 'opacity-100' : 'opacity-30'}`} />
+                {sortField === f.id && (
+                  <span className="font-bold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                )}
+              </Button>
+            ))}
           </div>
-          <Badge variant="outline" className="ml-auto">
-            Tổng: {campuses.length} campus
-          </Badge>
+          <div className="ml-auto pr-2">
+            <Badge variant="secondary" className="bg-slate-100 text-slate-600 border-none font-bold">
+              Tổng số: {campuses.length}
+            </Badge>
+          </div>
         </div>
       )}
 
-      {/* Campuses List */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48" />
-          ))}
-        </div>
-      ) : campuses.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedCampuses.map((campus) => (
-            <Card key={campus.campusId} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                      <Building2 className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{campus.campusName}</CardTitle>
-                      <Badge variant="outline" className="mt-1">ID: {campus.campusId}</Badge>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-start gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-medium text-slate-700">Địa chỉ:</p>
-                    <p className="text-slate-600">{campus.address}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2 text-sm">
-                  <Building2 className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-medium text-slate-700">Vị trí lưu trữ:</p>
-                    <p className="text-slate-600">{campus.storageLocation}</p>
-                  </div>
-                </div>
-                <div className="flex gap-2 pt-2 border-t">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => handleOpenEditDialog(campus)}>
-                    <Edit className="h-3 w-3 mr-1" />
-                    Sửa
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:text-red-700" onClick={() => handleOpenDeleteDialog(campus)}>
-                    <Trash2 className="h-3 w-3 mr-1" />
-                    Xóa
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 bg-slate-50 rounded-lg border-2 border-dashed border-slate-200">
-          <div className="h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-            <Building2 className="h-8 w-8 text-slate-300" />
-          </div>
-          <h3 className="text-xl font-medium text-slate-900">Chưa có Campus nào</h3>
-          <p className="text-slate-500 mt-2 max-w-sm text-center">
-            Bắt đầu bằng cách thêm Campus đầu tiên vào hệ thống.
-          </p>
-          <Button onClick={() => setDialogOpen(true)} className="mt-4">
-            <Plus className="mr-2 h-4 w-4" /> Thêm Campus mới
-          </Button>
-        </div>
-      )}
+      {/* Main List Section */}
+      <CampusList
+        campuses={sortedCampuses}
+        isLoading={isLoading}
+        onEdit={handleOpenEdit}
+        onDelete={handleOpenDelete}
+      />
 
-      {/* Edit Campus Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Sửa thông tin Campus</DialogTitle>
-            <DialogDescription>
-              Cập nhật thông tin cho {selectedCampus?.campusName}
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
-              <FormField
-                control={editForm.control}
-                name="campusName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tên Campus <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="VD: HCM - NVH Sinh Viên" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Địa chỉ <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Nhập địa chỉ đầy đủ của campus" 
-                        className="resize-none" 
-                        rows={3}
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={editForm.control}
-                name="storageLocation"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Vị trí lưu trữ đồ vật <span className="text-red-500">*</span></FormLabel>
-                    <FormControl>
-                      <Input placeholder="VD: Phòng P.102, Tòa A" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEditDialogOpen(false);
-                    editForm.reset();
-                    setSelectedCampus(null);
-                  }}
-                  disabled={isUpdating}
-                >
-                  Hủy
-                </Button>
-                <Button type="submit" disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
-                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Cập nhật
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+      {/* Modals */}
+      <CampusFormModal
+        isOpen={formOpen}
+        onOpenChange={setFormOpen}
+        onSubmit={handleFormSubmit}
+        initialData={selectedCampus}
+        isLoading={isCreating || isUpdating}
+      />
 
-      {/* Delete Campus Alert Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xóa Campus</AlertDialogTitle>
-            <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa campus <strong>{selectedCampus?.campusName}</strong>?
-              <br />
-              <span className="text-red-600 font-medium">Hành động này không thể hoàn tác!</span>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteCampus}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Xóa
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <CampusDeleteModal
+        isOpen={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirm={handleDeleteConfirm}
+        campus={selectedCampus}
+        isLoading={isDeleting}
+      />
     </div>
-    </>
   );
 };
 

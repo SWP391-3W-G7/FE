@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Package, Plus, CheckCircle2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { formatVN } from '@/utils/dateUtils';
 import { useGetSecurityTemporaryItemsQuery, useUpdateSecurityItemStatusMutation, useGetCampusesQuery } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
@@ -20,7 +20,7 @@ const SecurityDashboard = () => {
   const user = useAppSelector(selectCurrentUser);
 
   const [keyword, setKeyword] = useState<string>("");
-  const [selectedCampus, setSelectedCampus] = useState<string>(user?.campusId || "all");
+  const [selectedCampus, setSelectedCampus] = useState<string>(user?.campusId?.toString() || "all");
 
   const { data: campuses = [] } = useGetCampusesQuery();
   const { data: items = [], isLoading, isFetching, refetch } = useGetSecurityTemporaryItemsQuery({
@@ -140,13 +140,13 @@ const SecurityDashboard = () => {
       ) : filteredItems.filter(i => i.status === 'Open').length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredItems.filter(i => i.status === 'Open').map((item) => (
-            <Card key={item.foundItemID} className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-slate-200 flex flex-col">
+            <Card key={item.foundItemId} className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-slate-200 flex flex-col">
               
               <div className="bg-slate-100 relative">
                 <AspectRatio ratio={4 / 3}>
-                  {item.imageUrl ? (
+                  {item.imageUrls && item.imageUrls.length > 0 ? (
                     <img 
-                      src={item.imageUrl} 
+                      src={item.imageUrls[0]} 
                       alt={item.title}
                       className="w-full h-full object-cover"
                     />
@@ -177,7 +177,7 @@ const SecurityDashboard = () => {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-slate-400">
                   <Calendar className="h-3 w-3 shrink-0" />
-                  <span>{format(new Date(item.foundDate), "dd/MM/yyyy HH:mm")}</span>
+                  <span>{formatVN(item.foundDate)}</span>
                 </div>
                 {item.categoryName && (
                   <div className="border-t pt-2 mt-2">
@@ -190,7 +190,7 @@ const SecurityDashboard = () => {
               <div className="p-4 pt-0 flex gap-2">
                 <Button 
                   className="flex-1 gap-2 text-xs bg-green-600 hover:bg-green-700" 
-                  onClick={() => handleReturnToStudent(item.foundItemID)}
+                  onClick={() => handleReturnToStudent(item.foundItemId)}
                   disabled={isUpdatingStatus}
                 >
                   <CheckCircle2 className="h-3 w-3" />

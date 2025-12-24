@@ -26,7 +26,7 @@ const temporaryFoundItemSchema = z.object({
     description: z.string().optional(),
     categoryId: z.string().min(1, "Chọn loại tài sản"),
     campusId: z.string().min(1, "Chọn cơ sở"),
-    foundDate: z.date({ required_error: "Chọn thời gian nhặt" }),
+    foundDate: z.date({ message: "Chọn thời gian nhặt" }),
     foundLocation: z.string().min(2, "Nhập vị trí nhặt được"),
 });
 
