@@ -723,17 +723,17 @@ const AdminUsersPage = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Edit User Dialog */}
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Sửa thông tin người dùng</DialogTitle>
-              <DialogDescription>
-                Cập nhật thông tin cho {selectedUserForEdit?.fullName}
-              </DialogDescription>
-            </DialogHeader>
-            <Form {...editForm}>
-              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Sửa thông tin người dùng</DialogTitle>
+            <DialogDescription>
+              Cập nhật thông tin cho {selectedUserForEdit?.fullName}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
                 <FormField
                   control={editForm.control}
                   name="fullName"
@@ -805,24 +805,24 @@ const AdminUsersPage = () => {
                     </FormItem>
                   )}
                 />
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setEditDialogOpen(false);
-                      editForm.reset();
-                      setSelectedUserForEdit(null);
-                    }}
-                    disabled={isUpdating}
-                  >
-                    Hủy
-                  </Button>
-                  <Button type="submit" disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
-                    {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Cập nhật
-                  </Button>
-                </DialogFooter>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditDialogOpen(false);
+                    editForm.reset();
+                    setSelectedUserForEdit(null);
+                  }}
+                  disabled={isUpdating}
+                >
+                  Hủy
+                </Button>
+                <Button type="submit" disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
+                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Cập nhật
+                </Button>
+              </DialogFooter>
               </form>
             </Form>
           </DialogContent>
@@ -862,95 +862,6 @@ const AdminUsersPage = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
-        {/* User Detail Dialog */}
-        <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Thông tin chi tiết người dùng</DialogTitle>
-              <DialogDescription>
-                Xem đầy đủ thông tin của người dùng trong hệ thống
-              </DialogDescription>
-            </DialogHeader>
-
-            {isLoadingDetail ? (
-              <div className="space-y-4">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-              </div>
-            ) : userDetail ? (
-              <div className="space-y-4">
-                {userDetail.studentIdCardUrl && (
-                  <div>
-                    <label className="text-sm font-medium text-slate-700 block mb-2">
-                      Hình thẻ sinh viên
-                    </label>
-                    <img
-                      src={userDetail.studentIdCardUrl}
-                      alt="Student ID Card"
-                      className="w-full max-h-96 object-contain rounded-lg border"
-                    />
-                  </div>
-                )}
-              />
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEditDialogOpen(false);
-                    editForm.reset();
-                    setSelectedUserForEdit(null);
-                  }}
-                  disabled={isUpdating}
-                >
-                  Hủy
-                </Button>
-                <Button type="submit" disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
-                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Cập nhật
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Ban/Unban User Alert Dialog */}
-      <AlertDialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {selectedUserForBan?.isActive ? 'Khóa người dùng' : 'Mở khóa người dùng'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {selectedUserForBan?.isActive ? (
-                <>
-                  Bạn có chắc chắn muốn khóa <strong>{selectedUserForBan?.fullName}</strong>?
-                  Người dùng sẽ không thể truy cập hệ thống sau khi bị khóa.
-                </>
-              ) : (
-                <>
-                  Bạn có chắc chắn muốn mở khóa <strong>{selectedUserForBan?.fullName}</strong>?
-                  Người dùng sẽ có thể truy cập hệ thống trở lại.
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isBanning}>Hủy</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBanUser}
-              disabled={isBanning}
-              className={selectedUserForBan?.isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
-            >
-              {isBanning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {selectedUserForBan?.isActive ? 'Khóa' : 'Mở khóa'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
         {/* User Detail Dialog */}
         <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
