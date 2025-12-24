@@ -35,6 +35,20 @@ export const claimApi = rootApi.injectEndpoints({
             providesTags: ["Claims"],
         }),
 
+        // Get Approved claims for Return page - Claims sub-tab
+        getApprovedClaims: build.query<PaginatedResponse<Claim>, { pageNumber?: number; pageSize?: number } | void>({
+            query: (params) => ({
+                url: "/claim-requests",
+                method: "GET",
+                params: {
+                    status: "Approved",
+                    PageNumber: params?.pageNumber || 1,
+                    PageSize: params?.pageSize || 10
+                },
+            }),
+            providesTags: ["Claims"],
+        }),
+
         createClaim: build.mutation<any, FormData>({
             query: (formData) => ({
                 url: "/claim-requests",
@@ -149,6 +163,7 @@ export const {
     useGetClaimByIdQuery,
     useGetPendingClaimsQuery,
     useGetConflictedClaimsQuery,
+    useGetApprovedClaimsQuery,
     useCreateClaimMutation,
     useGetMyClaimsQuery,
     useGetApprovedMatchesQuery,
