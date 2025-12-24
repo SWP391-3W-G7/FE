@@ -723,17 +723,17 @@ const AdminUsersPage = () => {
           </DialogContent>
         </Dialog>
 
-      {/* Edit User Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Sửa thông tin người dùng</DialogTitle>
-            <DialogDescription>
-              Cập nhật thông tin cho {selectedUserForEdit?.fullName}
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...editForm}>
-            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+        {/* Edit User Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Sửa thông tin người dùng</DialogTitle>
+              <DialogDescription>
+                Cập nhật thông tin cho {selectedUserForEdit?.fullName}
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
                 <FormField
                   control={editForm.control}
                   name="fullName"
@@ -805,24 +805,24 @@ const AdminUsersPage = () => {
                     </FormItem>
                   )}
                 />
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setEditDialogOpen(false);
-                    editForm.reset();
-                    setSelectedUserForEdit(null);
-                  }}
-                  disabled={isUpdating}
-                >
-                  Hủy
-                </Button>
-                <Button type="submit" disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
-                  {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Cập nhật
-                </Button>
-              </DialogFooter>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setEditDialogOpen(false);
+                      editForm.reset();
+                      setSelectedUserForEdit(null);
+                    }}
+                    disabled={isUpdating}
+                  >
+                    Hủy
+                  </Button>
+                  <Button type="submit" disabled={isUpdating} className="bg-blue-600 hover:bg-blue-700">
+                    {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Cập nhật
+                  </Button>
+                </DialogFooter>
               </form>
             </Form>
           </DialogContent>
@@ -917,7 +917,7 @@ const AdminUsersPage = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700">Vai trò</label>
-                    <p className="text-slate-900 mt-1">{userDetail.role || userDetail.roleName || 'N/A'}</p>
+                    <p className="text-slate-900 mt-1">{userDetail.role || (userDetail as any).roleName || 'N/A'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700">Campus</label>

@@ -138,9 +138,9 @@ const AdminDashboard = () => {
   };
 
   // Calculate totals for KPI cards
-  const totalLostItems = getTotalCount(lostItemsStats);
-  const totalFoundItems = getTotalCount(foundItemsStats);
-  const totalClaims = getTotalCount(claimStats);
+  const totalLostItems = getTotalCount(lostItemsStats || []);
+  const totalFoundItems = getTotalCount(foundItemsStats || []);
+  const totalClaims = getTotalCount(claimStats || []);
 
   const isLoading =
     loadingUnreturned ||
@@ -935,7 +935,7 @@ const AdminDashboard = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {campusLostItems.map((campus: any, index: number) => {
+                      {campusLostItems.map((campus: any) => {
                         const countValue =
                           campus.lostItemCount || getCountValue(campus);
                         const maxCount = Math.max(
@@ -958,13 +958,12 @@ const AdminDashboard = () => {
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div
-                                  className={`w-2 h-2 rounded-full ${
-                                    riskLevel === "high"
+                                  className={`w-2 h-2 rounded-full ${riskLevel === "high"
                                       ? "bg-red-500"
                                       : riskLevel === "medium"
                                         ? "bg-orange-500"
                                         : "bg-green-500"
-                                  }`}
+                                    }`}
                                 />
                                 <span className="font-medium text-slate-900">
                                   {campus.campusName}
@@ -1211,7 +1210,7 @@ const AdminDashboard = () => {
                     Vai trò
                   </p>
                   <p className="text-base font-semibold text-slate-900">
-                    {userDetail.role || userDetail.roleName || (
+                    {userDetail.role || (userDetail as any).roleName || (
                       <span className="text-slate-400 italic">
                         Chưa xác định
                       </span>
