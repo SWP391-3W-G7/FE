@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { formatDateVN, formatTimeVN } from '@/utils/dateUtils';
-import { Search, Trash2, MoreHorizontal, MapPin, Tag, Image as ImageIcon } from 'lucide-react';
+import { Search, Trash2, MoreHorizontal, MapPin, Tag, Image as ImageIcon, Loader2 } from 'lucide-react';
 
 // API
-import { useGetAllLostItemsQuery } from '@/features/items/itemApi';
+import { useGetAllLostItemsQuery, useDeleteLostItemMutation } from '@/features/items/itemApi';
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import type { LostItem } from '@/types';
 
 
 export const LostReportsManager = () => {
-   // Giả sử API trả về data dạng LostItem[]
-   const { data, isLoading } = useGetAllLostItemsQuery();
+   const { data, isLoading, refetch } = useGetAllLostItemsQuery();
+   const [deleteLostItem, { isLoading: isDeleting }] = useDeleteLostItemMutation();
    const [searchTerm, setSearchTerm] = useState("");
+   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+   const [selectedItem, setSelectedItem] = useState<LostItem | null>(null);
+   const { toast } = useToast();
 
    // Defensive data extraction (handles flat array or paginated response)
    const lostItems: LostItem[] = (data as any)?.items || (Array.isArray(data) ? data : []);
@@ -28,6 +33,32 @@ export const LostReportsManager = () => {
       item.lostLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.categoryName.toLowerCase().includes(searchTerm.toLowerCase())
    );
+
+   const handleOpenDeleteDialog = (item: LostItem) => {
+      setSelectedItem(item);
+      setDeleteDialogOpen(true);
+   };
+
+   const handleConfirmDelete = async () => {
+      if (!selectedItem) return;
+
+      try {
+         await deleteLostItem(selectedItem.lostItemId).unwrap();
+         toast({
+            title: "Đã xóa báo cáo",
+            description: `"${selectedItem.title}" đã được xóa khỏi hệ thống.`,
+         });
+         setDeleteDialogOpen(false);
+         setSelectedItem(null);
+         refetch();
+      } catch (error) {
+         toast({
+            title: "Lỗi",
+            description: "Không thể xóa báo cáo. Vui lòng thử lại.",
+            variant: "destructive",
+         });
+      }
+   };
 
    if (isLoading) return <div className="p-4 text-center text-slate-500">Đang tải dữ liệu...</div>;
 
@@ -140,7 +171,7 @@ export const LostReportsManager = () => {
                                  <DropdownMenuContent align="end">
                                     <DropdownMenuItem
                                        className="text-red-600 focus:text-red-600 cursor-pointer"
-                                       onClick={() => console.log("Xóa item", item.lostItemId)}
+                                       onClick={() => handleOpenDeleteDialog(item)}
                                     >
                                        <Trash2 className="w-4 h-4 mr-2" /> Xóa báo cáo (Spam)
                                     </DropdownMenuItem>
@@ -153,6 +184,38 @@ export const LostReportsManager = () => {
                </TableBody>
             </Table>
          </div>
+
+         {/* Delete Confirmation Dialog */}
+         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <DialogContent>
+               <DialogHeader>
+                  <DialogTitle>Xác nhận xóa báo cáo</DialogTitle>
+                  <DialogDescription>
+                     Bạn có chắc chắn muốn xóa báo cáo "<strong>{selectedItem?.title}</strong>"?
+                     <br />
+                     Hành động này không thể hoàn tác.
+                  </DialogDescription>
+               </DialogHeader>
+               <DialogFooter>
+                  <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={isDeleting}>
+                     Hủy
+                  </Button>
+                  <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
+                     {isDeleting ? (
+                        <>
+                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                           Đang xóa...
+                        </>
+                     ) : (
+                        <>
+                           <Trash2 className="w-4 h-4 mr-2" />
+                           Xóa báo cáo
+                        </>
+                     )}
+                  </Button>
+               </DialogFooter>
+            </DialogContent>
+         </Dialog>
       </div>
    );
 };

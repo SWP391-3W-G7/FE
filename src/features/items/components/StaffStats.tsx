@@ -14,6 +14,7 @@ export const StaffStats = () => {
   const user = useAppSelector(selectCurrentUser);
   const { data: stats, isLoading } = useGetStaffStatsQuery({ campusId: user?.campusId });
 
+  console.log("dsadasd",stats);
   if (isLoading) return <div className="p-4 text-center text-slate-500">Đang tính toán số liệu...</div>;
 
   // Extract stats
@@ -140,33 +141,38 @@ export const StaffStats = () => {
           <CardContent className="pl-2">
             <div className="space-y-4">
               {(() => {
-                // Filter out categories with no name or count = 0
+                // Filter out categories with no name or value = 0
+                // API returns { name, value } instead of { categoryName, count }
                 const validCategories = stats?.categoryStats?.filter(
-                  (cat) => cat.categoryName && cat.count > 0
+                  (cat: any) => (cat.categoryName || cat.name) && (cat.count || cat.value) > 0
                 ) || [];
                 
                 if (validCategories.length === 0) {
                   return <p className="text-sm text-slate-400 italic">Chưa có dữ liệu phân loại</p>;
                 }
                 
-                const maxCount = Math.max(...validCategories.map(c => c.count), 1);
+                const maxCount = Math.max(...validCategories.map((c: any) => c.count || c.value), 1);
                 
-                return validCategories.map((cat) => (
-                  <div key={cat.categoryName} className="flex items-center">
-                    <div className="w-[120px] text-sm font-medium text-slate-600 truncate">
-                      {cat.categoryName}
+                return validCategories.map((cat: any) => {
+                  const categoryName = cat.categoryName || cat.name;
+                  const count = cat.count || cat.value;
+                  return (
+                    <div key={categoryName} className="flex items-center">
+                      <div className="w-[120px] text-sm font-medium text-slate-600 truncate">
+                        {categoryName}
+                      </div>
+                      <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden mx-2">
+                        <div 
+                          className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all" 
+                          style={{ width: `${(count / maxCount) * 100}%` }}
+                        />
+                      </div>
+                      <div className="w-[40px] text-right text-sm font-semibold text-slate-700">
+                        {count}
+                      </div>
                     </div>
-                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden mx-2">
-                      <div 
-                        className="h-full bg-gradient-to-r from-orange-400 to-orange-600 rounded-full transition-all" 
-                        style={{ width: `${(cat.count / maxCount) * 100}%` }}
-                      />
-                    </div>
-                    <div className="w-[40px] text-right text-sm font-semibold text-slate-700">
-                      {cat.count}
-                    </div>
-                  </div>
-                ));
+                  );
+                });
               })()}
             </div>
           </CardContent>
