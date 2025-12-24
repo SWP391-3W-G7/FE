@@ -860,98 +860,98 @@ const AdminUsersPage = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* User Detail Dialog */}
-      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Thông tin chi tiết người dùng</DialogTitle>
-            <DialogDescription>
-              Xem đầy đủ thông tin của người dùng trong hệ thống
-            </DialogDescription>
-          </DialogHeader>
-          
-          {isLoadingDetail ? (
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </div>
-          ) : userDetail ? (
-            <div className="space-y-4">
-              {userDetail.studentIdCardUrl && (
-                <div>
-                  <label className="text-sm font-medium text-slate-700 block mb-2">
-                    Hình thẻ sinh viên
-                  </label>
-                  <img
-                    src={userDetail.studentIdCardUrl}
-                    alt="Student ID Card"
-                    className="w-full max-h-96 object-contain rounded-lg border"
-                  />
-                </div>
-              )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-slate-700">ID</label>
-                  <p className="text-slate-900 mt-1">{userDetail.userId}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Username</label>
-                  <p className="text-slate-900 mt-1">{userDetail.username || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Họ và tên</label>
-                  <p className="text-slate-900 mt-1">{userDetail.fullName}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Email</label>
-                  <p className="text-slate-900 mt-1">{userDetail.email}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
-                  <p className="text-slate-900 mt-1">{userDetail.phoneNumber || 'N/A'}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Vai trò</label>
-                  <div className="mt-1">{userDetail.roleName}</div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Campus</label>
-                  <p className="text-slate-900 mt-1">{userDetail.campusName}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-slate-700">Trạng thái</label>
-                  <div className="mt-1">
-                    {userDetail.status === 'Active' ? (
-                      <Badge variant="outline" className="text-green-600 border-green-300">
-                        Hoạt động
-                      </Badge>
-                    ) : userDetail.status === 'Pending' ? (
-                      <Badge variant="outline" className="text-yellow-600 border-yellow-300">
-                        Chờ duyệt
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-gray-600">
-                        Không hoạt động
-                      </Badge>
-                    )}
+        {/* User Detail Dialog */}
+        <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Thông tin chi tiết người dùng</DialogTitle>
+              <DialogDescription>
+                Xem đầy đủ thông tin của người dùng trong hệ thống
+              </DialogDescription>
+            </DialogHeader>
+
+            {isLoadingDetail ? (
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ) : userDetail ? (
+              <div className="space-y-4">
+                {userDetail.studentIdCardUrl && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 block mb-2">
+                      Hình thẻ sinh viên
+                    </label>
+                    <img
+                      src={userDetail.studentIdCardUrl}
+                      alt="Student ID Card"
+                      className="w-full max-h-96 object-contain rounded-lg border"
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">ID</label>
+                    <p className="text-slate-900 mt-1">{userDetail.userId}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Username</label>
+                    <p className="text-slate-900 mt-1">{userDetail.username || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Họ và tên</label>
+                    <p className="text-slate-900 mt-1">{userDetail.fullName}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Email</label>
+                    <p className="text-slate-900 mt-1">{userDetail.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
+                    <p className="text-slate-900 mt-1">{userDetail.phoneNumber || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Vai trò</label>
+                    <p className="text-slate-900 mt-1">{userDetail.role || userDetail.roleName || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Campus</label>
+                    <p className="text-slate-900 mt-1">{userDetail.campusName}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Trạng thái</label>
+                    <div className="mt-1">
+                      {userDetail.status === 'Active' ? (
+                        <Badge variant="outline" className="text-green-600 border-green-300">
+                          Hoạt động
+                        </Badge>
+                      ) : userDetail.status === 'Pending' ? (
+                        <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                          Chờ duyệt
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-gray-600">
+                          Không hoạt động
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <p className="text-slate-500">Không thể tải thông tin người dùng</p>
-          )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
-              Đóng
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+            ) : (
+              <p className="text-slate-500">Không thể tải thông tin người dùng</p>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDetailDialogOpen(false)}>
+                Đóng
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </>
   );
 };
