@@ -115,7 +115,7 @@ export const itemApi = rootApi.injectEndpoints({
     //got it
     getMyLostItems: build.query<LostItem[], void>({
       query: () => ({
-        url: "/lost-items",
+        url: "/lost-items/my-lost-items",
         method: "GET",
       }),
       providesTags: ["MyLostItems"],

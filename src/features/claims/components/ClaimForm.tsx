@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, Upload, X } from 'lucide-react';
+import { Loader2, Upload, X, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCreateClaimMutation } from '@/features/claims/claimApi';
+import { useGetMyLostItemsQuery } from '@/features/items/itemApi';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '@/features/auth/authSlice';
@@ -17,6 +20,7 @@ import { useStudentVerification } from '../../auth/hooks/useStudentVerification'
 import { StudentIdCardModal } from '../../auth/components/StudentIdCardModal';
 
 const claimSchema = z.object({
+  lostItemId: z.string().min(1, "Vui lòng chọn bài đăng mất đồ của bạn"),
   title: z.string().min(5, "Tiêu đề quá ngắn"),
   description: z.string().min(10, "Vui lòng mô tả kỹ hơn để Staff xác minh (VD: Số tiền, vết trầy, pass...)"),
 });
@@ -38,12 +42,14 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
 
   const [createClaim, { isLoading }] = useCreateClaimMutation();
+  const { data: myLostItems = [], isLoading: isLoadingLostItems } = useGetMyLostItemsQuery();
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   const form = useForm<ClaimFormValues>({
     resolver: zodResolver(claimSchema),
     defaultValues: {
+      lostItemId: "",
       title: "",
       description: "",
     },
@@ -84,6 +90,7 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
 
       // Append theo đúng Swagger API spec
       formData.append("FoundItemId", foundItemId);
+      formData.append("LostItemId", data.lostItemId);
       formData.append("CampusId", user.campusId.toString());
 
       if (data.title) {
@@ -127,6 +134,49 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
       />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+          {/* LostItemId Selection - Required */}
+          <FormField
+            control={form.control}
+            name="lostItemId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Chọn bài đăng mất đồ của bạn *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={isLoadingLostItems ? "Đang tải..." : "Chọn bài đăng mất đồ"} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {isLoadingLostItems ? (
+                      <SelectItem value="loading" disabled>Đang tải...</SelectItem>
+                    ) : myLostItems.length === 0 ? (
+                      <SelectItem value="empty" disabled>Bạn chưa có bài đăng mất đồ</SelectItem>
+                    ) : (
+                      myLostItems.map((item) => (
+                        <SelectItem key={item.lostItemId} value={item.lostItemId.toString()}>
+                          {item.title} - {item.categoryName}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Alert if no lost items */}
+          {!isLoadingLostItems && myLostItems.length === 0 && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Bạn chưa có bài đăng mất đồ nào. Vui lòng{" "}
+                <a href="/report-lost" className="underline font-semibold">đăng báo mất đồ</a> trước khi nhận sở hữu.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <FormField
             control={form.control}

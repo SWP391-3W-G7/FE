@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useLoginMutation } from '../authApi';
+import { useLoginMutation, useGetProfileQuery } from '../authApi';
 import { useGetCampusesQuery } from '@/features/items/itemApi';
 import { useAppSelector } from '@/store';
 import { selectCurrentUser } from '../authSlice';
@@ -52,15 +52,30 @@ export const LoginForm = () => {
 
     const [login, { isLoading }] = useLoginMutation();
     const { data: campuses = [], isLoading: loadingCampuses } = useGetCampusesQuery();
-    
+
     const [selectedCampusId, setSelectedCampusId] = useState<string>("");
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-    // Listen for user change in Redux
+    // Fetch profile after login to get complete user data (studentIdCardUrl, status)
+    const [shouldFetchProfile, setShouldFetchProfile] = useState(false);
+    const { isFetching: isProfileLoading, isSuccess: isProfileLoaded } = useGetProfileQuery(undefined, {
+        skip: !shouldFetchProfile,
+    });
+
+    // Listen for user change in Redux and trigger profile fetch
     useEffect(() => {
-        if (currentUser?.role) {
-            console.log("✅ User updated in Redux:", currentUser);
+        if (currentUser?.role && !shouldFetchProfile) {
+            console.log("✅ User logged in, fetching profile for complete data...");
+            setShouldFetchProfile(true);
+        }
+    }, [currentUser, shouldFetchProfile]);
+
+    // After profile is loaded, navigate to appropriate page
+    useEffect(() => {
+        if (currentUser?.role && isProfileLoaded && !isProfileLoading) {
+            console.log("✅ Profile loaded, user data:", currentUser);
             console.log("✅ User role:", currentUser.role, "Type:", typeof currentUser.role);
+            console.log("✅ studentIdCardUrl:", currentUser.studentIdCardUrl);
 
             const userRole = currentUser.role;
             let redirectPath = '/items';
@@ -78,19 +93,15 @@ export const LoginForm = () => {
                 console.log("🔄 Redirecting", userRole, "to:", redirectPath);
             }
 
-            // Small delay to ensure Redux store is fully synced
-            setTimeout(() => {
-                toast({
-                    title: "Đăng nhập thành công!",
-                    description: `Xin chào ${currentUser.fullName}`,
-                });
+            toast({
+                title: "Đăng nhập thành công!",
+                description: `Xin chào ${currentUser.fullName}`,
+            });
 
-                // Always redirect to role-based path, ignore 'from' to avoid permission issues
-                console.log("🚀 Navigating to:", redirectPath);
-                navigate(redirectPath, { replace: true });
-            }, 100);
+            console.log("🚀 Navigating to:", redirectPath);
+            navigate(redirectPath, { replace: true });
         }
-    }, [currentUser, navigate, toast]);
+    }, [currentUser, isProfileLoaded, isProfileLoading, navigate, toast]);
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -151,11 +162,11 @@ export const LoginForm = () => {
         }
 
         setIsGoogleLoading(true);
-        
+
         // Redirect to BE Google OAuth endpoint
         const apiUrl = import.meta.env.VITE_API_URL || 'https://be-xtt0.onrender.com/api';
         const googleLoginUrl = `${apiUrl}/auth/google-login?campusId=${selectedCampusId}`;
-        
+
         console.log("🔄 Redirecting to Google OAuth:", googleLoginUrl);
         window.location.href = googleLoginUrl;
     };
@@ -191,9 +202,9 @@ export const LoginForm = () => {
             </div>
 
             {/* Google Login Button */}
-            <Button 
+            <Button
                 type="button"
-                variant="outline" 
+                variant="outline"
                 className="w-full h-11 gap-3 border-slate-300 hover:bg-slate-50"
                 onClick={handleGoogleLogin}
                 disabled={isGoogleLoading || !selectedCampusId}

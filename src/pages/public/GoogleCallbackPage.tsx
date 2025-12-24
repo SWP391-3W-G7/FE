@@ -22,6 +22,8 @@ const GoogleCallbackPage = () => {
       const roleName = searchParams.get('roleName') || searchParams.get('role');
       const campusId = searchParams.get('campusId');
       const campusName = searchParams.get('campusName');
+      const studentIdCardUrl = searchParams.get('studentIdCardUrl');
+      const status = searchParams.get('status');
       const error = searchParams.get('error');
 
       if (error) {
@@ -62,6 +64,8 @@ const GoogleCallbackPage = () => {
         campusName: campusName || '',
         role: role as UserRole,
         campusId: campusId ? Number(campusId) : 1,
+        studentIdCardUrl: studentIdCardUrl || undefined,
+        status: status || undefined,
       };
 
       // Dispatch login success
@@ -69,6 +73,18 @@ const GoogleCallbackPage = () => {
         user,
         token,
       }));
+
+      // Ngay sau khi login thành công, fetch profile để lấy đầy đủ thông tin user
+      // (bao gồm studentIdCardUrl và status vì URL params có thể không chứa đầy đủ)
+      try {
+        const { authApi } = await import('@/features/auth/authApi');
+        const profileResult = await dispatch(authApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true }));
+        if ('data' in profileResult) {
+          console.log("✅ Profile fetched successfully after Google login:", profileResult.data);
+        }
+      } catch (profileError) {
+        console.error("⚠️ Failed to fetch profile after Google login:", profileError);
+      }
 
       toast({
         title: "Đăng nhập thành công!",

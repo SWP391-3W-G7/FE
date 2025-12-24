@@ -19,6 +19,7 @@ export const authApi = rootApi.injectEndpoints({
         roleName: string;
         campusId: number;
         studentIdCardUrl?: string;
+        status?: string;
       }) => {
         // 1. Map 'token' của BE thành biến 'token' cho FE
         const accessToken = rawResult.token;
@@ -48,6 +49,7 @@ export const authApi = rootApi.injectEndpoints({
           role: role as UserRole,
           campusId: rawResult.campusId,
           studentIdCardUrl: rawResult.studentIdCardUrl,
+          status: rawResult.status,
         };
 
         return {
@@ -59,8 +61,8 @@ export const authApi = rootApi.injectEndpoints({
       async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-
           dispatch(loginSuccess(data));
+          // Profile fetch is handled by LoginForm/GoogleCallbackPage
         } catch {
           // Login failed
         }
