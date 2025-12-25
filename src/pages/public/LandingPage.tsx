@@ -31,7 +31,7 @@ const LandingPage = () => {
 
   const recentItems = useMemo(() => {
     if (!isAuthenticated) return [];
-    const itemsArray = Array.isArray(response) ? response : [];
+    const itemsArray = response?.items || [];
     return [...itemsArray]
       .sort((a, b) => new Date(b.foundDate).getTime() - new Date(a.foundDate).getTime())
       .slice(0, 4);

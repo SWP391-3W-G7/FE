@@ -3,8 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Filter, MapPin, Calendar, ArrowUpRight, PackageOpen } from 'lucide-react';
 import { formatVN } from '@/utils/dateUtils';
 import { useGetFoundItemsQuery, useGetCategoriesQuery, useGetCampusesQuery } from '@/features/items/itemApi';
-import { useAppSelector } from '@/store';
-import { selectCurrentUser } from '@/features/auth/authSlice';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +14,6 @@ import type { Campus, Category, FoundItem } from '@/types';
 
 const FindItemsPage = () => {
     const navigate = useNavigate();
-    const user = useAppSelector(selectCurrentUser);
 
     const [searchParams] = useSearchParams();
     const urlKeyword = searchParams.get('keyword') || "";
@@ -29,13 +26,8 @@ const FindItemsPage = () => {
     const [keyword, setKeyword] = useState(urlKeyword);
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
     
-    // Lấy ID từ user (đã có campusId từ login) làm mặc định
-    const [selectedCampus, setSelectedCampus] = useState<string>(() => {
-        if (user?.campusId) {
-            return user.campusId.toString();
-        }
-        return "all";
-    });
+    // Mặc định hiển thị tất cả campus
+    const [selectedCampus, setSelectedCampus] = useState<string>("all");
 
     // Lấy toàn bộ items theo Campus (API chỉ hỗ trợ filter Campus)
     const { data: response, isLoading, isFetching } = useGetFoundItemsQuery({
