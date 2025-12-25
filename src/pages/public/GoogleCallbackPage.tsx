@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { type UserRole, type User } from '@/types';
 import { ROLES } from '@/config/roles';
+import { authApi } from '@/features/auth/authApi';
 
 const GoogleCallbackPage = () => {
   const navigate = useNavigate();
@@ -77,13 +78,12 @@ const GoogleCallbackPage = () => {
       // Ngay sau khi login thành công, fetch profile để lấy đầy đủ thông tin user
       // (bao gồm studentIdCardUrl và status vì URL params có thể không chứa đầy đủ)
       try {
-        const { authApi } = await import('@/features/auth/authApi');
         const profileResult = await dispatch(authApi.endpoints.getProfile.initiate(undefined, { forceRefetch: true }));
         if ('data' in profileResult) {
-          console.log("✅ Profile fetched successfully after Google login:", profileResult.data);
+          // Profile fetched successfully
         }
       } catch (profileError) {
-        console.error("⚠️ Failed to fetch profile after Google login:", profileError);
+        // Failed to fetch profile - non-critical error
       }
 
       toast({

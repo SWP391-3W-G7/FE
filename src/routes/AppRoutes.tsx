@@ -5,19 +5,24 @@ import MainLayout from '@/layouts/MainLayout';
 import AuthPage from '@/pages/public/AuthPage';
 import LandingPage from '@/pages/public/LandingPage';
 import GoogleCallbackPage from '@/pages/public/GoogleCallbackPage';
-import ReportItemPage from '@/pages/private/student/ReportItemPage';
 import ProtectedRoute from './ProtectedRoute';
 import RoleBasedRedirect from './RoleBasedRedirect';
-import ReportFoundPage from '@/pages/private/student/ReportFoundPage';
-import FindItemsPage from '@/pages/private/student/FindItemsPage';
-import ClaimItemPage from '@/pages/private/student/ClaimItemPage';
-import ProfilePage from '@/pages/private/student/ProfilePage';
-import MyItemsPage from '@/pages/private/student/MyItemsPage';
-import EditLostItemPage from '@/pages/private/student/EditLostItemPage';
-import EditFoundItemPage from '@/pages/private/student/EditFoundItemPage';
-import SecurityLogPage from '@/pages/private/security/SecurityLogPage';
 import StaffLayout from '@/layouts/staff/StaffLayout';
 import AdminLayout from '@/layouts/admin/AdminLayout';
+
+// Lazy load Student Pages
+const ReportItemPage = lazy(() => import('@/pages/private/student/ReportItemPage'));
+const ReportFoundPage = lazy(() => import('@/pages/private/student/ReportFoundPage'));
+const FindItemsPage = lazy(() => import('@/pages/private/student/FindItemsPage'));
+const ClaimItemPage = lazy(() => import('@/pages/private/student/ClaimItemPage'));
+const ProfilePage = lazy(() => import('@/pages/private/student/ProfilePage'));
+const MyItemsPage = lazy(() => import('@/pages/private/student/MyItemsPage'));
+const EditLostItemPage = lazy(() => import('@/pages/private/student/EditLostItemPage'));
+const EditFoundItemPage = lazy(() => import('@/pages/private/student/EditFoundItemPage'));
+
+// Lazy load Security Pages
+const SecurityLogPage = lazy(() => import('@/pages/private/security/SecurityLogPage'));
+const SecurityDashboard = lazy(() => import('@/pages/private/security/SecurityDashboard'));
 
 // Lazy load Staff Pages
 const StaffDashboard = lazy(() => import('@/pages/private/staff/StaffDashboard').then(module => ({ default: module.StaffDashboard })));
@@ -32,8 +37,6 @@ const AdminDashboard = lazy(() => import('@/pages/private/admin/AdminDashboard')
 const AdminCampusPage = lazy(() => import('@/pages/private/admin/AdminCampusPage'));
 const AdminUsersPage = lazy(() => import('@/pages/private/admin/AdminUsersPage'));
 const PendingUsersPage = lazy(() => import('@/pages/private/admin/PendingUsersPage'));
-
-const SecurityDashboard = lazy(() => import('@/pages/private/security/SecurityDashboard'));
 
 // Fallback loading component
 const PageLoader = () => (
@@ -64,14 +67,46 @@ const AppRoutes = () => {
       {/* Student */}
       <Route element={<ProtectedRoute allowedRoles={[ROLES.STUDENT]} />}>
         <Route element={<MainLayout />}>
-          <Route path="/report-lost" element={<ReportItemPage />} />
-          <Route path="/report-found" element={<ReportFoundPage />} />
-          <Route path="/items" element={<FindItemsPage />} />
-          <Route path="/items/:id" element={<ClaimItemPage />} />
-          <Route path="/my-items" element={<MyItemsPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/edit-lost/:id" element={<EditLostItemPage />} />
-          <Route path="/edit-found/:id" element={<EditFoundItemPage />} />
+          <Route path="/report-lost" element={
+            <Suspense fallback={<PageLoader />}>
+              <ReportItemPage />
+            </Suspense>
+          } />
+          <Route path="/report-found" element={
+            <Suspense fallback={<PageLoader />}>
+              <ReportFoundPage />
+            </Suspense>
+          } />
+          <Route path="/items" element={
+            <Suspense fallback={<PageLoader />}>
+              <FindItemsPage />
+            </Suspense>
+          } />
+          <Route path="/items/:id" element={
+            <Suspense fallback={<PageLoader />}>
+              <ClaimItemPage />
+            </Suspense>
+          } />
+          <Route path="/my-items" element={
+            <Suspense fallback={<PageLoader />}>
+              <MyItemsPage />
+            </Suspense>
+          } />
+          <Route path="/profile" element={
+            <Suspense fallback={<PageLoader />}>
+              <ProfilePage />
+            </Suspense>
+          } />
+          <Route path="/edit-lost/:id" element={
+            <Suspense fallback={<PageLoader />}>
+              <EditLostItemPage />
+            </Suspense>
+          } />
+          <Route path="/edit-found/:id" element={
+            <Suspense fallback={<PageLoader />}>
+              <EditFoundItemPage />
+            </Suspense>
+          } />
         </Route>
       </Route>
 
@@ -119,7 +154,11 @@ const AppRoutes = () => {
               <SecurityDashboard />
             </Suspense>
           } />
-          <Route path="/security/log-item" element={<SecurityLogPage />} />
+          <Route path="/security/log-item" element={
+            <Suspense fallback={<PageLoader />}>
+              <SecurityLogPage />
+            </Suspense>
+          } />
         </Route>
       </Route>
 

@@ -556,9 +556,9 @@ export const itemApi = rootApi.injectEndpoints({
     }),
 
     // Admin Dashboard APIs
-    getUnreturnedItemsCount: build.query<number, void>({
-      query: () => ({
-        url: "/admin/dashboard/unreturned-items-count",
+    getUnreturnedItemsCount: build.query<number, number | null>({
+      query: (campusId) => ({
+        url: `/admin/dashboard/unreturned-items-count${campusId !== null ? `?campusId=${campusId}` : ''}`,
         method: "GET",
       }),
       transformResponse: (response: { count?: number }) => {
@@ -566,11 +566,18 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getFoundItemsMonthly: build.query<Array<{ month: string; name: string; count: number }>, void>({
-      query: () => ({
-        url: "/admin/dashboard/found-items-monthly",
-        method: "GET",
-      }),
+    getFoundItemsMonthly: build.query<Array<{ month: string; name: string; count: number }>, number | null>({
+      query: (campusId) => {
+        const currentYear = new Date().getFullYear();
+        const params = new URLSearchParams({ year: currentYear.toString() });
+        if (campusId !== null) {
+          params.append('campusId', campusId.toString());
+        }
+        return {
+          url: `/admin/dashboard/found-items-monthly?${params.toString()}`,
+          method: "GET",
+        };
+      },
       transformResponse: (response: { data?: number[] }) => {
         const data = response?.data;
         if (!Array.isArray(data)) return [];
@@ -584,9 +591,9 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getTopContributor: build.query<Array<{ userId: number; userName: string; fullName: string; email: string; count: number; itemCount: number }>, void>({
-      query: () => ({
-        url: "/admin/dashboard/top-contributor",
+    getTopContributor: build.query<Array<{ userId: number; userName: string; fullName: string; email: string; count: number; itemCount: number }>, number | null>({
+      query: (campusId) => ({
+        url: `/admin/dashboard/top-contributor${campusId !== null ? `?campusId=${campusId}` : ''}`,
         method: "GET",
       }),
       transformResponse: (response: { data?: { userId: number; fullName: string; email: string; totalFoundItems: number } }) => {
@@ -607,7 +614,7 @@ export const itemApi = rootApi.injectEndpoints({
 
     getCampusMostLostItems: build.query<Array<{ campusId: number; campusName: string; count: number; lostItemCount: number }>, void>({
       query: () => ({
-        url: "/admin/dashboard/campus-most-lost-items",
+        url: `/admin/dashboard/campus-most-lost-items`,
         method: "GET",
       }),
       transformResponse: (response: { data?: { campusId: number; campusName: string; totalLostItems: number } }) => {
@@ -624,9 +631,9 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getUserMostLostItems: build.query<Array<{ userId: number; userName: string; fullName: string; email: string; count: number; lostItemCount: number }>, void>({
-      query: () => ({
-        url: "/admin/dashboard/user-most-lost-items",
+    getUserMostLostItems: build.query<Array<{ userId: number; userName: string; fullName: string; email: string; count: number; lostItemCount: number }>, number | null>({
+      query: (campusId) => ({
+        url: `/admin/dashboard/user-most-lost-items${campusId !== null ? `?campusId=${campusId}` : ''}`,
         method: "GET",
       }),
       transformResponse: (response: { data?: { userId: number; fullName: string; email: string; totalLostItems: number } }) => {
@@ -645,9 +652,9 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getLostItemsStatusStats: build.query<Array<{ status: string; count: number }>, void>({
-      query: () => ({
-        url: "/admin/dashboard/lost-items-status-stats",
+    getLostItemsStatusStats: build.query<Array<{ status: string; count: number }>, number | null>({
+      query: (campusId) => ({
+        url: `/admin/dashboard/lost-items-status-stats${campusId !== null ? `?campusId=${campusId}` : ''}`,
         method: "GET",
       }),
       transformResponse: (response: { data?: { totalLost: number; totalMatched: number; totalReturned: number } }) => {
@@ -662,9 +669,9 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getFoundItemsStatusStats: build.query<Array<{ status: string; count: number }>, void>({
-      query: () => ({
-        url: "/admin/dashboard/found-items-status-stats",
+    getFoundItemsStatusStats: build.query<Array<{ status: string; count: number }>, number | null>({
+      query: (campusId) => ({
+        url: `/admin/dashboard/found-items-status-stats${campusId !== null ? `?campusId=${campusId}` : ''}`,
         method: "GET",
       }),
       transformResponse: (response: { data?: { totalOpen: number; totalStored: number; totalClaimed: number; totalReturned: number; totalClosed: number } }) => {
@@ -681,9 +688,9 @@ export const itemApi = rootApi.injectEndpoints({
       },
     }),
 
-    getClaimStatusStats: build.query<Array<{ status: string; count: number }>, void>({
-      query: () => ({
-        url: "/admin/dashboard/claim-status-stats",
+    getClaimStatusStats: build.query<Array<{ status: string; count: number }>, number | null>({
+      query: (campusId) => ({
+        url: `/admin/dashboard/claim-status-stats${campusId !== null ? `?campusId=${campusId}` : ''}`,
         method: "GET",
       }),
       transformResponse: (response: { data?: { totalPending: number; totalApproved: number; totalRejected: number; totalReturned: number; totalConflicted: number } }) => {

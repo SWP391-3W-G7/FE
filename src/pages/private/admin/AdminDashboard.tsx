@@ -9,6 +9,7 @@ import {
   useGetFoundItemsStatusStatsQuery,
   useGetClaimStatusStatsQuery,
   useGetUserDetailQuery,
+  useGetCampusesQuery,
 } from "@/features/items/itemApi";
 import {
   Card,
@@ -29,13 +30,18 @@ import {
   Trophy,
   AlertCircle,
   Eye,
-  Calendar,
   ArrowUpRight,
   ArrowDownRight,
   Minus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -52,31 +58,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type TimeFilter = "7d" | "30d" | "90d" | "all";
-
 const AdminDashboard = () => {
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("30d");
+  const [selectedCampusId, setSelectedCampusId] = useState<number | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedUserIdForDetail, setSelectedUserIdForDetail] = useState<
     number | null
   >(null);
 
+  const { data: campuses = [], isLoading: loadingCampuses } = useGetCampusesQuery();
+  
   const { data: unreturnedCount, isLoading: loadingUnreturned } =
-    useGetUnreturnedItemsCountQuery();
+    useGetUnreturnedItemsCountQuery(selectedCampusId);
   const { data: monthlyData, isLoading: loadingMonthly } =
-    useGetFoundItemsMonthlyQuery();
+    useGetFoundItemsMonthlyQuery(selectedCampusId);
   const { data: topContributors, isLoading: loadingContributors } =
-    useGetTopContributorQuery();
+    useGetTopContributorQuery(selectedCampusId);
   const { data: campusLostItems, isLoading: loadingCampusLost } =
     useGetCampusMostLostItemsQuery();
   const { data: userLostItems, isLoading: loadingUserLost } =
-    useGetUserMostLostItemsQuery();
+    useGetUserMostLostItemsQuery(selectedCampusId);
   const { data: lostItemsStats, isLoading: loadingLostStats } =
-    useGetLostItemsStatusStatsQuery();
+    useGetLostItemsStatusStatsQuery(selectedCampusId);
   const { data: foundItemsStats, isLoading: loadingFoundStats } =
-    useGetFoundItemsStatusStatsQuery();
+    useGetFoundItemsStatusStatsQuery(selectedCampusId);
   const { data: claimStats, isLoading: loadingClaimStats } =
-    useGetClaimStatusStatsQuery();
+    useGetClaimStatusStatsQuery(selectedCampusId);
 
   const { data: userDetail, isLoading: isLoadingDetail } =
     useGetUserDetailQuery(selectedUserIdForDetail!, {
@@ -143,6 +149,7 @@ const AdminDashboard = () => {
   const totalClaims = getTotalCount(claimStats || []);
 
   const isLoading =
+    loadingCampuses ||
     loadingUnreturned ||
     loadingMonthly ||
     loadingContributors ||
@@ -175,7 +182,7 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header with Time Filter */}
+        {/* Header with Campus Filter */}
         <div className="mb-8 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -183,22 +190,27 @@ const AdminDashboard = () => {
                 Admin Dashboard
               </h1>
               <p className="text-slate-600 mt-1 flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+                <MapPin className="h-4 w-4" />
                 Tổng quan hệ thống Lost & Found
               </p>
             </div>
-            <div>
-              <Tabs
-                value={timeFilter}
-                onValueChange={(v) => setTimeFilter(v as TimeFilter)}
+            <div className="w-full md:w-64">
+              <Select
+                value={selectedCampusId?.toString() || "all"}
+                onValueChange={(value) => setSelectedCampusId(value === "all" ? null : Number(value))}
               >
-                <TabsList className="bg-slate-100">
-                  <TabsTrigger value="7d">7 ngày</TabsTrigger>
-                  <TabsTrigger value="30d">30 ngày</TabsTrigger>
-                  <TabsTrigger value="90d">90 ngày</TabsTrigger>
-                  <TabsTrigger value="all">Tất cả</TabsTrigger>
-                </TabsList>
-              </Tabs>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn cơ sở" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả cơ sở</SelectItem>
+                  {campuses.map((campus) => (
+                    <SelectItem key={campus.campusId} value={campus.campusId.toString()}>
+                      {campus.campusName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
