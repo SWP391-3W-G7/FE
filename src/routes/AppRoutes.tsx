@@ -92,6 +92,7 @@ const AppRoutes = () => {
               <MyItemsPage />
             </Suspense>
           } />
+          <Route path="/my-claims" element={<Navigate to="/my-items" replace />} />
           <Route path="/profile" element={
             <Suspense fallback={<PageLoader />}>
               <ProfilePage />

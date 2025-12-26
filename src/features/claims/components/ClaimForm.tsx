@@ -21,8 +21,8 @@ import { StudentIdCardModal } from '../../auth/components/StudentIdCardModal';
 
 const claimSchema = z.object({
   lostItemId: z.string().min(1, "Vui lòng chọn bài đăng mất đồ của bạn"),
-  title: z.string().min(5, "Tiêu đề quá ngắn"),
-  description: z.string().min(10, "Vui lòng mô tả kỹ hơn để Staff xác minh (VD: Số tiền, vết trầy, pass...)"),
+  title: z.string(),
+  description: z.string(),
 });
 
 type ClaimFormValues = z.infer<typeof claimSchema>;
@@ -115,7 +115,7 @@ export const ClaimForm = ({ foundItemId }: ClaimFormProps) => {
         description: "Vui lòng chờ Staff duyệt. Bạn có thể theo dõi trong Lịch sử.",
       });
 
-      navigate('/my-claims');
+      navigate('/my-items', { state: { defaultTab: 'claims' } });
 
     } catch {
       toast({
